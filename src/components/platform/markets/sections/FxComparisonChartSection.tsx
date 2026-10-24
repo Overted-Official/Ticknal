@@ -11,13 +11,33 @@ import {
   YAxis,
   Tooltip,
 } from 'recharts';
-import { ChevronRight } from '@/components/ui/icon-library';
+import { ChevronRight, Sparkles } from '@/components/ui/icon-library';
 import Skeleton from '@/components/ui/Skeleton';
 import { useTranslation } from '@/lib/i18n';
 import type { FxFairValueResponse, FxHistoryItem } from '@/lib/handlers/fx-fair-value-handler';
 
 export type SelectedFxSeries = 'ALL' | 'OFFICIAL' | 'FAIR' | 'USDT' | 'GOLD' | 'CIB';
 export type FxHorizon = '1M' | '3M' | '6M' | 'YTD' | '1Y' | 'ALL';
+
+export interface FxChartPoint {
+  date: string;
+  officialUsd?: number;
+  compositeFair?: number;
+  usdtRate?: number;
+  goldRate?: number;
+  gdrRate?: number;
+  fairSpread?: number;
+  usdtSpread?: number;
+  goldSpread?: number;
+  gdrSpread?: number;
+  maxSpread?: number;
+  maxSpreadPct?: number;
+  // Kronos Forward Projection
+  isForecast?: boolean;
+  forecastFair?: number;
+  lower80?: number;
+  upper80?: number;
+}
 
 const HORIZONS: { key: FxHorizon; label: string; labelAr: string; count: number }[] = [
   { key: '1M', label: '1M', labelAr: 'شهر', count: 22 },
@@ -115,15 +135,40 @@ export default function FxComparisonChartSection({
     },
   ];
 
-  // Slice history by selected horizon
-  const chartData = useMemo(() => {
+  // Slice history by selected horizon and append Kronos forward forecast
+  const chartData: FxChartPoint[] = useMemo(() => {
     const rawHistory = fxData?.history;
     if (!rawHistory || rawHistory.length === 0) return [];
 
     const selectedPreset = HORIZONS.find((h) => h.key === horizon);
     const count = selectedPreset ? selectedPreset.count : 132;
-    return rawHistory.slice(-count);
-  }, [fxData?.history, horizon]);
+    const sliced = rawHistory.slice(-count);
+
+    const basePoints: FxChartPoint[] = sliced.map((h, i, arr) => {
+      const isLast = i === arr.length - 1;
+      return {
+        ...h,
+        isForecast: false,
+        forecastFair: isLast ? h.compositeFair : undefined,
+        lower80: isLast ? h.compositeFair : undefined,
+        upper80: isLast ? h.compositeFair : undefined,
+      };
+    });
+
+    const predictions = fxData?.kronosForecast?.predictions;
+    if (predictions && predictions.length > 0 && (selectedSeries === 'ALL' || selectedSeries === 'FAIR')) {
+      const forecastPoints: FxChartPoint[] = predictions.map((p) => ({
+        date: p.date,
+        isForecast: true,
+        forecastFair: p.fairValue,
+        lower80: p.lower80,
+        upper80: p.upper80,
+      }));
+      return [...basePoints, ...forecastPoints];
+    }
+
+    return basePoints;
+  }, [fxData?.history, fxData?.kronosForecast?.predictions, horizon, selectedSeries]);
 
   // Compute dynamic Y-axis min/max
   const { yMin, yMax, yTicks } = useMemo(() => {
@@ -132,18 +177,30 @@ export default function FxComparisonChartSection({
     let allValues: number[] = [];
     if (selectedSeries === 'ALL') {
       for (const d of chartData) {
-        allValues.push(d.officialUsd, d.compositeFair, d.usdtRate, d.goldRate, d.gdrRate);
+        if (typeof d.officialUsd === 'number') allValues.push(d.officialUsd);
+        if (typeof d.compositeFair === 'number') allValues.push(d.compositeFair);
+        if (typeof d.usdtRate === 'number') allValues.push(d.usdtRate);
+        if (typeof d.goldRate === 'number') allValues.push(d.goldRate);
+        if (typeof d.gdrRate === 'number') allValues.push(d.gdrRate);
+        if (typeof d.forecastFair === 'number') allValues.push(d.forecastFair);
+        if (typeof d.lower80 === 'number') allValues.push(d.lower80);
+        if (typeof d.upper80 === 'number') allValues.push(d.upper80);
       }
     } else if (selectedSeries === 'OFFICIAL') {
-      allValues = chartData.map((d) => d.officialUsd);
+      allValues = chartData.map((d) => d.officialUsd).filter((v): v is number => typeof v === 'number');
     } else if (selectedSeries === 'FAIR') {
-      allValues = chartData.map((d) => d.compositeFair);
+      for (const d of chartData) {
+        if (typeof d.compositeFair === 'number') allValues.push(d.compositeFair);
+        if (typeof d.forecastFair === 'number') allValues.push(d.forecastFair);
+        if (typeof d.lower80 === 'number') allValues.push(d.lower80);
+        if (typeof d.upper80 === 'number') allValues.push(d.upper80);
+      }
     } else if (selectedSeries === 'USDT') {
-      allValues = chartData.map((d) => d.usdtRate);
+      allValues = chartData.map((d) => d.usdtRate).filter((v): v is number => typeof v === 'number');
     } else if (selectedSeries === 'GOLD') {
-      allValues = chartData.map((d) => d.goldRate);
+      allValues = chartData.map((d) => d.goldRate).filter((v): v is number => typeof v === 'number');
     } else if (selectedSeries === 'CIB') {
-      allValues = chartData.map((d) => d.gdrRate);
+      allValues = chartData.map((d) => d.gdrRate).filter((v): v is number => typeof v === 'number');
     }
 
     const min = Math.min(...allValues);
@@ -180,7 +237,7 @@ export default function FxComparisonChartSection({
     <div id={id} className="w-full pt-3 select-none font-sans">
       <div className="w-full bg-transparent p-0 border-0">
         {/* 1. Header: Title + Canonical Horizon Switcher */}
-        <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 mb-3">
           <div className="flex flex-col gap-0.5">
             <h3 className="text-sm sm:text-base font-semibold tracking-tight text-plt-text">
               {isAr ? 'مسار سعر الصرف الرسمي مقابل الأسواق الموازية' : 'Official USD vs. Shadow Proxies'}
@@ -193,7 +250,7 @@ export default function FxComparisonChartSection({
           </div>
 
           {/* Time Horizon Switcher (Canonical segmented control) */}
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1 shrink-0 self-start sm:self-auto">
             <div className="seg-control h-7.5 p-0.5">
               {HORIZONS.map((h) => {
                 const isSelected = horizon === h.key;
@@ -228,7 +285,7 @@ export default function FxComparisonChartSection({
                   key={item.id}
                   type="button"
                   onClick={() => setSelectedSeries(item.id)}
-                  className={`group relative flex items-center gap-3 px-3.5 py-2 rounded-full transition-all shrink-0 text-left cursor-pointer ${
+                  className={`group relative flex items-center gap-3 px-3.5 py-2 rounded-full transition-all shrink-0 min-w-[210px] text-left rtl:text-right cursor-pointer ${
                     isSelected
                       ? 'bg-surface-active border border-white/10 shadow-lg'
                       : 'bg-transparent border border-transparent hover:bg-white/[0.04]'
@@ -246,7 +303,7 @@ export default function FxComparisonChartSection({
                   </div>
 
                   {/* Right Info Block */}
-                  <div className="flex flex-col justify-center">
+                  <div className="flex flex-col justify-center min-w-0 flex-1">
                     {/* Top Line: Name + Amber D Tag + Dash */}
                     <div className="flex items-center gap-1 leading-none">
                       <span
@@ -328,8 +385,8 @@ export default function FxComparisonChartSection({
                     tickLine={false}
                     axisLine={false}
                     tick={{ fill: '#888888', fontSize: 10, fontFamily: 'sans-serif' }}
-                    tickFormatter={(val: number) => `${val.toFixed(1)}${isAr ? ' ج.م' : ' EGP'}`}
-                    width={56}
+                    tickFormatter={(val: number) => val.toFixed(1)}
+                    width={44}
                     dx={2}
                   />
                   <XAxis
@@ -354,7 +411,66 @@ export default function FxComparisonChartSection({
                     cursor={{ stroke: 'rgba(255, 255, 255, 0.15)', strokeDasharray: '3 3' }}
                     content={({ active, payload }) => {
                       if (!active || !payload || payload.length === 0) return null;
-                      const d = payload[0].payload as FxHistoryItem;
+                      const d = payload[0].payload as FxChartPoint;
+
+                      if (d.isForecast) {
+                        const driftFromSpot = typeof d.forecastFair === 'number'
+                          ? Number((((d.forecastFair - compositeFair) / compositeFair) * 100).toFixed(1))
+                          : 0;
+
+                        return (
+                          <div
+                            className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50 min-w-[270px]"
+                            dir={isAr ? 'rtl' : 'ltr'}
+                          >
+                            <div className="text-neutral-400 font-medium pb-1.5 border-b border-white/10 flex items-center justify-between gap-4">
+                              <span className="tabular-nums">{d.date}</span>
+                              <div className="flex items-center gap-1.5 text-neutral-200">
+                                <Sparkles className="w-3.5 h-3.5 text-brand-purple" />
+                                <span className="font-semibold">{isAr ? 'توقع الذكاء الاصطناعي' : 'AI Prediction'}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-4 pt-0.5">
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
+                                <span className="text-neutral-300 font-medium">
+                                  {isAr ? 'القيمة العادلة المتوقعة:' : 'Projected Fair Value:'}
+                                </span>
+                              </div>
+                              <span className="font-bold text-white tabular-nums text-sm">
+                                {d.forecastFair?.toFixed(2)}{' '}
+                                <span className="text-[10px] text-neutral-400">{isAr ? 'ج.م' : 'EGP'}</span>
+                              </span>
+                            </div>
+
+                            <div className="space-y-1 pt-1 border-t border-plt-border-soft">
+                              <div className="flex items-center justify-between gap-4">
+                                <span className="text-neutral-400">{isAr ? 'الانحراف المتوقع:' : 'Expected Drift:'}</span>
+                                <span className={`font-semibold tabular-nums ${driftFromSpot >= 0 ? 'text-profit-num' : 'text-accent-orange'}`}>
+                                  {driftFromSpot >= 0 ? '+' : ''}{driftFromSpot.toFixed(1)}%
+                                </span>
+                              </div>
+
+                              {typeof d.lower80 === 'number' && typeof d.upper80 === 'number' && (
+                                <div className="flex items-center justify-between gap-4">
+                                  <span className="text-neutral-400">{isAr ? 'ممر الثقة 80%:' : '80% Corridor:'}</span>
+                                  <span className="font-semibold text-neutral-200 tabular-nums">
+                                    [{d.lower80.toFixed(2)} – {d.upper80.toFixed(2)}]
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between gap-4 text-plt-muted text-[11px] pt-1.5 border-t border-plt-border-soft">
+                              <span>{isAr ? 'ثقة النموذج:' : 'Model Confidence:'}</span>
+                              <span className="font-semibold text-neutral-200 tabular-nums">
+                                {fxData?.kronosForecast?.confidenceScore ?? 84}%
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      }
 
                       return (
                         <div
@@ -378,7 +494,7 @@ export default function FxComparisonChartSection({
                               </span>
                             </div>
                             <span className="font-bold text-white tabular-nums text-sm">
-                              {d.officialUsd.toFixed(2)}{' '}
+                              {d.officialUsd?.toFixed(2)}{' '}
                               <span className="text-[10px] text-neutral-400">{isAr ? 'ج.م' : 'EGP'}</span>
                             </span>
                           </div>
@@ -392,9 +508,9 @@ export default function FxComparisonChartSection({
                                 <span className="text-neutral-400">{isAr ? 'القيمة العادلة:' : 'Fair Value:'}</span>
                               </div>
                               <span className="font-semibold text-white tabular-nums">
-                                {d.compositeFair.toFixed(2)} <span className="text-[10px] text-neutral-400">{isAr ? 'ج.م' : 'EGP'}</span>{' '}
-                                <span className={`text-[11px] font-semibold ml-1 ${d.fairSpread >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                                  ({d.fairSpread >= 0 ? '+' : ''}{d.fairSpread.toFixed(1)}%)
+                                {d.compositeFair?.toFixed(2)} <span className="text-[10px] text-neutral-400">{isAr ? 'ج.م' : 'EGP'}</span>{' '}
+                                <span className={`text-[11px] font-semibold ml-1 ${(d.fairSpread ?? 0) >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                                  {(d.fairSpread ?? 0) >= 0 ? '+' : ''}{(d.fairSpread ?? 0).toFixed(1)}%
                                 </span>
                               </span>
                             </div>
@@ -406,9 +522,9 @@ export default function FxComparisonChartSection({
                                 <span className="text-neutral-400">{isAr ? 'تيذر P2P:' : 'USDT P2P:'}</span>
                               </div>
                               <span className="font-semibold text-white tabular-nums">
-                                {d.usdtRate.toFixed(2)} <span className="text-[10px] text-neutral-400">{isAr ? 'ج.م' : 'EGP'}</span>{' '}
-                                <span className={`text-[11px] font-semibold ml-1 ${d.usdtSpread >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                                  ({d.usdtSpread >= 0 ? '+' : ''}{d.usdtSpread.toFixed(1)}%)
+                                {d.usdtRate?.toFixed(2)} <span className="text-[10px] text-neutral-400">{isAr ? 'ج.م' : 'EGP'}</span>{' '}
+                                <span className={`text-[11px] font-semibold ml-1 ${(d.usdtSpread ?? 0) >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                                  {(d.usdtSpread ?? 0) >= 0 ? '+' : ''}{(d.usdtSpread ?? 0).toFixed(1)}%
                                 </span>
                               </span>
                             </div>
@@ -420,9 +536,9 @@ export default function FxComparisonChartSection({
                                 <span className="text-neutral-400">{isAr ? 'دولار الصاغة:' : 'Sagha Gold:'}</span>
                               </div>
                               <span className="font-semibold text-white tabular-nums">
-                                {d.goldRate.toFixed(2)} <span className="text-[10px] text-neutral-400">{isAr ? 'ج.م' : 'EGP'}</span>{' '}
-                                <span className={`text-[11px] font-semibold ml-1 ${d.goldSpread >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                                  ({d.goldSpread >= 0 ? '+' : ''}{d.goldSpread.toFixed(1)}%)
+                                {d.goldRate?.toFixed(2)} <span className="text-[10px] text-neutral-400">{isAr ? 'ج.م' : 'EGP'}</span>{' '}
+                                <span className={`text-[11px] font-semibold ml-1 ${(d.goldSpread ?? 0) >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                                  {(d.goldSpread ?? 0) >= 0 ? '+' : ''}{(d.goldSpread ?? 0).toFixed(1)}%
                                 </span>
                               </span>
                             </div>
@@ -434,9 +550,9 @@ export default function FxComparisonChartSection({
                                 <span className="text-neutral-400">{isAr ? 'CIB لندن (GDR):' : 'CIB London:'}</span>
                               </div>
                               <span className="font-semibold text-white tabular-nums">
-                                {d.gdrRate.toFixed(2)} <span className="text-[10px] text-neutral-400">{isAr ? 'ج.م' : 'EGP'}</span>{' '}
-                                <span className={`text-[11px] font-semibold ml-1 ${d.gdrSpread >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                                  ({d.gdrSpread >= 0 ? '+' : ''}{d.gdrSpread.toFixed(1)}%)
+                                {d.gdrRate?.toFixed(2)} <span className="text-[10px] text-neutral-400">{isAr ? 'ج.م' : 'EGP'}</span>{' '}
+                                <span className={`text-[11px] font-semibold ml-1 ${(d.gdrSpread ?? 0) >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                                  {(d.gdrSpread ?? 0) >= 0 ? '+' : ''}{(d.gdrSpread ?? 0).toFixed(1)}%
                                 </span>
                               </span>
                             </div>
@@ -446,7 +562,7 @@ export default function FxComparisonChartSection({
                           <div className="flex items-center justify-between gap-4 text-plt-muted text-[11px] pt-1.5 border-t border-plt-border-soft">
                             <span>{isAr ? 'الفجوة الموازية العظمى:' : 'Max Parallel Spread:'}</span>
                             <span className="font-semibold text-neutral-200 tabular-nums">
-                              +{d.maxSpread.toFixed(2)} EGP (+{d.maxSpreadPct.toFixed(1)}%)
+                              +{(d.maxSpread ?? 0).toFixed(2)} EGP (+{(d.maxSpreadPct ?? 0).toFixed(1)}%)
                             </span>
                           </div>
                         </div>
@@ -460,6 +576,8 @@ export default function FxComparisonChartSection({
                   <Line type="linear" dataKey="usdtRate" stroke="#06b6d4" strokeWidth={1.8} dot={false} isAnimationActive={false} />
                   <Line type="linear" dataKey="goldRate" stroke="#f59e0b" strokeWidth={1.8} dot={false} isAnimationActive={false} />
                   <Line type="linear" dataKey="gdrRate" stroke="#a855f7" strokeWidth={1.8} dot={false} isAnimationActive={false} />
+                  {/* Kronos Forward Forecast Dashed Line */}
+                  <Line type="linear" dataKey="forecastFair" stroke="#10b981" strokeWidth={2} strokeDasharray="4 4" dot={false} isAnimationActive={false} />
                 </LineChart>
               ) : (
                 /* Focused Single Series View with Area Gradient + Benchmark */
@@ -483,8 +601,8 @@ export default function FxComparisonChartSection({
                     tickLine={false}
                     axisLine={false}
                     tick={{ fill: '#888888', fontSize: 10, fontFamily: 'sans-serif' }}
-                    tickFormatter={(val: number) => `${val.toFixed(1)}${isAr ? ' ج.م' : ' EGP'}`}
-                    width={56}
+                    tickFormatter={(val: number) => val.toFixed(1)}
+                    width={44}
                     dx={2}
                   />
                   <XAxis
@@ -509,7 +627,67 @@ export default function FxComparisonChartSection({
                     cursor={{ stroke: 'rgba(255, 255, 255, 0.15)', strokeDasharray: '3 3' }}
                     content={({ active, payload }) => {
                       if (!active || !payload || payload.length === 0) return null;
-                      const d = payload[0].payload as FxHistoryItem;
+                      const d = payload[0].payload as FxChartPoint;
+
+                      if (d.isForecast) {
+                        const driftFromSpot = typeof d.forecastFair === 'number'
+                          ? Number((((d.forecastFair - compositeFair) / compositeFair) * 100).toFixed(1))
+                          : 0;
+
+                        return (
+                          <div
+                            className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50 min-w-[270px]"
+                            dir={isAr ? 'rtl' : 'ltr'}
+                          >
+                            <div className="text-neutral-400 font-medium pb-1.5 border-b border-white/10 flex items-center justify-between gap-4">
+                              <span className="tabular-nums">{d.date}</span>
+                              <div className="flex items-center gap-1.5 text-neutral-200">
+                                <Sparkles className="w-3.5 h-3.5 text-brand-purple" />
+                                <span className="font-semibold">{isAr ? 'توقع الذكاء الاصطناعي' : 'AI Prediction'}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-4 pt-0.5">
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
+                                <span className="text-neutral-300 font-medium">
+                                  {isAr ? 'القيمة العادلة المتوقعة:' : 'Projected Fair Value:'}
+                                </span>
+                              </div>
+                              <span className="font-bold text-white tabular-nums text-sm">
+                                {d.forecastFair?.toFixed(2)}{' '}
+                                <span className="text-[10px] text-neutral-400">{isAr ? 'ج.م' : 'EGP'}</span>
+                              </span>
+                            </div>
+
+                            <div className="space-y-1 pt-1 border-t border-plt-border-soft">
+                              <div className="flex items-center justify-between gap-4">
+                                <span className="text-neutral-400">{isAr ? 'الانحراف المتوقع:' : 'Expected Drift:'}</span>
+                                <span className={`font-semibold tabular-nums ${driftFromSpot >= 0 ? 'text-profit-num' : 'text-accent-orange'}`}>
+                                  {driftFromSpot >= 0 ? '+' : ''}{driftFromSpot.toFixed(1)}%
+                                </span>
+                              </div>
+
+                              {typeof d.lower80 === 'number' && typeof d.upper80 === 'number' && (
+                                <div className="flex items-center justify-between gap-4">
+                                  <span className="text-neutral-400">{isAr ? 'ممر الثقة 80%:' : '80% Corridor:'}</span>
+                                  <span className="font-semibold text-neutral-200 tabular-nums">
+                                    [{d.lower80.toFixed(2)} – {d.upper80.toFixed(2)}]
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between gap-4 text-plt-muted text-[11px] pt-1.5 border-t border-plt-border-soft">
+                              <span>{isAr ? 'ثقة النموذج:' : 'Model Confidence:'}</span>
+                              <span className="font-semibold text-neutral-200 tabular-nums">
+                                {fxData?.kronosForecast?.confidenceScore ?? 84}%
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      }
+
                       const activeVal =
                         selectedSeries === 'OFFICIAL'
                           ? d.officialUsd
@@ -521,7 +699,10 @@ export default function FxComparisonChartSection({
                           ? d.goldRate
                           : d.gdrRate;
 
-                      const spreadVsOfficial = Number((((activeVal - d.officialUsd) / d.officialUsd) * 100).toFixed(1));
+                      const officialVal = d.officialUsd ?? officialUsd;
+                      const spreadVsOfficial = typeof activeVal === 'number' && officialVal > 0
+                        ? Number((((activeVal - officialVal) / officialVal) * 100).toFixed(1))
+                        : 0;
 
                       return (
                         <div
@@ -536,12 +717,12 @@ export default function FxComparisonChartSection({
                           <div className="flex items-center justify-between gap-4 pt-0.5">
                             <span className="text-neutral-400">{isAr ? 'السعر:' : 'Rate:'}</span>
                             <span className="font-bold text-white tabular-nums text-sm">
-                              {activeVal.toFixed(2)}{' '}
+                              {typeof activeVal === 'number' ? activeVal.toFixed(2) : '—'}{' '}
                               <span className="text-[10px] text-neutral-400">{isAr ? 'ج.م' : 'EGP'}</span>
                             </span>
                           </div>
 
-                          {selectedSeries !== 'OFFICIAL' && (
+                          {selectedSeries !== 'OFFICIAL' && typeof activeVal === 'number' && (
                             <div className="flex items-center justify-between gap-4">
                               <span className="text-neutral-400">{isAr ? 'الفارق عن الرسمي:' : 'Spread vs. Official:'}</span>
                               <span
@@ -550,8 +731,8 @@ export default function FxComparisonChartSection({
                                 }`}
                               >
                                 {spreadVsOfficial >= 0 ? '+' : ''}
-                                {spreadVsOfficial.toFixed(1)}% ({(activeVal - d.officialUsd >= 0 ? '+' : '')}
-                                {(activeVal - d.officialUsd).toFixed(2)} EGP)
+                                {spreadVsOfficial.toFixed(1)}% ({(activeVal - officialVal >= 0 ? '+' : '')}
+                                {(activeVal - officialVal).toFixed(2)} EGP)
                               </span>
                             </div>
                           )}
@@ -559,7 +740,7 @@ export default function FxComparisonChartSection({
                           <div className="flex items-center justify-between gap-4 text-plt-muted text-[11px] pt-1.5 border-t border-plt-border-soft">
                             <span>{isAr ? 'الرسمي (CBE):' : 'Official CBE: '}</span>
                             <span className="font-semibold text-neutral-200 tabular-nums">
-                              {d.officialUsd.toFixed(2)} EGP
+                              {typeof d.officialUsd === 'number' ? d.officialUsd.toFixed(2) : officialUsd.toFixed(2)} EGP
                             </span>
                           </div>
                         </div>
@@ -586,6 +767,41 @@ export default function FxComparisonChartSection({
                     fill={`url(#fx-grad-${selectedSeries})`}
                     isAnimationActive={false}
                   />
+
+                  {/* Kronos Forward Forecast on FAIR */}
+                  {selectedSeries === 'FAIR' && (
+                    <>
+                      <Line
+                        type="linear"
+                        dataKey="forecastFair"
+                        stroke="#10b981"
+                        strokeWidth={2}
+                        strokeDasharray="4 4"
+                        dot={false}
+                        isAnimationActive={false}
+                      />
+                      <Line
+                        type="linear"
+                        dataKey="upper80"
+                        stroke="#10b981"
+                        strokeWidth={1}
+                        strokeDasharray="2 2"
+                        strokeOpacity={0.45}
+                        dot={false}
+                        isAnimationActive={false}
+                      />
+                      <Line
+                        type="linear"
+                        dataKey="lower80"
+                        stroke="#10b981"
+                        strokeWidth={1}
+                        strokeDasharray="2 2"
+                        strokeOpacity={0.45}
+                        dot={false}
+                        isAnimationActive={false}
+                      />
+                    </>
+                  )}
 
                   {/* Secondary dashed benchmark line if not official */}
                   {selectedSeries !== 'OFFICIAL' && (

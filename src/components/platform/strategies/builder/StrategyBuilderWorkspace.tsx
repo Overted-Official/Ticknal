@@ -1,12 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, ChevronRight, LineChart, Pencil, Plus, SlidersHorizontal, X } from '@/components/ui/icon-library';
+import { Bell, ChevronRight, LineChart, Pencil, Plus, SlidersHorizontal, Sparkles, X } from '@/components/ui/icon-library';
 import { useTranslation } from '@/lib/i18n';
 import StrategyFlowCanvas from './StrategyFlowCanvas';
+import StrategyStudioAssistant from './StrategyStudioAssistant';
 import StrategyResultsDeck, { type StrategyResultsMode } from './StrategyResultsDeck';
 import StrategySelectorDropdown from './StrategySelectorDropdown';
 import StrategyTimeRangeSelector from './StrategyTimeRangeSelector';
+import StrategyBacktestSettings from './StrategyBacktestSettings';
+import { currentBacktestPeriod, DEFAULT_BACKTEST_ASSUMPTIONS } from './strategy-backtest-assumptions';
+import type { BacktestAssumptions } from '../../../../lib/strategies/run-simple-backtest';
 import { projectSimpleDraftIntoAdvancedNodes, reconcileSimpleDraftFromFlow } from './advanced-builder-state';
 import { compileAdvancedStrategy } from './compile-advanced-strategy';
 import { compileSimpleStrategy, type CompileDiagnosticCode } from './compile-simple-strategy';
@@ -27,6 +31,8 @@ import { getStrategyVisualizationModel } from './strategy-visualization-model';
 import type { ExecutableStrategyProgram } from '../../../../lib/strategies/strategy-program';
 import type { SavedStrategyRecord } from '../../../../lib/strategies/server/parse-saved-strategy';
 import { readSelectedUniverse } from './strategy-universe-selection';
+import type { StrategyWorkspaceSnapshot } from '../../../../lib/strategies/assistant/strategy-actions';
+import { canApplyAssistantResponse, type AssistantRevisionToken } from '../../../../lib/strategies/assistant/assistant-revision';
 
 interface StrategyBuilderWorkspaceProps {
   readonly indicatorCatalog: readonly StrategyBuilderIndicatorCatalogItem[];
@@ -40,6 +46,7 @@ interface StrategyBuilderWorkspaceProps {
 type SavedStrategy = SavedStrategyRecord;
 
 const STORAGE_KEY = 'ticknal.strategy-studio.saved.v1';
+const ASSISTANT_PILOT = process.env.NEXT_PUBLIC_STRATEGY_ASSISTANT_ENABLED === 'true';
 const DIAGNOSTIC_TEXT: Record<CompileDiagnosticCode, { en: string; ar: string }> = {
   BUY_RULE_REQUIRED: { en: 'Add a buy condition', ar: 'أضف شرط شراء' },
   SELL_RULE_REQUIRED: { en: 'Add a sell condition', ar: 'أضف شرط بيع' },
@@ -93,6 +100,11 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
   const [builderMode, setBuilderMode] = useState<'simple' | 'advanced'>('simple');
   const [enabledOptionalStages, setEnabledOptionalStages] = useState<readonly OptionalStrategyStageId[]>([]);
   const [draftRevision, setDraftRevision] = useState(0);
+  const draftRevisionRef = useRef(0);
+  const selectedStrategyIdRef = useRef(selectedStrategyId);
+  selectedStrategyIdRef.current = selectedStrategyId;
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantUndo, setAssistantUndo] = useState<{ readonly snapshot: StrategyWorkspaceSnapshot; readonly appliedRevision: number } | null>(null);
   const [ticker, setTicker] = useState('COMI');
   const [focusedBlockId, setFocusedBlockId] = useState<string | null>(null);
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
@@ -104,8 +116,16 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
   const [resultsMode, setResultsMode] = useState<StrategyResultsMode>('market');
   const [startDate, setStartDate] = useState('2025-01-05');
   const [endDate, setEndDate] = useState('2025-12-28');
+  const [assumptions, setAssumptions] = useState<BacktestAssumptions>(DEFAULT_BACKTEST_ASSUMPTIONS);
   const [savedNotice, setSavedNotice] = useState(false);
   const [renaming, setRenaming] = useState(false);
+
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const period = currentBacktestPeriod(today);
+    setStartDate(period.startDate);
+    setEndDate(period.endDate);
+  }, []);
 
   useEffect(() => {
     if (!mobileActionsOpen) return;
@@ -145,9 +165,10 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
         for (const strategy of Array.isArray(legacy) ? legacy : []) {
           if (!strategy?.id?.startsWith('custom-') || existing.has(strategy.id)) continue;
           const snapshot = { ...strategy, selectedSymbols: readSelectedUniverse(strategy.id, universe.map((company) => company.symbol)) };
-          const saved = await fetch('/api/strategies/saved', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ strategy: snapshot }), cache: 'no-store' });
+          const saved = await fetch('/api/strategies/saved', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ strategy: snapshot, expectedRevision: 0 }), cache: 'no-store' });
           if (!saved.ok) throw new Error('Could not migrate browser-saved strategies. Nothing was removed.');
-          migrated.push(snapshot);
+          const savedPayload = await saved.json() as { strategy: SavedStrategy };
+          migrated.push(savedPayload.strategy);
         }
         if (cancelled) return;
         setSavedStrategies([...server, ...migrated]);
@@ -196,9 +217,33 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
     endDate,
   });
 
-  const touchDraft = () => { setDraftRevision((value) => value + 1); setSavedNotice(false); setStorageError(null); };
+  const touchDraft = () => { draftRevisionRef.current += 1; setDraftRevision(draftRevisionRef.current); setSavedNotice(false); setStorageError(null); };
+
+  const assistantSnapshot: StrategyWorkspaceSnapshot = { revision: draftRevision, mode: builderMode, draft, nodes: advancedNodes, optionalStages: enabledOptionalStages };
+  const assistantToken: AssistantRevisionToken = { strategyId: selectedStrategyId, revision: draftRevision };
+  const restoreAssistantSnapshot = (snapshot: StrategyWorkspaceSnapshot) => {
+    setDraft(snapshot.draft);
+    setAdvancedNodes(snapshot.nodes);
+    setBuilderMode(snapshot.mode);
+    setEnabledOptionalStages(snapshot.optionalStages);
+    touchDraft();
+  };
+  const applyAssistantSnapshot = (next: StrategyWorkspaceSnapshot, token: AssistantRevisionToken): boolean => {
+    if (!canApplyAssistantResponse(token, { strategyId: selectedStrategyIdRef.current, revision: draftRevisionRef.current })) return false;
+    setAssistantUndo({ snapshot: assistantSnapshot, appliedRevision: draftRevisionRef.current + 1 });
+    restoreAssistantSnapshot(next);
+    return true;
+  };
+  const undoAssistantEdit = (): boolean => {
+    if (!assistantUndo || assistantUndo.appliedRevision !== draftRevisionRef.current || assistantUndo.snapshot.draft.id !== selectedStrategyIdRef.current) return false;
+    restoreAssistantSnapshot(assistantUndo.snapshot);
+    setAssistantUndo(null);
+    return true;
+  };
 
   const selectStrategy = (id: string) => {
+    setAssistantOpen(false);
+    setAssistantUndo(null);
     const saved = savedStrategies.find((strategy) => strategy.id === id);
     if (saved) {
       setDraft(saved.draft);
@@ -220,6 +265,8 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
   };
 
   const createNew = () => {
+    setAssistantOpen(false);
+    setAssistantUndo(null);
     const id = `custom-${Date.now()}`;
     setDraft({ ...createEmptyStrategyDraft(), id });
     setAdvancedNodes([]);
@@ -259,12 +306,14 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
     setSaving(true);
     setStorageError(null);
     try {
-      const response = await fetch('/api/strategies/saved', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ strategy: snapshot }), cache: 'no-store' });
+      const expectedRevision = savedStrategies.find((strategy) => strategy.id === snapshot.id)?.revision ?? 0;
+      const response = await fetch('/api/strategies/saved', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ strategy: snapshot, expectedRevision }), cache: 'no-store' });
       if (!response.ok) {
         const body = await response.json().catch(() => null) as { error?: string } | null;
         throw new Error(response.status === 401 ? 'Sign in to save strategies.' : body?.error ?? 'Could not save strategy on the server.');
       }
-      setSavedStrategies((current) => [...current.filter((strategy) => strategy.id !== snapshot.id), snapshot]);
+      const savedPayload = await response.json() as { strategy: SavedStrategy };
+      setSavedStrategies((current) => [...current.filter((strategy) => strategy.id !== snapshot.id), savedPayload.strategy]);
       setDraft(snapshot.draft);
       setSelectedSymbols(snapshot.selectedSymbols ?? null);
       setNotificationsEnabled(snapshot.notificationsEnabled === true);
@@ -294,7 +343,7 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-black font-sans text-white">
       <div className="relative flex min-h-0 flex-1">
         <div className="strategy-studio-viewport relative min-w-0 flex-1" aria-label={isAr ? 'لوحة تدفق الاستراتيجية' : 'Strategy flow canvas'}>
-          <StrategyFlowCanvas key={`${selectedStrategyId}-${builderMode}`} strategyNodes={flowNodes} indicators={indicators} locale={builderLocale} protectedBlueprint={isProtected} editable={!isProtected} mode={builderMode} resizeSignal={analyticsOpen ? analyticsWidth : 0} enabledOptionalStages={enabledOptionalStages} onOptionalStagesChange={(stages) => { setEnabledOptionalStages(stages); touchDraft(); }} onNodesChange={updateFlowNodes} onAddSimpleRule={(side, indicator) => { setDraft((current) => addRuleToDraft(current, side, indicator)); touchDraft(); }} />
+          <StrategyFlowCanvas key={`${selectedStrategyId}-${builderMode}`} strategyNodes={flowNodes} indicators={indicators} locale={builderLocale} protectedBlueprint={isProtected} editable={!isProtected} mode={builderMode} resizeSignal={assistantOpen ? 430 : analyticsOpen ? analyticsWidth : 0} enabledOptionalStages={enabledOptionalStages} onOptionalStagesChange={(stages) => { setEnabledOptionalStages(stages); touchDraft(); }} onNodesChange={updateFlowNodes} onAddSimpleRule={(side, indicator) => { setDraft((current) => addRuleToDraft(current, side, indicator)); touchDraft(); }} />
           <div className="strategy-studio-identity">
             <h1 className="strategy-studio-identity-title">{isAr ? 'استوديو الاستراتيجيات' : 'Strategy Studio'}</h1>
             {renaming && !isProtected ? <div className="mt-2 flex items-center gap-2"><label htmlFor="strategy-name" className="sr-only">{isAr ? 'اسم الاستراتيجية' : 'Strategy name'}</label><input id="strategy-name" autoFocus value={draft.name} onChange={(event) => { setDraft((current) => ({ ...current, name: event.target.value })); touchDraft(); }} onKeyDown={(event) => { if (event.key === 'Enter') setRenaming(false); }} className="h-8 min-w-0 flex-1 rounded-md border border-white/20 bg-black px-2.5 text-xs text-white outline-none focus:border-tv-blue-500" /><button type="button" className="strategy-studio-toolbar-button" onClick={() => setRenaming(false)}>{isAr ? 'تم' : 'Done'}</button></div> : <p className="strategy-studio-identity-caption truncate">{strategyName} <span className="mx-1 text-white/20">/</span> {isProtected ? (isAr ? 'للعرض فقط' : 'View mode') : (isAr ? 'وضع التحرير' : 'Edit mode')}</p>}
@@ -320,12 +369,13 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
             </div>
             <span className="strategy-studio-dock-divider strategy-studio-dock-desktop-only" aria-hidden="true" />
             <button type="button" className="strategy-studio-toolbar-button strategy-studio-dock-desktop-only" onClick={createNew}><Plus size={13} />{isAr ? 'جديدة' : 'New'}</button>
+            {ASSISTANT_PILOT && !isProtected && <button type="button" className="strategy-studio-toolbar-button strategy-studio-dock-desktop-only" aria-controls="strategy-assistant-panel" aria-expanded={assistantOpen} onClick={() => { setAnalyticsOpen(false); setAssistantOpen((open) => !open); }}><Sparkles size={14} />{isAr ? 'المساعد' : 'Assistant'}</button>}
             {!isProtected && <button type="button" className="strategy-studio-toolbar-button strategy-studio-dock-desktop-only" onClick={editProfile}><Pencil size={13} />{isAr ? 'تعديل' : 'Edit'}</button>}
             {!isProtected && <button type="button" className="strategy-studio-save-button strategy-studio-dock-desktop-only" onClick={() => { void saveStrategy(); }} disabled={saving}>{saving ? (isAr ? 'جارٍ الحفظ' : 'Saving…') : savedNotice ? (isAr ? 'تم الحفظ' : 'Saved') : (isAr ? 'حفظ' : 'Save')}</button>}
             {!isProtected && <button type="button" className="strategy-studio-toolbar-button strategy-studio-dock-desktop-only" onClick={() => { void saveStrategy(undefined, !notificationsEnabled); }} disabled={saving || (!notificationsEnabled && !complete)} aria-pressed={notificationsEnabled} title={!complete && !notificationsEnabled ? (isAr ? 'أكمل قواعد الاستراتيجية لتفعيل التنبيهات' : 'Complete the strategy before enabling alerts') : undefined}><Bell size={13} />{notificationsEnabled ? (isAr ? 'التنبيهات مفعلة' : 'Alerts on') : (isAr ? 'تفعيل التنبيهات' : 'Alerts off')}</button>}
             {isProtected && <button type="button" className="strategy-studio-toolbar-button strategy-studio-dock-desktop-only" onClick={() => { void toggleProtectedAlerts(); }} disabled={protectedAlertsPending} aria-pressed={protectedAlertsEnabled} title={isAr ? 'تنبيه واحد لكل شركة من أفضل استراتيجية بين تايفون وسيربيروس وهيدرا' : 'One alert per ticker from the champion of Typhon, Cerberus and Hydra'}><Bell size={13} />{protectedAlertsEnabled ? (isAr ? 'تنبيهات البطل مفعلة' : 'Champion alerts on') : (isAr ? 'تنبيهات البطل متوقفة' : 'Champion alerts off')}</button>}
             <span className="strategy-studio-dock-divider strategy-studio-dock-desktop-only" aria-hidden="true" />
-            <button type="button" className="strategy-studio-analytics-button" aria-label={isAr ? 'التحليلات' : 'Analytics'} aria-controls="strategy-analytics-panel" aria-expanded={analyticsOpen} onClick={() => { setMobileActionsOpen(false); setDockRailOpen(false); setAnalyticsOpen((value) => !value); }}><LineChart size={15} /><span className="strategy-studio-analytics-label">{isAr ? 'التحليلات' : 'Analytics'}</span><ChevronRight size={14} className="strategy-studio-analytics-arrow rtl-mirror" /></button>
+            <button type="button" className="strategy-studio-analytics-button" aria-label={isAr ? 'التحليلات' : 'Analytics'} aria-controls="strategy-analytics-panel" aria-expanded={analyticsOpen} onClick={() => { setMobileActionsOpen(false); setDockRailOpen(false); setAssistantOpen(false); setAnalyticsOpen((value) => !value); }}><LineChart size={15} /><span className="strategy-studio-analytics-label">{isAr ? 'التحليلات' : 'Analytics'}</span><ChevronRight size={14} className="strategy-studio-analytics-arrow rtl-mirror" /></button>
             {!analyticsOpen && <div ref={mobileActionsRef} className="strategy-studio-mobile-actions">
               <button ref={mobileActionsTriggerRef} type="button" className="strategy-studio-mobile-actions-trigger" aria-label={isAr ? 'المزيد من إجراءات الاستراتيجية' : 'More strategy actions'} aria-controls="strategy-studio-mobile-menu" aria-expanded={mobileActionsOpen} onClick={() => setMobileActionsOpen((open) => !open)}><SlidersHorizontal size={18} /></button>
               {mobileActionsOpen && <div id="strategy-studio-mobile-menu" className="strategy-studio-mobile-menu" role="group" aria-label={isAr ? 'إجراءات الاستراتيجية' : 'Strategy actions'}>
@@ -335,6 +385,7 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
                 </div>
                 <div className="strategy-studio-mobile-menu-divider" />
                 <button type="button" className="strategy-studio-toolbar-button" onClick={() => { createNew(); setMobileActionsOpen(false); }}><Plus size={15} />{isAr ? 'استراتيجية جديدة' : 'New strategy'}</button>
+                {ASSISTANT_PILOT && !isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={() => { setAnalyticsOpen(false); setAssistantOpen(true); setMobileActionsOpen(false); }}><Sparkles size={15} />{isAr ? 'مساعد الاستراتيجيات' : 'Strategy assistant'}</button>}
                 {!isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={() => { editProfile(); setMobileActionsOpen(false); }}><Pencil size={15} />{isAr ? 'تعديل الاسم' : 'Edit name'}</button>}
                 {!isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={() => { setMobileActionsOpen(false); void saveStrategy(); }} disabled={saving}>{saving ? (isAr ? 'جارٍ الحفظ' : 'Saving…') : savedNotice ? (isAr ? 'تم الحفظ' : 'Saved') : (isAr ? 'حفظ الاستراتيجية' : 'Save strategy')}</button>}
                 {!isProtected && <button type="button" className="strategy-studio-toolbar-button" onClick={() => { setMobileActionsOpen(false); void saveStrategy(undefined, !notificationsEnabled); }} disabled={saving || (!notificationsEnabled && !complete)} aria-pressed={notificationsEnabled} title={!complete && !notificationsEnabled ? (isAr ? 'أكمل قواعد الاستراتيجية لتفعيل التنبيهات' : 'Complete the strategy before enabling alerts') : undefined}><Bell size={15} />{notificationsEnabled ? (isAr ? 'التنبيهات مفعلة' : 'Alerts on') : (isAr ? 'التنبيهات متوقفة' : 'Alerts off')}</button>}
@@ -344,7 +395,8 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
           </div>
           </div>
         </div>
-        {analyticsOpen && <><div className="strategy-studio-resize-handle" role="separator" aria-label={isAr ? 'تغيير حجم التحليلات' : 'Resize analytics'} aria-orientation="vertical" tabIndex={0} onPointerDown={beginResize} onKeyDown={(event) => { if (event.key === 'ArrowLeft') setAnalyticsWidth((value) => Math.min(value + 24, window.innerWidth * 0.7)); if (event.key === 'ArrowRight') setAnalyticsWidth((value) => Math.max(value - 24, 360)); }} /><aside id="strategy-analytics-panel" className="flex min-h-0 shrink-0 flex-col overflow-y-auto border-l border-white/10 bg-black custom-scrollbar" style={{ width: analyticsWidth, maxWidth: 'calc(100vw - 56px)' }} aria-label={isAr ? 'تحليلات الاستراتيجية' : 'Strategy analytics'}><div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-white/10 bg-black px-4 py-2"><span className="text-xs font-semibold">{isAr ? 'التحليلات' : 'Analytics'}</span><button type="button" className="strategy-studio-toolbar-button" onClick={() => setAnalyticsOpen(false)} aria-label={isAr ? 'إغلاق التحليلات' : 'Close analytics'}><X size={13} /></button></div><div className="flex flex-wrap items-center gap-2 border-b border-white/10 p-3"><div className="seg-control" role="tablist" aria-label={isAr ? 'عرض النتائج' : 'Results view'}><button type="button" role="tab" aria-selected={resultsMode === 'market'} onClick={() => setResultsMode('market')} className={`seg-control-btn ${resultsMode === 'market' ? 'seg-control-btn-active active' : ''}`}>{isAr ? 'السوق' : 'Market'}</button><button type="button" role="tab" aria-selected={resultsMode === 'companies'} onClick={() => setResultsMode('companies')} className={`seg-control-btn ${resultsMode === 'companies' ? 'seg-control-btn-active active' : ''}`}>{isAr ? 'الشركات' : 'Companies'}</button></div>{(resultsMode === 'companies' || liveProgram !== null) && <StrategyTimeRangeSelector startDate={startDate} endDate={endDate} locale={builderLocale} purpose={liveProgram ? 'backtest' : 'chart'} onChange={(start, end) => { setStartDate(start); setEndDate(end); }} />}</div><div className="min-w-0 flex-1 p-3"><StrategyResultsDeck strategyId={selectedStrategyId} strategyName={strategyName} hasRules={complete} draftRevision={draftRevision} locale={builderLocale} visualizationModel={visualization} ticker={ticker} focusedBlockId={focusedBlockId} resultsMode={resultsMode} startDate={startDate} endDate={endDate} simpleProgram={liveProgram} selectedSymbols={selectedSymbols} onSaveSelection={isProtected ? undefined : (symbols) => saveStrategy(symbols)} universe={universe} onResultsModeChange={setResultsMode} onTickerChange={setTicker} onFocusBlock={setFocusedBlockId} /></div></aside></>}
+        {ASSISTANT_PILOT && assistantOpen && !isProtected && <div id="strategy-assistant-panel" className="contents"><StrategyStudioAssistant locale={builderLocale} snapshot={assistantSnapshot} currentToken={assistantToken} canUndo={Boolean(assistantUndo && assistantUndo.appliedRevision === draftRevision)} beforeProgram={liveProgram} symbol={ticker} period={{ startDate, endDate }} assumptions={assumptions} onApply={applyAssistantSnapshot} onUndo={undoAssistantEdit} onClose={() => setAssistantOpen(false)} /></div>}
+        {analyticsOpen && <><div className="strategy-studio-resize-handle" role="separator" aria-label={isAr ? 'تغيير حجم التحليلات' : 'Resize analytics'} aria-orientation="vertical" tabIndex={0} onPointerDown={beginResize} onKeyDown={(event) => { if (event.key === 'ArrowLeft') setAnalyticsWidth((value) => Math.min(value + 24, window.innerWidth * 0.7)); if (event.key === 'ArrowRight') setAnalyticsWidth((value) => Math.max(value - 24, 360)); }} /><aside id="strategy-analytics-panel" className="flex min-h-0 shrink-0 flex-col overflow-y-auto border-l border-white/10 bg-black custom-scrollbar" style={{ width: analyticsWidth, maxWidth: 'calc(100vw - 56px)' }} aria-label={isAr ? 'تحليلات الاستراتيجية' : 'Strategy analytics'}><div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-white/10 bg-black px-4 py-2"><span className="text-xs font-semibold">{isAr ? 'التحليلات' : 'Analytics'}</span><button type="button" className="strategy-studio-toolbar-button" onClick={() => setAnalyticsOpen(false)} aria-label={isAr ? 'إغلاق التحليلات' : 'Close analytics'}><X size={13} /></button></div><div className="flex flex-wrap items-center gap-2 border-b border-white/10 p-3"><div className="seg-control" role="tablist" aria-label={isAr ? 'عرض النتائج' : 'Results view'}><button type="button" role="tab" aria-selected={resultsMode === 'market'} onClick={() => setResultsMode('market')} className={`seg-control-btn ${resultsMode === 'market' ? 'seg-control-btn-active active' : ''}`}>{isAr ? 'السوق' : 'Market'}</button><button type="button" role="tab" aria-selected={resultsMode === 'companies'} onClick={() => setResultsMode('companies')} className={`seg-control-btn ${resultsMode === 'companies' ? 'seg-control-btn-active active' : ''}`}>{isAr ? 'الشركات' : 'Companies'}</button></div>{(resultsMode === 'companies' || liveProgram !== null) && <StrategyTimeRangeSelector startDate={startDate} endDate={endDate} locale={builderLocale} purpose={liveProgram ? 'backtest' : 'chart'} onChange={(start, end) => { setStartDate(start); setEndDate(end); }} />}</div>{liveProgram && <StrategyBacktestSettings key={`${selectedStrategyId}-${liveProgram.schemaVersion === 2 ? liveProgram.execution?.feeBps ?? 'editable' : 'editable'}`} assumptions={assumptions} program={liveProgram} locale={builderLocale} onChange={setAssumptions} />}<div className="min-w-0 flex-1 p-3"><StrategyResultsDeck strategyId={selectedStrategyId} strategyName={strategyName} hasRules={complete} draftRevision={draftRevision} locale={builderLocale} visualizationModel={visualization} ticker={ticker} focusedBlockId={focusedBlockId} resultsMode={resultsMode} startDate={startDate} endDate={endDate} assumptions={assumptions} simpleProgram={liveProgram} selectedSymbols={selectedSymbols} onSaveSelection={isProtected ? undefined : (symbols) => saveStrategy(symbols)} universe={universe} onResultsModeChange={setResultsMode} onTickerChange={setTicker} onFocusBlock={setFocusedBlockId} /></div></aside></>}
       </div>
     </div>
   );

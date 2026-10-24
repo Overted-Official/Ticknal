@@ -333,6 +333,35 @@ export default function BottomNav() {
     setOptimisticNavId(null);
   }, [pathname]);
 
+  // Auto-open notifications drawer when navigated from push notification (?drawer=notifications or SW message)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('drawer') === 'notifications') {
+      setIsNotificationsOpen(true);
+    }
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'OPEN_NOTIFICATIONS_DRAWER') {
+        setIsNotificationsOpen(true);
+      }
+    };
+
+    const handleCustomEvent = () => setIsNotificationsOpen(true);
+
+    window.addEventListener('ticknal:open-notifications', handleCustomEvent);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleMessage);
+    }
+
+    return () => {
+      window.removeEventListener('ticknal:open-notifications', handleCustomEvent);
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleMessage);
+      }
+    };
+  }, [pathname]);
+
   const currentNavId = optimisticNavId ?? routeNavId;
 
   // Prefetch all top-level mobile destinations for zero-latency page transitions

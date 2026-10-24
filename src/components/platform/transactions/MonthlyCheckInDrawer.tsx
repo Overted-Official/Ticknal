@@ -5,20 +5,13 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
-  CheckCircle2,
-  Calendar,
-  DollarSign,
-  TrendingUp,
-  TrendingDown,
-  ArrowRight,
-  ArrowLeft,
-  PieChart,
-  Landmark,
-  Wallet,
   Sparkles,
-  ChevronRight,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  Plus,
 } from '@/components/ui/icon-library';
-import { type BankAccount, type MonthlyCashflowSummary } from '@/types/bank';
+import { type BankAccount, type MonthlyCashflowSummary, type BankItem } from '@/types/bank';
 import { isVirtualAccount } from '@/lib/banks/virtual-account-constants';
 import {
   calculateMonthlySpendAndSavingsRate,
@@ -32,24 +25,115 @@ interface MonthlyCheckInDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   accounts: BankAccount[];
+  availableBanks?: BankItem[];
   usdRate?: number;
   isArabic?: boolean;
   previousSummary?: MonthlyCashflowSummary | null;
   onCheckInComplete?: (summary: MonthlyCashflowSummary) => void;
+  onOpenAddAccount?: () => void;
+}
+
+function getAccountBadge(bankShort: string): string {
+  const clean = (bankShort || '').trim();
+  if (!clean) return 'ACC';
+  if (clean.length <= 3) return clean.toUpperCase();
+  const upper = clean.toUpperCase();
+  if (upper.includes('MISR')) return 'BM';
+  if (upper.includes('AHLI') || upper.includes('NBE') || upper.includes('NATIONAL BANK')) return 'NBE';
+  if (upper.includes('CAIRO') || upper.includes('BDC')) return 'BDC';
+  if (upper.includes('COMMERCIAL') || upper.includes('CIB')) return 'CIB';
+  if (upper.includes('THNDR')) return 'TH';
+  if (upper.includes('VODAFONE')) return 'VF';
+  if (upper.includes('INSTAPAY')) return 'IP';
+  if (upper.includes('ETISALAT')) return 'ET';
+  if (upper.includes('ORANGE')) return 'OG';
+  if (upper.includes('CASH')) return 'CSH';
+  const words = clean.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+  return clean.slice(0, 3).toUpperCase();
+}
+
+function resolveBankLogoUrl(
+  acc: BankAccount,
+  availableBanks: BankItem[] = []
+): string | null {
+  // 1. Direct on account object
+  if (acc.bankLogoUrl) return acc.bankLogoUrl;
+
+  // 2. Match by bankId in availableBanks
+  if (acc.bankId && availableBanks.length > 0) {
+    const match = availableBanks.find((b) => b.id === acc.bankId);
+    if (match?.logoUrl) return match.logoUrl;
+  }
+
+  // 3. Match by name or slug in availableBanks
+  const raw = `${acc.bankName || ''} ${acc.customBankName || ''} ${acc.accountName || ''}`.toLowerCase().trim();
+  if (availableBanks.length > 0) {
+    const match = availableBanks.find((b) => {
+      const bName = b.name.toLowerCase();
+      const bSlug = (b.slug || '').toLowerCase();
+      return (
+        raw.includes(bName) ||
+        bName.includes(raw) ||
+        (bSlug && raw.includes(bSlug))
+      );
+    });
+    if (match?.logoUrl) return match.logoUrl;
+  }
+
+  // 4. Institutional canonical Egyptian bank/fintech logo assets
+  if (raw.includes('cib') || raw.includes('commercial international')) {
+    return 'https://s3-symbol-logo.tradingview.com/commercial-international-bank-egypt.svg';
+  }
+  if (raw.includes('misr') || raw.includes('banque misr')) {
+    return 'https://s3-symbol-logo.tradingview.com/banque-misr.svg';
+  }
+  if (raw.includes('nbe') || raw.includes('national bank') || raw.includes('ahli')) {
+    return 'https://s3-symbol-logo.tradingview.com/national-bank-of-egypt.svg';
+  }
+  if (raw.includes('hsbc')) {
+    return 'https://s3-symbol-logo.tradingview.com/hsbc.svg';
+  }
+  if (raw.includes('thndr')) {
+    return 'https://web.thndr.app/favicon.ico';
+  }
+  if (raw.includes('cairo') || raw.includes('bdc')) {
+    return 'https://s3-symbol-logo.tradingview.com/banque-du-caire.svg';
+  }
+  if (raw.includes('qnb')) {
+    return 'https://s3-symbol-logo.tradingview.com/qatar-national-bank-alahli.svg';
+  }
+  if (raw.includes('faisal') || raw.includes('faib')) {
+    return 'https://s3-symbol-logo.tradingview.com/faisal-islamic-bank-of-egypt.svg';
+  }
+  if (raw.includes('adib') || raw.includes('abu dhabi')) {
+    return 'https://s3-symbol-logo.tradingview.com/abu-dhabi-islamic-bank-egypt.svg';
+  }
+  if (raw.includes('alex') || raw.includes('alexandria')) {
+    return 'https://s3-symbol-logo.tradingview.com/bank-of-alexandria.svg';
+  }
+  if (raw.includes('vodafone')) {
+    return 'https://s3-symbol-logo.tradingview.com/vodafone.svg';
+  }
+
+  return null;
 }
 
 export default function MonthlyCheckInDrawer({
   isOpen,
   onClose,
   accounts = [],
+  availableBanks = [],
   usdRate = 50.2,
   isArabic = false,
   previousSummary = null,
   onCheckInComplete,
+  onOpenAddAccount,
 }: MonthlyCheckInDrawerProps) {
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
   // Month Key: default to current YYYY-MM
   const now = new Date();
@@ -58,15 +142,17 @@ export default function MonthlyCheckInDrawer({
 
   // Balances state: accountId -> balance string
   const [accountBalances, setAccountBalances] = useState<Record<number, string>>({});
+  // Logo image loading error fallback state
+  const [failedLogos, setFailedLogos] = useState<Record<number, boolean>>({});
   // Income state
   const [incomeInput, setIncomeInput] = useState<string>('');
   // Expense breakdown state
+  const [showExpenseBreakdown, setShowExpenseBreakdown] = useState(false);
   const [expenseCategories, setExpenseCategories] = useState<ExpenseAllocationResultItem[]>([]);
   // Optional user notes
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize or reset form when drawer opens
   useEffect(() => {
     setMounted(true);
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -82,7 +168,6 @@ export default function MonthlyCheckInDrawer({
 
   useEffect(() => {
     if (isOpen) {
-      setCurrentStep(1);
       const initialMap: Record<number, string> = {};
       realAccounts.forEach((acc) => {
         initialMap[acc.id] = String(acc.balance ?? '0');
@@ -95,7 +180,9 @@ export default function MonthlyCheckInDrawer({
         setIncomeInput('');
       }
 
+      setFailedLogos({});
       setExpenseCategories([]);
+      setShowExpenseBreakdown(false);
       setNotes('');
     }
   }, [isOpen, realAccounts, previousSummary]);
@@ -134,7 +221,7 @@ export default function MonthlyCheckInDrawer({
     }, 0);
   }, [realAccounts, accountBalances, usdRate]);
 
-  // Monthly Cashflow Math
+  // Derived Monthly Cashflow Math
   const cashflowMath = useMemo(() => {
     const inc = Number(incomeInput) || 0;
     return calculateMonthlySpendAndSavingsRate(startingCashEgp, endingCashEgp, inc);
@@ -147,7 +234,8 @@ export default function MonthlyCheckInDrawer({
     }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setIsSubmitting(true);
     try {
       const formattedBalances = Object.entries(accountBalances).map(([accId, val]) => ({
@@ -175,12 +263,12 @@ export default function MonthlyCheckInDrawer({
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Failed to submit monthly closeout');
+        throw new Error(data.error || 'Failed to submit balance update');
       }
 
       const resData = await res.json();
       toast.success(
-        isArabic ? 'تم حفظ وإغلاق الشهر بنجاح' : 'Monthly closeout saved successfully',
+        isArabic ? 'تم حفظ تحديث الأرصدة بنجاح' : 'Balance update saved successfully',
         isArabic
           ? `تم تحديث أرصدة ومصروفات شهر ${yearMonth}`
           : `Saved balances & cashflow for ${yearMonth}`
@@ -191,9 +279,9 @@ export default function MonthlyCheckInDrawer({
       }
       onClose();
     } catch (err: any) {
-      console.error('Monthly closeout error:', err);
+      console.error('Balance update error:', err);
       toast.error(
-        isArabic ? 'حدث خطأ أثناء حفظ البيانات' : 'Error saving monthly check-in',
+        isArabic ? 'حدث خطأ أثناء حفظ البيانات' : 'Error saving balance update',
         err.message
       );
     } finally {
@@ -206,9 +294,10 @@ export default function MonthlyCheckInDrawer({
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div key="monthly-checkin-drawer-container" className="drawer-overlay z-[80]">
+        <div key="monthly-balance-update-overlay" className="drawer-overlay z-[80]">
           {/* Backdrop */}
           <motion.div
+            key="monthly-balance-update-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -220,397 +309,385 @@ export default function MonthlyCheckInDrawer({
 
           {/* Drawer Sheet */}
           <motion.div
-            initial={isMobile ? { y: '100%' } : { x: '100%' }}
+            key="monthly-balance-update-sheet"
+            initial={isMobile ? { y: '100%' } : { x: isArabic ? '-100%' : '100%' }}
             animate={isMobile ? { y: 0 } : { x: 0 }}
-            exit={isMobile ? { y: '100%' } : { x: '100%' }}
+            exit={isMobile ? { y: '100%' } : { x: isArabic ? '-100%' : '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-            className={`drawer-sheet bg-black text-white rounded-none border-l border-white/10 ${
-              !isMobile ? 'drawer-sheet-viewport-safe w-full max-w-2xl' : 'max-h-[92vh]'
-            } flex flex-col font-sans`}
+            className={`drawer-sheet bg-black text-text-primary rounded-none border-l border-border-subtle ${
+              !isMobile ? 'drawer-sheet-viewport-safe w-full max-w-xl lg:max-w-2xl' : 'max-h-[92vh]'
+            } flex flex-col font-sans select-none`}
           >
-            {/* Header */}
-            <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between shrink-0 bg-black">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-brand-blue animate-pulse" />
-                  <h2 className="text-base sm:text-lg font-bold text-text-primary tracking-tight">
-                    {isArabic ? 'المراجعة المالية الشهرية (90 ثانية)' : '90-Second Monthly Check-In'}
-                  </h2>
-                </div>
-                <p className="text-xs text-text-muted mt-0.5">
-                  {isArabic
-                    ? 'حدث أرصدة حساباتك لحساب صافي المصروفات ومعدل الادخار تلقائياً'
-                    : 'Reconcile account balances to derive monthly burn and savings rate automatically'}
-                </p>
+            {/* Header: Platform canonical drawer header */}
+            <div className="drawer-header">
+              {/* Mobile Drag Indicator */}
+              <div
+                className="drawer-drag-pill-container"
+                onClick={onClose}
+                aria-label={isArabic ? 'سحب للإغلاق' : 'Drag handle to close'}
+              >
+                <div className="drawer-drag-pill" />
               </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="month"
-                  value={yearMonth}
-                  onChange={(e) => setYearMonth(e.target.value)}
-                  className="bg-black border border-white/15 px-2.5 py-1 text-xs text-text-primary focus:border-brand-blue focus:outline-none tabular-nums"
-                />
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="p-1.5 text-text-muted hover:text-white transition-colors cursor-pointer"
-                  aria-label="Close"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Stepper Tabs Bar */}
-            <div className="flex items-center border-b border-white/10 bg-white/[0.01] px-4 py-2 shrink-0">
-              <div className="flex items-center gap-2 sm:gap-4 w-full">
-                {/* Step 1 */}
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep(1)}
-                  className={`flex items-center gap-1.5 text-xs font-semibold pb-1 border-b-2 transition-colors cursor-pointer ${
-                    currentStep === 1
-                      ? 'border-brand-blue text-brand-blue'
-                      : 'border-transparent text-text-muted hover:text-text-primary'
-                  }`}
-                >
-                  <span className="w-4 h-4 rounded-full border border-current flex items-center justify-center text-[10px]">
-                    1
-                  </span>
-                  <span>{isArabic ? 'أرصدة الحسابات' : 'Ending Balances'}</span>
-                </button>
-
-                <ChevronRight className="w-3.5 h-3.5 text-text-muted shrink-0" />
-
-                {/* Step 2 */}
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep(2)}
-                  className={`flex items-center gap-1.5 text-xs font-semibold pb-1 border-b-2 transition-colors cursor-pointer ${
-                    currentStep === 2
-                      ? 'border-brand-blue text-brand-blue'
-                      : 'border-transparent text-text-muted hover:text-text-primary'
-                  }`}
-                >
-                  <span className="w-4 h-4 rounded-full border border-current flex items-center justify-center text-[10px]">
-                    2
-                  </span>
-                  <span>{isArabic ? 'الدخل والمصروف' : 'Income & Spend'}</span>
-                </button>
-
-                <ChevronRight className="w-3.5 h-3.5 text-text-muted shrink-0" />
-
-                {/* Step 3 */}
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep(3)}
-                  className={`flex items-center gap-1.5 text-xs font-semibold pb-1 border-b-2 transition-colors cursor-pointer ${
-                    currentStep === 3
-                      ? 'border-brand-blue text-brand-blue'
-                      : 'border-transparent text-text-muted hover:text-text-primary'
-                  }`}
-                >
-                  <span className="w-4 h-4 rounded-full border border-current flex items-center justify-center text-[10px]">
-                    3
-                  </span>
-                  <span>{isArabic ? 'التوزيع (اختياري)' : 'Breakdown (Optional)'}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Body Content */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
-              {/* STEP 1: Balances */}
-              {currentStep === 1 && (
-                <div className="space-y-4">
-                  <div className="p-3.5 border border-white/10 bg-white/[0.02] flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-text-muted">{isArabic ? 'رصيد بداية الشهر المقدر' : 'Estimated Starting Cash'}</p>
-                      <p className="text-base sm:text-lg font-bold text-text-primary tabular-nums mt-0.5">
-                        {Math.round(startingCashEgp).toLocaleString()}{' '}
-                        <span className="text-xs font-normal text-text-muted">EGP</span>
-                      </p>
-                    </div>
-
-                    <div className="text-right">
-                      <p className="text-xs text-text-muted">{isArabic ? 'رصيد نهاية الشهر المحسوب' : 'Reconciled Ending Cash'}</p>
-                      <p className="text-base sm:text-lg font-bold text-text-primary tabular-nums mt-0.5">
-                        {Math.round(endingCashEgp).toLocaleString()}{' '}
-                        <span className="text-xs font-normal text-text-muted">EGP</span>
-                      </p>
-                    </div>
+              {/* Header Row */}
+              <div className="drawer-header-row">
+                <div className="drawer-header-brand">
+                  <div className="drawer-header-icon-box">
+                    <Calendar className="drawer-header-icon" />
                   </div>
+                  <div className="drawer-header-titles">
+                    <h2 className="drawer-title">
+                      {isArabic ? 'تحديث الأرصدة' : 'Balance Update'}
+                    </h2>
+                    <p className="drawer-subtitle">
+                      {isArabic
+                        ? 'تحديث أرصدة الحسابات لحساب صافي المصروفات ومعدل الادخار'
+                        : 'Update balances to calculate monthly spend & savings'}
+                    </p>
+                  </div>
+                </div>
 
-                  {/* Net Change indicator */}
-                  <div className="flex items-center justify-between text-xs px-1">
-                    <span className="text-text-muted">{isArabic ? 'صافي التغير في السيولة:' : 'Net Liquid Change:'}</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="month"
+                    value={yearMonth}
+                    onChange={(e) => setYearMonth(e.target.value)}
+                    className="input-control-compact font-sans tabular-nums text-xs"
+                    title={isArabic ? 'اختر الشهر' : 'Select Month'}
+                  />
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="drawer-close-btn"
+                    aria-label="Close"
+                  >
+                    <X className="drawer-close-icon" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Form wrapping body and sticky footer */}
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="drawer-body custom-scrollbar space-y-5">
+                {/* 1. Liquidity Summary Ribbon */}
+                <div className="grid grid-cols-3 gap-2 p-3 bg-surface-raised border border-border-subtle">
+                  <div>
+                    <span className="text-[11px] text-text-muted block">
+                      {isArabic ? 'رصيد البداية' : 'Starting Cash'}
+                    </span>
+                    <span className="text-sm sm:text-base font-bold tabular-nums text-text-primary">
+                      {Math.round(startingCashEgp).toLocaleString()}{' '}
+                      <span className="text-[10px] text-text-muted font-normal">EGP</span>
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-text-muted block">
+                      {isArabic ? 'رصيد النهاية' : 'Ending Cash'}
+                    </span>
+                    <span className="text-sm sm:text-base font-bold tabular-nums text-text-primary">
+                      {Math.round(endingCashEgp).toLocaleString()}{' '}
+                      <span className="text-[10px] text-text-muted font-normal">EGP</span>
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-text-muted block">
+                      {isArabic ? 'صافي التغير' : 'Net Change'}
+                    </span>
                     <span
-                      className={`font-semibold tabular-nums ${
-                        endingCashEgp >= startingCashEgp ? 'text-emerald-400' : 'text-amber-400'
+                      className={`text-sm sm:text-base font-bold tabular-nums ${
+                        endingCashEgp >= startingCashEgp ? 'text-profit-num' : 'text-loss-num'
                       }`}
                     >
                       {endingCashEgp >= startingCashEgp ? '+' : ''}
-                      {Math.round(endingCashEgp - startingCashEgp).toLocaleString()} EGP
+                      {Math.round(endingCashEgp - startingCashEgp).toLocaleString()}{' '}
+                      <span className="text-[10px] text-text-muted font-normal">EGP</span>
                     </span>
                   </div>
+                </div>
 
-                  {/* Account Inputs List */}
-                  <div className="space-y-2 pt-2">
-                    <p className="text-xs font-semibold text-text-secondary">
-                      {isArabic ? 'أدخل الرصيد الفعلي لكل حساب في نهاية الشهر:' : 'Confirm or update each balance:'}
-                    </p>
+                {/* 2. Ending Account Balances in Condensed 2x2 Grid */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="field-label font-semibold text-text-primary uppercase tracking-wider text-[11px]">
+                      {isArabic ? 'أرصدة نهاية الشهر' : 'Ending Account Balances'}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      {onOpenAddAccount && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onOpenAddAccount();
+                          }}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-blue hover:underline cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>{isArabic ? 'إضافة حساب جديد' : 'Add Account'}</span>
+                        </button>
+                      )}
+                      <span className="text-[11px] text-text-muted">
+                        {realAccounts.length} {isArabic ? 'حسابات' : 'accounts'}
+                      </span>
+                    </div>
+                  </div>
 
+                  {/* 2x2 Condensed Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {realAccounts.map((acc) => {
                       const { bankShort, subName } = formatCleanAccountTitle(acc);
-                      const isUsd = acc.currency === 'USD';
+                      const badge = getAccountBadge(bankShort);
+                      const logoUrl = resolveBankLogoUrl(acc, availableBanks);
+                      const hasImgError = failedLogos[acc.id];
                       const val = accountBalances[acc.id] ?? String(acc.balance ?? '0');
 
                       return (
                         <div
                           key={acc.id}
-                          className="p-3 border border-white/10 bg-white/[0.02] flex items-center justify-between gap-3"
+                          className="p-2.5 border border-border-subtle bg-surface-base hover:border-border-default transition-colors flex flex-col justify-between gap-2 rounded-none"
                         >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-8 h-8 rounded-none border border-white/10 bg-white/5 flex items-center justify-center shrink-0">
-                              {isUsd ? (
-                                <DollarSign className="w-4 h-4 text-emerald-400" />
-                              ) : (
-                                <Landmark className="w-4 h-4 text-purple-400" />
-                              )}
+                          <div className="flex items-center justify-between gap-2 min-w-0">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="w-6 h-6 rounded-full overflow-hidden bg-white/5 border border-border-subtle flex items-center justify-center shrink-0">
+                                {logoUrl && !hasImgError ? (
+                                  <img
+                                    src={logoUrl}
+                                    alt={bankShort}
+                                    onError={() =>
+                                      setFailedLogos((prev) => ({ ...prev, [acc.id]: true }))
+                                    }
+                                    className="w-full h-full object-contain p-0.5 rounded-full"
+                                  />
+                                ) : (
+                                  <span className="text-[9px] font-bold text-text-primary">
+                                    {badge}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-semibold text-text-primary truncate">
+                                  {bankShort}
+                                </p>
+                                {subName && (
+                                  <p className="text-[10px] text-text-muted truncate">
+                                    {subName}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                            <div className="min-w-0">
-                              <p className="text-xs sm:text-sm font-semibold text-text-primary truncate">
-                                {bankShort}
-                              </p>
-                              <p className="text-[11px] text-text-muted truncate">{subName}</p>
-                            </div>
+
+                            <span className="text-[10px] font-bold text-text-muted uppercase px-1.5 py-0.5 border border-border-subtle bg-surface-raised tabular-nums shrink-0">
+                              {acc.currency}
+                            </span>
                           </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="field-group h-8 px-2 w-full">
                             <input
                               type="number"
                               step="any"
                               value={val}
                               onChange={(e) => handleBalanceChange(acc.id, e.target.value)}
-                              className="w-28 sm:w-36 bg-black border border-white/15 px-2.5 py-1.5 text-right text-xs sm:text-sm text-text-primary tabular-nums focus:border-brand-blue focus:outline-none"
+                              className="field-input text-right text-xs"
                               placeholder="0"
                             />
-                            <span className="text-xs text-text-muted shrink-0 w-8 text-center">
-                              {acc.currency}
-                            </span>
+                            <span className="field-suffix text-[10px]">{acc.currency}</span>
                           </div>
                         </div>
                       );
                     })}
+
+                    {/* Add Account Tile Inside 2x2 Grid */}
+                    {onOpenAddAccount && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onOpenAddAccount();
+                        }}
+                        className="p-2.5 border border-dashed border-border-subtle hover:border-brand-blue/50 hover:bg-white/[0.02] transition-colors flex flex-col items-center justify-center gap-1.5 cursor-pointer text-text-muted hover:text-text-primary min-h-[76px] rounded-none group"
+                      >
+                        <div className="w-6 h-6 rounded-full border border-dashed border-border-subtle group-hover:border-brand-blue flex items-center justify-center text-text-muted group-hover:text-brand-blue transition-colors">
+                          <Plus className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="text-xs font-semibold">
+                          {isArabic ? 'إضافة حساب جديد' : 'Add Account'}
+                        </span>
+                      </button>
+                    )}
                   </div>
                 </div>
-              )}
 
-              {/* STEP 2: Income & Delta Spend */}
-              {currentStep === 2 && (
-                <div className="space-y-5">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-text-secondary">
-                      {isArabic ? 'إجمالي دخل هذا الشهر (الراتب، أرباح، توزيعات...):' : 'Total Monthly Inflow (Salary, Dividends, Cash in):'}
-                    </label>
-                    <div className="relative flex items-center">
-                      <input
-                        type="number"
-                        min="0"
-                        step="100"
-                        value={incomeInput}
-                        onChange={(e) => setIncomeInput(e.target.value)}
-                        placeholder="50000"
-                        className="w-full bg-black border border-white/15 px-3 py-2 text-base text-text-primary tabular-nums focus:border-brand-blue focus:outline-none"
-                        autoFocus
-                      />
-                      <span className="absolute right-3 text-xs text-text-muted pointer-events-none">
-                        EGP
+                {/* 3. Monthly Income & Inflows */}
+                <div className="space-y-1.5">
+                  <label className="field-label font-semibold text-text-primary uppercase tracking-wider text-[11px]">
+                    {isArabic
+                      ? 'إجمالي الدخل والوارد (راتب، أرباح، إيداعات)'
+                      : 'Monthly Income & Inflows (Salary, Dividends, Cash in)'}
+                  </label>
+                  <div className="field-group">
+                    <input
+                      type="number"
+                      min="0"
+                      step="100"
+                      value={incomeInput}
+                      onChange={(e) => setIncomeInput(e.target.value)}
+                      placeholder="50000"
+                      className="field-input"
+                    />
+                    <span className="field-suffix">EGP</span>
+                  </div>
+                </div>
+
+                {/* 4. Live Derived Spend & Savings Insight Card */}
+                <div className="p-3.5 border border-border-subtle bg-surface-raised space-y-3">
+                  <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
+                    <div>
+                      <span className="text-[11px] text-text-muted block">
+                        {isArabic ? 'صافي المصروفات المستنتجة' : 'Derived Monthly Spend'}
+                      </span>
+                      <span className="text-xl sm:text-2xl font-bold text-text-primary tabular-nums mt-0.5 block">
+                        {Math.round(cashflowMath.spend).toLocaleString()}{' '}
+                        <span className="text-xs font-normal text-text-muted">EGP</span>
+                      </span>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-[11px] text-text-muted block">
+                        {isArabic ? 'معدل الادخار' : 'Savings Rate'}
+                      </span>
+                      <span
+                        className={`text-xl sm:text-2xl font-bold tabular-nums mt-0.5 block ${
+                          cashflowMath.savingsRatePct >= 20
+                            ? 'text-profit-num'
+                            : cashflowMath.savingsRatePct >= 0
+                            ? 'text-brand-blue'
+                            : 'text-loss-num'
+                        }`}
+                      >
+                        {cashflowMath.savingsRatePct > 0 ? '+' : ''}
+                        {cashflowMath.savingsRatePct.toFixed(1)}%
                       </span>
                     </div>
                   </div>
 
-                  {/* Top-Down Delta Summary Card */}
-                  <div className="p-4 border border-white/15 bg-white/[0.03] space-y-4">
-                    <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                      <div>
-                        <p className="text-xs text-text-muted">{isArabic ? 'صافي المصروفات المحسوبة' : 'Calculated Monthly Burn'}</p>
-                        <p className="text-2xl font-bold text-text-primary tabular-nums mt-0.5">
-                          {Math.round(cashflowMath.spend).toLocaleString()}{' '}
-                          <span className="text-xs font-normal text-text-muted">EGP</span>
-                        </p>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-xs text-text-muted">{isArabic ? 'معدل الادخار' : 'Savings Rate'}</p>
-                        <p
-                          className={`text-2xl font-bold tabular-nums mt-0.5 ${
-                            cashflowMath.savingsRatePct >= 20
-                              ? 'text-emerald-400'
-                              : cashflowMath.savingsRatePct >= 0
-                              ? 'text-brand-blue'
-                              : 'text-rose-400'
-                          }`}
-                        >
-                          {cashflowMath.savingsRatePct > 0 ? '+' : ''}
-                          {cashflowMath.savingsRatePct.toFixed(1)}%
-                        </p>
-                      </div>
+                  {/* Formula Equation */}
+                  <div className="text-xs text-text-muted space-y-1 font-sans">
+                    <div className="flex justify-between">
+                      <span>{isArabic ? 'الدخل الشهري:' : 'Income Inflow:'}</span>
+                      <span className="text-text-primary tabular-nums">
+                        +{Number(incomeInput || 0).toLocaleString()} EGP
+                      </span>
                     </div>
-
-                    {/* Breakdown Math Formula */}
-                    <div className="text-xs text-text-muted space-y-1">
-                      <div className="flex justify-between">
-                        <span>{isArabic ? 'الدخل الشهري:' : 'Income Inflow:'}</span>
-                        <span className="text-text-primary tabular-nums">
-                          +{Number(incomeInput || 0).toLocaleString()} EGP
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>{isArabic ? 'تغير السيولة (نهاية - بداية):' : 'Cash Delta (End - Start):'}</span>
-                        <span
-                          className={`tabular-nums ${
-                            cashflowMath.deltaCash >= 0 ? 'text-emerald-400' : 'text-amber-400'
-                          }`}
-                        >
-                          {cashflowMath.deltaCash >= 0 ? '+' : ''}
-                          {Math.round(cashflowMath.deltaCash).toLocaleString()} EGP
-                        </span>
-                      </div>
-                      <div className="flex justify-between pt-1 border-t border-white/5 font-semibold text-text-primary">
-                        <span>{isArabic ? 'إجمالي الصرف المستنتج:' : 'Derived Total Spend:'}</span>
-                        <span className="tabular-nums">
-                          {Math.round(cashflowMath.spend).toLocaleString()} EGP
-                        </span>
-                      </div>
+                    <div className="flex justify-between">
+                      <span>{isArabic ? 'تغير السيولة:' : 'Liquid Cash Delta:'}</span>
+                      <span
+                        className={`tabular-nums ${
+                          cashflowMath.deltaCash >= 0 ? 'text-profit-num' : 'text-loss-num'
+                        }`}
+                      >
+                        {cashflowMath.deltaCash >= 0 ? '+' : ''}
+                        {Math.round(cashflowMath.deltaCash).toLocaleString()} EGP
+                      </span>
                     </div>
-
-                    <div className="p-3 border border-white/10 bg-white/[0.02] flex items-start gap-2.5">
-                      <Sparkles className="w-4 h-4 text-brand-blue shrink-0 mt-0.5" />
-                      <p className="text-xs text-text-secondary leading-relaxed">
-                        {isArabic
-                          ? `حققت دخلاً بقيمة ${(Number(incomeInput) || 0).toLocaleString()} ج.م، وادخرت ${cashflowMath.deltaCash >= 0 ? '+' : ''}${Math.round(cashflowMath.deltaCash).toLocaleString()} ج.م (بنسبة ادخار ${cashflowMath.savingsRatePct.toFixed(1)}%)، ومصروفاتك الإجمالية كانت ${Math.round(cashflowMath.spend).toLocaleString()} ج.م.`
-                          : `You earned ${(Number(incomeInput) || 0).toLocaleString()} EGP, retained ${cashflowMath.deltaCash >= 0 ? '+' : ''}${Math.round(cashflowMath.deltaCash).toLocaleString()} EGP (${cashflowMath.savingsRatePct.toFixed(1)}% savings rate), and spent ${Math.round(cashflowMath.spend).toLocaleString()} EGP.`}
-                      </p>
+                    <div className="flex justify-between pt-1 border-t border-border-subtle/60 font-semibold text-text-primary">
+                      <span>{isArabic ? 'المصروف المحسوب (دخل - تغير السيولة):' : 'Derived Spend (Income - Delta):'}</span>
+                      <span className="tabular-nums">
+                        {Math.round(cashflowMath.spend).toLocaleString()} EGP
+                      </span>
                     </div>
                   </div>
 
-                  {/* Optional Notes */}
-                  <div className="space-y-1">
-                    <label className="text-xs text-text-muted">
-                      {isArabic ? 'ملاحظات الشهر (اختياري):' : 'Month Notes (Optional):'}
-                    </label>
+                  {/* Plain Language Insight */}
+                  <div className="drawer-info-card">
+                    <Sparkles className="w-3.5 h-3.5 text-brand-blue shrink-0 mt-0.5" />
+                    <p className="drawer-info-text leading-relaxed">
+                      {isArabic
+                        ? `حققت دخلاً بقيمة ${(Number(incomeInput) || 0).toLocaleString()} ج.م، واحتفظت بـ ${cashflowMath.deltaCash >= 0 ? '+' : ''}${Math.round(cashflowMath.deltaCash).toLocaleString()} ج.م (بنسبة ادخار ${cashflowMath.savingsRatePct.toFixed(1)}%)، وصافي مصروفك كان ${Math.round(cashflowMath.spend).toLocaleString()} ج.م.`
+                        : `You earned ${(Number(incomeInput) || 0).toLocaleString()} EGP, retained ${cashflowMath.deltaCash >= 0 ? '+' : ''}${Math.round(cashflowMath.deltaCash).toLocaleString()} EGP (${cashflowMath.savingsRatePct.toFixed(1)}% savings rate), and spent ${Math.round(cashflowMath.spend).toLocaleString()} EGP.`}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 5. Optional Expense Breakdown Section */}
+                <div className="space-y-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowExpenseBreakdown(!showExpenseBreakdown)}
+                    className="filter-control-btn w-full justify-between py-2 text-xs cursor-pointer"
+                  >
+                    <span>
+                      {isArabic
+                        ? 'توزيع المصروفات حسب الفئات (اختياري)'
+                        : 'Expense Category Breakdown (Optional)'}
+                    </span>
+                    {showExpenseBreakdown ? (
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+
+                  {showExpenseBreakdown && (
+                    <div className="p-3 border border-border-subtle bg-surface-raised space-y-3">
+                      <p className="text-[11px] text-text-muted">
+                        {isArabic
+                          ? 'حدد الفئات الرئيسية، وسيتكفل الوعاء العام بباقي المصروفات تلقائياً.'
+                          : 'Estimate a few major categories. Unallocated spend automatically balances into General.'}
+                      </p>
+                      <ExpenseAllocationSlider
+                        totalSpend={cashflowMath.spend}
+                        currency="EGP"
+                        categories={expenseCategories}
+                        onChange={setExpenseCategories}
+                        isArabic={isArabic}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* 6. Optional Notes */}
+                <div className="space-y-1.5">
+                  <label className="field-label font-semibold text-text-primary uppercase tracking-wider text-[11px]">
+                    {isArabic ? 'ملاحظات الشهر (اختياري)' : 'Month Notes (Optional)'}
+                  </label>
+                  <div className="field-group">
                     <input
                       type="text"
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      placeholder={isArabic ? 'مثلاً: مصاريف صيانة سيارة، مكافأة نهاية الربع...' : 'e.g. Car maintenance, annual bonus...'}
-                      className="w-full bg-black border border-white/15 px-3 py-1.5 text-xs text-text-primary focus:border-brand-blue focus:outline-none"
+                      placeholder={
+                        isArabic
+                          ? 'مثلاً: صيانة السيارة، مكافأة نهاية الربع، تجديد اشتراكات...'
+                          : 'e.g. Car maintenance, annual bonus, subscription renewals...'
+                      }
+                      className="field-input font-normal"
                     />
                   </div>
                 </div>
-              )}
+              </div>
 
-              {/* STEP 3: Expense Allocation (Optional) */}
-              {currentStep === 3 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                    <div>
-                      <h3 className="text-sm font-semibold text-text-primary">
-                        {isArabic ? 'توزيع المصروفات (اختياري بالكامل)' : 'Optional Expense Allocation'}
-                      </h3>
-                      <p className="text-xs text-text-muted">
-                        {isArabic
-                          ? 'وزع بعض الفئات الكبيرة وسيتولى الوعاء العام الباقي تلقائياً'
-                          : 'Estimate a few major buckets. The General bucket absorbs the remainder automatically.'}
-                      </p>
-                    </div>
-                    <span className="text-xs font-bold text-text-primary tabular-nums">
-                      {Math.round(cashflowMath.spend).toLocaleString()} EGP
-                    </span>
-                  </div>
-
-                  <ExpenseAllocationSlider
-                    totalSpend={cashflowMath.spend}
-                    currency="EGP"
-                    categories={expenseCategories}
-                    onChange={setExpenseCategories}
-                    isArabic={isArabic}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Footer Action Buttons */}
-            <div className="p-4 sm:p-5 border-t border-white/10 bg-black flex items-center justify-between gap-3 shrink-0">
-              {currentStep > 1 ? (
+              {/* Sticky Footer */}
+              <div className="drawer-footer">
                 <button
                   type="button"
-                  onClick={() => setCurrentStep((prev) => (prev - 1) as 1 | 2)}
-                  className="px-4 py-2 text-xs font-semibold border border-white/15 hover:bg-white/5 transition-colors cursor-pointer text-text-secondary"
+                  onClick={onClose}
+                  className="drawer-cancel-btn"
                 >
-                  {isArabic ? 'الرجوع' : 'Back'}
+                  {isArabic ? 'إلغاء' : 'Cancel'}
                 </button>
-              ) : (
-                <div />
-              )}
-
-              <div className="flex items-center gap-2">
-                {currentStep === 1 && (
-                  <button
-                    type="button"
-                    onClick={() => setCurrentStep(2)}
-                    className="px-5 py-2 text-xs font-bold bg-white text-black hover:bg-white/90 transition-colors cursor-pointer"
-                  >
-                    {isArabic ? 'متابعة إلى الدخل' : 'Continue to Income'}
-                  </button>
-                )}
-
-                {currentStep === 2 && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(3)}
-                      className="px-3.5 py-2 text-xs font-semibold border border-white/15 hover:bg-white/5 transition-colors cursor-pointer text-text-secondary"
-                    >
-                      {isArabic ? 'توزيع الفئات (اختياري)' : 'Break Down (Optional)'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSubmit}
-                      disabled={isSubmitting}
-                      className="px-5 py-2 text-xs font-bold bg-white text-black hover:bg-white/90 transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                      {isSubmitting
-                        ? isArabic
-                          ? 'جاري الحفظ...'
-                          : 'Saving...'
-                        : isArabic
-                        ? 'حفظ وإغلاق الشهر'
-                        : 'Save & Close Month'}
-                    </button>
-                  </>
-                )}
-
-                {currentStep === 3 && (
-                  <button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                    className="px-6 py-2 text-xs font-bold bg-white text-black hover:bg-white/90 transition-colors cursor-pointer disabled:opacity-50"
-                  >
-                    {isSubmitting
-                      ? isArabic
-                        ? 'جاري الحفظ...'
-                        : 'Saving...'
-                      : isArabic
-                      ? 'حفظ وإغلاق الشهر'
-                      : 'Save & Close Month'}
-                  </button>
-                )}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="drawer-confirm-btn"
+                >
+                  {isSubmitting
+                    ? isArabic
+                      ? 'جاري الحفظ...'
+                      : 'Saving...'
+                    : isArabic
+                    ? 'حفظ تحديث الأرصدة'
+                    : 'Save Balance Update'}
+                </button>
               </div>
-            </div>
+            </form>
           </motion.div>
         </div>
       )}

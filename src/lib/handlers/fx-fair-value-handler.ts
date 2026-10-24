@@ -1,10 +1,47 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { dailyPrices } from '@/db/schema';
+import { dailyPrices, egxInvestorFlows } from '@/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import TradingView from '@mathieuc/tradingview';
 import { fetchLiveSaghaGold } from '@/lib/server/isagha-scraper';
 import { fetchLiveUsdtEgp } from '@/lib/server/p2p-usdt-scraper';
+import { runKronosPrediction } from '@/tools/kronos/run-kronos-prediction';
+
+export interface CapitalFlowsSummary {
+  latestDate: string;
+  todayHotMoneyNetMillion: number;
+  todayForeignNetMillion: number;
+  todayArabNetMillion: number;
+  rolling10DayHotMoneyNetMillion: number;
+  rolling10DayForeignNetMillion: number;
+  rolling10DayArabNetMillion: number;
+  rolling30DayHotMoneyNetMillion: number;
+  capitalFlowRegime: 'INFLOW_CUSHION' | 'BALANCED' | 'OUTFLOW_PRESSURE';
+  regimeLabel: string;
+  flowSignalSummary: string;
+  flowSignalSummaryAr: string;
+}
+
+export interface FxKronosForecastPoint {
+  date: string;
+  fairValue: number;
+  lower80?: number;
+  upper80?: number;
+}
+
+export interface FxKronosForecast {
+  projectedFairValue10D: number;
+  expectedDriftPct: number;
+  corridor80: {
+    lower: number;
+    upper: number;
+  };
+  trajectoryVerdict: 'STABLE_RANGE' | 'MODERATE_DRIFT' | 'ELEVATED_PRESSURE';
+  trajectoryVerdictLabel: string;
+  trajectoryVerdictLabelAr: string;
+  confidenceScore: number;
+  predictions: FxKronosForecastPoint[];
+}
 
 export interface FxHistoryItem {
   date: string;
@@ -58,6 +95,7 @@ export interface FxFairValueResponse {
       goldPremium: { value: number; weight: number; status: string };
       atrCompression: { value: number; weight: number; status: string };
       netForeignAssets: { value: string; weight: number; status: string };
+      capitalFlows?: { value: number; weight: number; status: string };
     };
   };
   netForeignAssets: {
@@ -65,6 +103,8 @@ export interface FxFairValueResponse {
     asOfDate: string;
     status: string;
   };
+  capitalFlows?: CapitalFlowsSummary;
+  kronosForecast?: FxKronosForecast;
   sparklines: {
     officialUsd: number[];
     compositeFair: number[];
@@ -88,24 +128,29 @@ export async function handleFxFairValueGet(request?: Request): Promise<Response>
   }
 
   try {
-    // 1. Fetch historical series from DB for USDEGP and COMI, and real live market quotes concurrently
-    const [usdRows, comiRows, saghaQuote, usdtQuote] = await Promise.all([
+    // 1. Fetch historical series from DB for USDEGP and COMI, real live market quotes, and official EGX investor flows concurrently
+    const [usdRows, comiRows, saghaQuote, usdtQuote, flowRows] = await Promise.all([
       db.query.dailyPrices.findMany({
         where: eq(dailyPrices.tickerSymbol, 'USDEGP'),
         orderBy: [desc(dailyPrices.date)],
-        limit: 250,
+        limit: 280,
       }),
       db.query.dailyPrices.findMany({
         where: eq(dailyPrices.tickerSymbol, 'COMI'),
         orderBy: [desc(dailyPrices.date)],
-        limit: 250,
+        limit: 280,
       }),
       fetchLiveSaghaGold(),
       fetchLiveUsdtEgp(),
+      db.query.egxInvestorFlows.findMany({
+        where: eq(egxInvestorFlows.marketSegment, 'TOTAL'),
+        orderBy: [desc(egxInvestorFlows.date)],
+        limit: 30,
+      }),
     ]);
 
     const latestUsdRow = usdRows[0];
-    const officialUsd = latestUsdRow ? Number(latestUsdRow.close) : 53.92;
+    let officialUsd = latestUsdRow ? Number(latestUsdRow.close) : 55.25;
     const latestComiRow = comiRows[0];
     const cairoComi = latestComiRow ? Number(latestComiRow.close) : 124.97;
 
@@ -169,9 +214,10 @@ export async function handleFxFairValueGet(request?: Request): Promise<Response>
           });
         });
 
-      const [cbkdResult, goldResult] = await Promise.all([
+      const [cbkdResult, goldResult, usdResult] = await Promise.all([
         getTvData('CBKD', 250),
         getTvData('COMEX:GC1!', 2),
+        getTvData('FX_IDC:USDEGP', 5),
       ]);
       client.end();
 
@@ -181,6 +227,9 @@ export async function handleFxFairValueGet(request?: Request): Promise<Response>
       }
       if (!saghaQuote.globalOunceUsd && goldResult.length > 0) {
         comexGoldUsd = Number(goldResult[0].close);
+      }
+      if (usdResult.length > 0 && Number(usdResult[0]?.close) > 0) {
+        officialUsd = Number(usdResult[0].close);
       }
     } catch (tvErr) {
       console.warn('TradingView fetch fallback in fx-fair-value:', tvErr);
@@ -217,7 +266,7 @@ export async function handleFxFairValueGet(request?: Request): Promise<Response>
     const managedGapEgp = Number((compositeFairValue - officialUsd).toFixed(2));
 
     // 6. Dynamic Algorithmic Devaluation Risk Index (0-100)
-    // Component A: Average Proxy Spread (40% weight) across USDT, GDR, and Gold
+    // Component A: Average Proxy Spread (35% weight) across USDT, GDR, and Gold
     const avgSpread = (Math.max(0, usdtSpreadPct) + Math.max(0, gdrSpreadPct) + Math.max(0, goldSpreadPct)) / 3;
     let spreadScore = 15;
     if (avgSpread <= 1.0) {
@@ -230,7 +279,7 @@ export async function handleFxFairValueGet(request?: Request): Promise<Response>
       spreadScore = Math.min(100, 75 + (avgSpread - 12.0) * 2.5); // >75
     }
 
-    // Component B: ATR Volatility Compression (35% weight)
+    // Component B: ATR Volatility Compression (30% weight)
     let atrScore = 20;
     if (atrCompressionRatio < 0.35 && avgSpread > 1.0) {
       // Artificially suppressed peg with proxy divergence: high coiling risk
@@ -244,12 +293,71 @@ export async function handleFxFairValueGet(request?: Request): Promise<Response>
       atrScore = Math.max(10, 20 - (atrCompressionRatio - 1.0) * 10);
     }
 
-    // Component C: Macro Net Foreign Assets buffer (25% weight)
-    // Large NFA surplus ($28.4B) acts as a strong cushion against devaluation shocks
-    const liquidityScore = 15; // baseline cushioned
+    // Component C: Investor Net Flow (Hot Money) Pressure (20% weight)
+    let flowScore = 18; // baseline balanced
+    let capitalFlows: CapitalFlowsSummary | undefined;
+
+    if (flowRows && flowRows.length > 0) {
+      const latestFlow = flowRows[0];
+      const todayForeignNetMillion = Number((Number(latestFlow.foreignNet || 0) / 1e6).toFixed(1));
+      const todayArabNetMillion = Number((Number(latestFlow.arabNet || 0) / 1e6).toFixed(1));
+      const todayHotMoneyNetMillion = Number((todayForeignNetMillion + todayArabNetMillion).toFixed(1));
+
+      const tenDays = flowRows.slice(0, 10);
+      const rolling10DayForeignNetMillion = Number(
+        (tenDays.reduce((sum, r) => sum + Number(r.foreignNet || 0), 0) / 1e6).toFixed(1)
+      );
+      const rolling10DayArabNetMillion = Number(
+        (tenDays.reduce((sum, r) => sum + Number(r.arabNet || 0), 0) / 1e6).toFixed(1)
+      );
+      const rolling10DayHotMoneyNetMillion = Number(
+        (rolling10DayForeignNetMillion + rolling10DayArabNetMillion).toFixed(1)
+      );
+
+      const rolling30DayHotMoneyNetMillion = Number(
+        (flowRows.reduce((sum, r) => sum + Number(r.foreignNet || 0) + Number(r.arabNet || 0), 0) / 1e6).toFixed(1)
+      );
+
+      let capitalFlowRegime: 'INFLOW_CUSHION' | 'BALANCED' | 'OUTFLOW_PRESSURE' = 'BALANCED';
+      let regimeLabel = 'Balanced Cross-Border Flow';
+      let flowSignalSummary = 'Cross-border capital flows remain in balance without acute repatriation or accumulation pressure.';
+      let flowSignalSummaryAr = 'تدفقات رؤوس الأموال العابرة للحدود متوازنة دون ضغوط تخارج أو تراكم استثنائية.';
+
+      if (rolling10DayHotMoneyNetMillion >= 1000) {
+        capitalFlowRegime = 'INFLOW_CUSHION';
+        regimeLabel = `Inflow Cushion (+${(rolling10DayHotMoneyNetMillion / 1000).toFixed(1)}B EGP)`;
+        flowSignalSummary = `Foreign & Arab carry trade inflows (+${(rolling10DayHotMoneyNetMillion / 1000).toFixed(2)}B EGP over 10 sessions) provide solid FX liquidity to commercial banks.`;
+        flowSignalSummaryAr = `تدفقات المستثمرين الأجانب والعرب (+${(rolling10DayHotMoneyNetMillion / 1000).toFixed(2)} مليار ج.م خلال 10 جلسات) توفر سيولة دولارية مريحة للبنوك.`;
+        flowScore = 8;
+      } else if (rolling10DayHotMoneyNetMillion <= -800) {
+        capitalFlowRegime = 'OUTFLOW_PRESSURE';
+        regimeLabel = `Outflow Pressure (${(rolling10DayHotMoneyNetMillion / 1000).toFixed(1)}B EGP)`;
+        flowSignalSummary = `Net foreign & Arab capital repatriation (${(rolling10DayHotMoneyNetMillion / 1000).toFixed(2)}B EGP over 10 sessions) increases dollar demand and reserve drain.`;
+        flowSignalSummaryAr = `تخارجات المستثمرين الأجانب والعرب (${(rolling10DayHotMoneyNetMillion / 1000).toFixed(2)} مليار ج.م خلال 10 جلسات) ترفع الطلب على العملة الأجنبية وتضغط على الاحتياطيات.`;
+        flowScore = 65;
+      }
+
+      capitalFlows = {
+        latestDate: String(latestFlow.date).slice(0, 10),
+        todayHotMoneyNetMillion,
+        todayForeignNetMillion,
+        todayArabNetMillion,
+        rolling10DayHotMoneyNetMillion,
+        rolling10DayForeignNetMillion,
+        rolling10DayArabNetMillion,
+        rolling30DayHotMoneyNetMillion,
+        capitalFlowRegime,
+        regimeLabel,
+        flowSignalSummary,
+        flowSignalSummaryAr,
+      };
+    }
+
+    // Component D: Macro Net Foreign Assets buffer (15% weight)
+    const liquidityScore = 12; // baseline cushioned
 
     // Multi-factor composite risk score
-    const rawScore = spreadScore * 0.40 + atrScore * 0.35 + liquidityScore * 0.25;
+    const rawScore = spreadScore * 0.35 + atrScore * 0.30 + flowScore * 0.20 + liquidityScore * 0.15;
     const clampedScore = Math.round(Math.min(95, Math.max(8, rawScore)));
 
     let level: 'LOW' | 'MODERATE' | 'ELEVATED' | 'HIGH' = 'LOW';
@@ -355,9 +463,102 @@ export async function handleFxFairValueGet(request?: Request): Promise<Response>
     const riskSparkline = recent14History.map((h) => {
       const daySpread = (Math.max(0, h.usdtSpread) + Math.max(0, h.gdrSpread) + Math.max(0, h.goldSpread)) / 3;
       return Math.round(
-        Math.min(95, Math.max(8, (daySpread <= 1.0 ? 10 : 10 + (daySpread - 1.0) * 7.5) * 0.4 + atrScore * 0.35 + liquidityScore * 0.25))
+        Math.min(95, Math.max(8, (daySpread <= 1.0 ? 10 : 10 + (daySpread - 1.0) * 7.5) * 0.35 + atrScore * 0.30 + flowScore * 0.20 + liquidityScore * 0.15))
       );
     });
+
+    // 8. Kronos 10-Session Forward Trajectory on Composite Fair Value
+    let kronosForecast: FxKronosForecast | undefined;
+    try {
+      if (history.length >= 30) {
+        // Build daily OHLC bars on the unpegged composite fair value series
+        const fxInputBars = history.map((h, i, arr) => {
+          const prevClose = i > 0 ? arr[i - 1].compositeFair : h.compositeFair;
+          const open = prevClose;
+          const close = h.compositeFair;
+          // Proxy extremes provide the natural unpegged spread bounds
+          const maxProxy = Math.max(h.usdtRate, h.goldRate, h.gdrRate, open, close);
+          const minProxy = Math.min(h.usdtRate, h.goldRate, h.gdrRate, open, close);
+          const high = Math.max(open, close, Number((Math.max(open, close) * 1.002).toFixed(2)), maxProxy <= close * 1.08 ? maxProxy : close * 1.005);
+          const low = Math.min(open, close, Number((Math.min(open, close) * 0.998).toFixed(2)), minProxy >= close * 0.92 ? minProxy : close * 0.995);
+          return {
+            time: h.date,
+            open,
+            high,
+            low,
+            close,
+            volume: 1000000,
+            amount: 1000000 * close,
+          };
+        });
+
+        const lastHistoricalDate = history[history.length - 1].date;
+        const customCacheKey = `FX_KRONOS_FAIR:${lastHistoricalDate}:10:3:0.60`;
+
+        const { result: kronosResult } = await runKronosPrediction(
+          fxInputBars.slice(-250),
+          10,
+          {
+            sampleCount: 3,
+            temperature: 0.60,
+            customCacheKey,
+          }
+        );
+
+        if (kronosResult && kronosResult.predictions && kronosResult.predictions.length > 0) {
+          const lastPred = kronosResult.predictions[kronosResult.predictions.length - 1];
+          const projectedFairValue10D = Number(lastPred.close.toFixed(2));
+          const expectedDriftPct = Number(
+            (((projectedFairValue10D - compositeFairValue) / compositeFairValue) * 100).toFixed(2)
+          );
+
+          // Corridor bounds at the 10-day horizon
+          const lower80AtHorizon = lastPred.lower80 ?? Number((projectedFairValue10D * 0.985).toFixed(2));
+          const upper80AtHorizon = lastPred.upper80 ?? Number((projectedFairValue10D * 1.015).toFixed(2));
+
+          let trajectoryVerdict: 'STABLE_RANGE' | 'MODERATE_DRIFT' | 'ELEVATED_PRESSURE' = 'STABLE_RANGE';
+          let trajectoryVerdictLabel = 'Stable Range (Low Drift)';
+          let trajectoryVerdictLabelAr = 'نطاق مستقر (تذبذب محدود)';
+
+          if (expectedDriftPct > 3.0) {
+            trajectoryVerdict = 'ELEVATED_PRESSURE';
+            trajectoryVerdictLabel = 'Elevated Depreciation Pressure';
+            trajectoryVerdictLabelAr = 'ضغوط تراجع مرتفعة';
+          } else if (expectedDriftPct > 0.8) {
+            trajectoryVerdict = 'MODERATE_DRIFT';
+            trajectoryVerdictLabel = 'Moderate Drift (Controlled Depreciation)';
+            trajectoryVerdictLabelAr = 'انخفاض تدريجي مسيطر عليه';
+          }
+
+          const corridorWidth = upper80AtHorizon - lower80AtHorizon;
+          const relSpread = corridorWidth / projectedFairValue10D;
+          const confidenceScore = Math.round(Math.min(92, Math.max(68, 88 - relSpread * 120)));
+
+          const predictions: FxKronosForecastPoint[] = kronosResult.predictions.map((p) => ({
+            date: p.date,
+            fairValue: Number(p.close.toFixed(2)),
+            lower80: p.lower80 ? Number(p.lower80.toFixed(2)) : Number((p.close * 0.985).toFixed(2)),
+            upper80: p.upper80 ? Number(p.upper80.toFixed(2)) : Number((p.close * 1.015).toFixed(2)),
+          }));
+
+          kronosForecast = {
+            projectedFairValue10D,
+            expectedDriftPct,
+            corridor80: {
+              lower: Number(lower80AtHorizon.toFixed(2)),
+              upper: Number(upper80AtHorizon.toFixed(2)),
+            },
+            trajectoryVerdict,
+            trajectoryVerdictLabel,
+            trajectoryVerdictLabelAr,
+            confidenceScore,
+            predictions,
+          };
+        }
+      }
+    } catch (kErr) {
+      console.warn('[FxFairValue] Kronos prediction fallback:', kErr);
+    }
 
     const payload: FxFairValueResponse = {
       timestamp: new Date().toISOString(),
@@ -407,14 +608,23 @@ export async function handleFxFairValueGet(request?: Request): Promise<Response>
           },
           atrCompression: {
             value: atr14,
-            weight: 25,
+            weight: 30,
             status: `${atr14.toFixed(2)} EGP ATR (${volatilityLabel})`,
           },
           netForeignAssets: {
             value: '+$28.4B Surplus',
-            weight: 25,
+            weight: 15,
             status: 'Robust Reserve Buffer',
           },
+          ...(capitalFlows
+            ? {
+                capitalFlows: {
+                  value: capitalFlows.rolling10DayHotMoneyNetMillion,
+                  weight: 20,
+                  status: capitalFlows.regimeLabel,
+                },
+              }
+            : {}),
         },
       },
       netForeignAssets: {
@@ -422,6 +632,8 @@ export async function handleFxFairValueGet(request?: Request): Promise<Response>
         asOfDate: 'Latest CBE Disclosure',
         status: 'Record Surplus',
       },
+      capitalFlows,
+      kronosForecast,
       sparklines: {
         officialUsd: officialUsdSparkline,
         compositeFair: fairSparkline,

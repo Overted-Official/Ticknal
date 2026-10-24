@@ -49,13 +49,19 @@ export async function PUT(request: Request): Promise<Response> {
     const owner = await userId();
     if (!owner) return unauthorized();
     const body = await readJson(request);
+    const expectedRevision = body && typeof body === 'object' && 'expectedRevision' in body ? body.expectedRevision : undefined;
+    if (!Number.isSafeInteger(expectedRevision) || Number(expectedRevision) < 0 || Number(expectedRevision) > 1_000_000_000) {
+      return Response.json({ status: 'invalid', error: 'Expected strategy revision is required.' }, { status: 400, headers });
+    }
     const parsed = parseSavedStrategy(body && typeof body === 'object' && 'strategy' in body ? body.strategy : null);
     if (!parsed.success) return Response.json({ status: 'invalid', error: parsed.error }, { status: 400, headers });
     if (parsed.value.notificationsEnabled) {
       const compiled = compileSavedStrategy(parsed.value);
       if (compiled.status !== 'ready') return Response.json({ status: 'invalid', error: `Alerts require an executable strategy: ${compiled.message}` }, { status: 400, headers });
     }
-    return Response.json({ status: 'ok', strategy: await saveUserStrategy(owner, parsed.value) }, { headers });
+    const saved = await saveUserStrategy(owner, parsed.value, expectedRevision as number);
+    if (saved.status === 'conflict') return Response.json({ status: 'conflict', error: 'A newer version of this strategy exists. Reload before saving.' }, { status: 409, headers });
+    return Response.json({ status: 'ok', strategy: saved.strategy }, { headers });
   } catch (error) {
     if (error instanceof SyntaxError || error instanceof RangeError) return Response.json({ status: 'invalid', error: error.message }, { status: error instanceof RangeError ? 413 : 400, headers });
     console.error('[strategies/saved] Save failed.', error); return unavailable();

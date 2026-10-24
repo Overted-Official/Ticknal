@@ -104,14 +104,14 @@ export default function ExpenseAllocationSlider({
       <div
         className={`p-3.5 border transition-all ${
           allocation.isOverallocated
-            ? 'border-amber-500/30 bg-amber-500/10 text-amber-200'
-            : 'border-white/10 bg-white/[0.03] text-text-primary'
+            ? 'border-loss-num/30 bg-loss-num/10 text-loss-num'
+            : 'border-border-subtle bg-surface-raised text-text-primary'
         }`}
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             {allocation.isOverallocated ? (
-              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+              <AlertCircle className="w-4 h-4 text-loss-num shrink-0" />
             ) : (
               <Sparkles className="w-4 h-4 text-brand-blue shrink-0" />
             )}
@@ -130,7 +130,7 @@ export default function ExpenseAllocationSlider({
           <div className="text-right shrink-0">
             <span
               className={`text-base font-bold tabular-nums ${
-                allocation.isOverallocated ? 'text-amber-400' : 'text-emerald-400'
+                allocation.isOverallocated ? 'text-loss-num' : 'text-profit-num'
               }`}
             >
               {allocation.remainder.toLocaleString()}{' '}
@@ -144,7 +144,7 @@ export default function ExpenseAllocationSlider({
         </div>
 
         {allocation.isOverallocated && (
-          <p className="text-[11px] text-amber-300 mt-2 font-medium">
+          <p className="text-[11px] text-loss-num mt-2 font-medium">
             {isArabic
               ? `إجمالي الفئات (${allocation.allocatedTotal.toLocaleString()} ${currency}) تجاوز المصروف المحسوب (${totalSpend.toLocaleString()} ${currency}) بمقدار ${(allocation.allocatedTotal - totalSpend).toLocaleString()} ${currency}.`
               : `Allocated categories (${allocation.allocatedTotal.toLocaleString()} ${currency}) exceed total spend (${totalSpend.toLocaleString()} ${currency}) by ${(allocation.allocatedTotal - totalSpend).toLocaleString()} ${currency}.`}
@@ -155,7 +155,7 @@ export default function ExpenseAllocationSlider({
       {/* Active Category Rows */}
       <div className="space-y-3">
         {activeCategories.length === 0 ? (
-          <div className="py-6 text-center border border-dashed border-white/10 bg-white/[0.01]">
+          <div className="py-6 text-center border border-dashed border-border-subtle bg-surface-raised/30">
             <p className="text-xs text-text-muted">
               {isArabic
                 ? 'لم يتم تحديد فئات بعد. اختر من الفئات المقترحة أدناه أو أضف فئة مخصصة.'
@@ -168,14 +168,14 @@ export default function ExpenseAllocationSlider({
             return (
               <div
                 key={item.category}
-                className="p-3 border border-white/10 bg-white/[0.02] space-y-2 transition-colors hover:border-white/20"
+                className="p-3 border border-border-subtle bg-surface-base space-y-2 transition-colors hover:border-border-default"
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-text-primary text-xs sm:text-sm">
                       {item.category}
                     </span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-text-muted tabular-nums">
+                    <span className="text-[10px] px-1.5 py-0.5 border border-border-subtle bg-surface-raised text-text-muted tabular-nums">
                       {pct.toFixed(1)}%
                     </span>
                   </div>
@@ -189,7 +189,7 @@ export default function ExpenseAllocationSlider({
                         step="100"
                         value={item.amount || ''}
                         onChange={(e) => handleUpdateAmount(item.category, Number(e.target.value))}
-                        className="w-24 sm:w-28 bg-black border border-white/15 px-2 py-1 text-right text-xs text-text-primary tabular-nums focus:border-brand-blue focus:outline-none"
+                        className="w-24 sm:w-28 bg-surface-raised border border-border-subtle px-2 py-1 text-right text-xs text-text-primary tabular-nums focus:border-brand-blue focus:outline-none"
                         placeholder="0"
                       />
                       <span className="text-[10px] text-text-muted ml-1.5 shrink-0">{currency}</span>
@@ -198,7 +198,7 @@ export default function ExpenseAllocationSlider({
                     <button
                       type="button"
                       onClick={() => handleRemoveCategory(item.category)}
-                      className="p-1 text-text-muted hover:text-rose-400 transition-colors cursor-pointer"
+                      className="p-1 text-text-muted hover:text-loss-num transition-colors cursor-pointer"
                       title={isArabic ? 'حذف الفئة' : 'Remove category'}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -214,7 +214,7 @@ export default function ExpenseAllocationSlider({
                   step="100"
                   value={Math.min(item.amount, totalSpend || 1000)}
                   onChange={(e) => handleUpdateAmount(item.category, Number(e.target.value))}
-                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-brand-blue"
+                  className="w-full h-1 bg-surface-raised appearance-none cursor-pointer accent-brand-blue"
                 />
               </div>
             );
@@ -236,7 +236,7 @@ export default function ExpenseAllocationSlider({
                   key={preset.en}
                   type="button"
                   onClick={() => handleAddCategory(label)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 text-text-secondary transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] border border-border-subtle bg-surface-raised hover:bg-surface-hover-raised hover:border-border-default text-text-secondary transition-colors cursor-pointer"
                 >
                   <Plus className="w-3 h-3 text-brand-blue" />
                   <span>{label}</span>
@@ -262,20 +262,20 @@ export default function ExpenseAllocationSlider({
                 }
               }}
               placeholder={isArabic ? 'اسم الفئة (مثلاً: جيم، دروس، سفر...)' : 'Category name (e.g. Gym, Tuition...)'}
-              className="flex-1 bg-black border border-white/15 px-3 py-1.5 text-xs text-text-primary focus:border-brand-blue focus:outline-none"
+              className="flex-1 bg-surface-raised border border-border-subtle px-3 py-1.5 text-xs text-text-primary focus:border-brand-blue focus:outline-none"
               autoFocus
             />
             <button
               type="button"
               onClick={() => handleAddCategory(customName)}
-              className="px-3 py-1.5 text-xs font-medium bg-white text-black hover:bg-white/90 transition-colors cursor-pointer"
+              className="btn-primary-cta h-8 px-3 text-xs"
             >
               {isArabic ? 'إضافة' : 'Add'}
             </button>
             <button
               type="button"
               onClick={() => setShowAddCustom(false)}
-              className="px-2 py-1.5 text-xs text-text-muted hover:text-white transition-colors cursor-pointer"
+              className="filter-control-btn h-8 px-2.5 text-xs"
             >
               {isArabic ? 'إلغاء' : 'Cancel'}
             </button>

@@ -1169,7 +1169,7 @@ export default function QuickAddDrawer({
                                   value={searchQuery}
                                   onChange={(e) => handleSearchChange(e.target.value)}
                                   autoFocus
-                                  className="input-token h-9 ps-9 pe-8 bg-plt-base text-plt-text border-plt-border focus:border-plt-border-active font-sans text-xs"
+                                  className="input-token h-9 !pl-9 !pr-8 rtl:!pr-9 rtl:!pl-8 bg-plt-base text-plt-text border-plt-border focus:border-plt-border-active font-sans text-xs"
                                 />
                                 {searchQuery && (
                                   <button
@@ -1197,80 +1197,82 @@ export default function QuickAddDrawer({
                               )}
                             </div>
 
-                            {/* Autocomplete Dropdown */}
-                            <div className="max-h-56 overflow-y-auto bg-plt-base border border-plt-border rounded-lg shadow-2xl p-1 divide-y divide-plt-border-soft custom-scrollbar">
-                              {filteredTickersList.length === 0 ? (
-                                <div className="p-3 text-xs text-plt-faint text-center font-sans">{locale === 'ar' ? 'لم يتم العثور على أسهم مطابقة' : 'No matching tickers found'}</div>
-                              ) : (
-                                filteredTickersList.map((t) => {
-                                  const clean = t.symbol.replace('.CA', '').toUpperCase();
-                                  return (
-                                    <div
-                                      key={t.symbol}
-                                      onClick={() => handleSelectTicker(t)}
-                                      className="px-2.5 py-2 hover:bg-plt-hover active:bg-plt-active cursor-pointer flex items-center justify-between transition-colors gap-2.5 rounded-lg"
-                                    >
-                                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                        {/* 1. Circular Logo */}
-                                        <div className="w-7 h-7 rounded-full bg-plt-active border border-plt-border p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
-                                          {t.logoUrl ? (
-                                            <img
-                                              src={t.logoUrl}
-                                              alt={clean}
-                                              className="w-full h-full object-contain rounded-full"
-                                              onError={(e) => {
-                                                (e.currentTarget as HTMLElement).style.display = 'none';
-                                              }}
-                                            />
-                                          ) : (
-                                            <span className="text-[10px] font-bold text-plt-text font-sans">{clean.slice(0, 2)}</span>
-                                          )}
-                                        </div>
-
-                                        {/* 2. Text Column */}
-                                        <div className="min-w-0 flex flex-col flex-1">
-                                          <span className="text-xs text-plt-text truncate font-sans font-medium leading-tight" title={t.companyName}>
-                                            {t.companyName || clean}
-                                          </span>
-                                          <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
-                                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold text-plt-text bg-plt-active border border-plt-border tabular-nums font-sans shrink-0 leading-tight">
-                                              {clean}
-                                            </span>
-                                            {t.sector && (
-                                              <>
-                                                <span className="text-[10px] text-plt-faint shrink-0">•</span>
-                                                <span className="text-[10px] text-plt-muted truncate font-sans">
-                                                  {t.sector}
-                                                </span>
-                                              </>
+                            {/* Autocomplete Dropdown - only shows when user enters at least 1 letter */}
+                            {searchQuery.trim().length >= 1 && (
+                              <div className="max-h-56 overflow-y-auto bg-plt-base border border-plt-border rounded-lg shadow-2xl p-1 divide-y divide-plt-border-soft custom-scrollbar">
+                                {filteredTickersList.length === 0 ? (
+                                  <div className="p-3 text-xs text-plt-faint text-center font-sans">{locale === 'ar' ? 'لم يتم العثور على أسهم مطابقة' : 'No matching tickers found'}</div>
+                                ) : (
+                                  filteredTickersList.map((t) => {
+                                    const clean = t.symbol.replace('.CA', '').toUpperCase();
+                                    return (
+                                      <div
+                                        key={t.symbol}
+                                        onClick={() => handleSelectTicker(t)}
+                                        className="px-2.5 py-2 hover:bg-plt-hover active:bg-plt-active cursor-pointer flex items-center justify-between transition-colors gap-2.5 rounded-lg"
+                                      >
+                                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                          {/* 1. Circular Logo */}
+                                          <div className="w-7 h-7 rounded-full bg-plt-active border border-plt-border p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                                            {t.logoUrl ? (
+                                              <img
+                                                src={t.logoUrl}
+                                                alt={clean}
+                                                className="w-full h-full object-contain rounded-full"
+                                                onError={(e) => {
+                                                  (e.currentTarget as HTMLElement).style.display = 'none';
+                                                }}
+                                              />
+                                            ) : (
+                                              <span className="text-[10px] font-bold text-plt-text font-sans">{clean.slice(0, 2)}</span>
                                             )}
                                           </div>
+
+                                          {/* 2. Text Column */}
+                                          <div className="min-w-0 flex flex-col flex-1">
+                                            <span className="text-xs text-plt-text truncate font-sans font-medium leading-tight" title={t.companyName}>
+                                              {t.companyName || clean}
+                                            </span>
+                                            <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                                              <span className="px-1.5 py-0.2 rounded text-[10px] font-bold text-plt-text bg-plt-active border border-plt-border tabular-nums font-sans shrink-0 leading-tight">
+                                                {clean}
+                                              </span>
+                                              {t.sector && (
+                                                <>
+                                                  <span className="text-[10px] text-plt-faint shrink-0">•</span>
+                                                  <span className="text-[10px] text-plt-muted truncate font-sans">
+                                                    {t.sector}
+                                                  </span>
+                                                </>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* 3. Latest Price */}
+                                        <div className="flex flex-col items-end shrink-0 pl-2 rtl:pl-0 rtl:pr-2 font-sans tabular-nums text-right rtl:text-left">
+                                          {t.price && t.price > 0 ? (
+                                            <>
+                                              <span className="text-xs font-semibold text-plt-text">
+                                                {Number(t.price).toFixed(2)}{' '}
+                                                <span className="text-[10px] text-plt-faint font-normal">{t.currency || 'EGP'}</span>
+                                              </span>
+                                              {t.changePct !== undefined && t.changePct !== 0 && (
+                                                <span className={`text-[10px] font-medium ${t.changePct > 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                                                  {t.changePct > 0 ? '+' : ''}{Number(t.changePct).toFixed(2)}%
+                                                </span>
+                                              )}
+                                            </>
+                                          ) : (
+                                            <span className="text-xs text-plt-faint font-medium">—</span>
+                                          )}
                                         </div>
                                       </div>
-
-                                      {/* 3. Latest Price */}
-                                      <div className="flex flex-col items-end shrink-0 pl-2 rtl:pl-0 rtl:pr-2 font-sans tabular-nums text-right rtl:text-left">
-                                        {t.price && t.price > 0 ? (
-                                          <>
-                                            <span className="text-xs font-semibold text-plt-text">
-                                              {Number(t.price).toFixed(2)}{' '}
-                                              <span className="text-[10px] text-plt-faint font-normal">{t.currency || 'EGP'}</span>
-                                            </span>
-                                            {t.changePct !== undefined && t.changePct !== 0 && (
-                                              <span className={`text-[10px] font-medium ${t.changePct > 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                                                {t.changePct > 0 ? '+' : ''}{Number(t.changePct).toFixed(2)}%
-                                              </span>
-                                            )}
-                                          </>
-                                        ) : (
-                                          <span className="text-xs text-plt-faint font-medium">—</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  );
-                                })
-                              )}
-                            </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
 

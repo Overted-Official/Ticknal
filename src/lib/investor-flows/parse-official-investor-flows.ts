@@ -96,12 +96,12 @@ export function extractMonetaryAmountsEgp(clause: string): number[] {
 
   // Expand shared units like "126 و 4 ملايين جنيه" or "126 و4 مليون جنيه"
   const expanded = clause.replace(
-    /(\d+(?:\.\d+)?)\s*و\s*(\d+(?:\.\d+)?)\s*(مليار|مليارات|مليون|ملايين|الفا|الف|الاف)/g,
+    /(\d+(?:\.\d+)?)\s*و\s*(\d+(?:\.\d+)?)\s*(مليارا|مليار|مليارات|مليونا|مليون|ملايين|الفا|الف|الاف)/g,
     '$1 $3 جنيه و $2 $3'
   );
 
   // 1. Explicit number + unit
-  const numUnitRegex = /(\d+(?:\.\d+)?)\s*(مليار|مليارات|مليون|ملايين|الفا|الف|الاف)(?:\s*جنيه)?/g;
+  const numUnitRegex = /(\d+(?:\.\d+)?)\s*(مليارا|مليار|مليارات|مليونا|مليون|ملايين|الفا|الف|الاف)(?:\s*جنيه)?/g;
   let m: RegExpExecArray | null;
   const matchedSpans: Array<[number, number]> = [];
 
@@ -138,15 +138,20 @@ export function extractMonetaryAmountsEgp(clause: string): number[] {
  */
 function extractNationalitiesInOrder(clause: string): Nat[] {
   const tokens: { index: number; nat: Nat }[] = [];
+  // Normalize shorthand "الافراد والعرب" -> "الافراد المصريون والعرب"
+  const normalizedClause = clause.replace(/الافراد\s+والعرب/g, 'الافراد المصريون والعرب');
   const patterns: Array<{ nat: Nat; re: RegExp }> = [
-    { nat: 'EG', re: /(المصريون|المصريين|المصريه|المحليه|المحليين)/g },
-    { nat: 'AR', re: /(العرب|العربيه)/g },
-    { nat: 'FR', re: /(الاجانب|الاجنبيه)/g },
+    {
+      nat: 'EG',
+      re: /(?<!البورصه |لبورصه |السوق |بالسوق |الاسهم |لاسهم |الشركات |الحكومه |الدوله |العمله )((?:ال|لل)(?:مصريون|مصريين|مصريه|محليه|محليين))/g,
+    },
+    { nat: 'AR', re: /((?:ال|لل)(?:عرب|عربيه))/g },
+    { nat: 'FR', re: /((?:ال|لل)(?:اجانب|اجنبيه))/g },
   ];
 
   for (const { nat, re } of patterns) {
     let m: RegExpExecArray | null;
-    while ((m = re.exec(clause)) !== null) {
+    while ((m = re.exec(normalizedClause)) !== null) {
       tokens.push({ index: m.index, nat });
     }
   }
@@ -175,7 +180,7 @@ function parseDirectionalNatFlows(segment: string): Partial<Record<Nat, number>>
   // Split segment into directional sub-clauses (IMPORTANT: never split on decimal point \.(?=\d)!)
   const clauses = segment
     .split(
-      /(?:،\s*(?=فيما|بينما|وفى|وفي|في حين|كما|مقابل|وسجل|واتجه|وتوجه|والمؤسسات|والافراد)|(?:\.(?!\d)|؛|فيما|بينما|وفي المقابل|في المقابل|في حين|كما\s+(?=سجل|اتجه|توجه|حققت)))/g
+      /(?:،\s*(?=فيما|بينما|وفى|وفي|في حين|كما|مقابل|وسجل|واتجه|وتوجه|وضخت|والمؤسسات|والافراد|تزامنا مع)|(?:\.(?!\d)|؛|فيما|بينما|وفي المقابل|في المقابل|في حين|تزامنا مع|كما\s+(?=سجل|اتجه|توجه|حققت)))/g
     )
     .map((c) => c.trim())
     .filter(Boolean);
@@ -183,8 +188,10 @@ function parseDirectionalNatFlows(segment: string): Partial<Record<Nat, number>>
   let inheritedSign: number | null = null;
   let allSameDirectionSign: number | null = null;
 
-  if (/متجهين نحو البيع جميعا/.test(segment)) allSameDirectionSign = -1;
-  else if (/متجهين نحو الشراء جميعا/.test(segment)) allSameDirectionSign = 1;
+  if (/(متجهين نحو البيع جميعا|جميعا نحو البيع|بمختلف فئاتهم الي البيع|بمختلف فئاتهم للبيع)/.test(segment))
+    allSameDirectionSign = -1;
+  else if (/(متجهين نحو الشراء جميعا|جميعا نحو الشراء|بمختلف فئاتهم الي الشراء|بمختلف فئاتهم للشراء)/.test(segment))
+    allSameDirectionSign = 1;
 
   for (const clause of clauses) {
     const subParts = clause.split(/\s+مقابل\s+(?=صافي\s+(?:بيع|شراء)|مشتريات|مبيعات)/);
@@ -192,9 +199,9 @@ function parseDirectionalNatFlows(segment: string): Partial<Record<Nat, number>>
     for (const part of subParts) {
       const nats = extractNationalitiesInOrder(part);
       if (nats.length === 0) {
-        if (/(الشراء|شراء|مشتريات)/.test(part) && !/(البيع|بيع|مبيعات)/.test(part)) {
+        if (/(الشراء|شراء|مشتريات|شرائيا|شرائي)/.test(part) && !/(البيع|بيع|مبيعات|بيعيا|بيعي)/.test(part)) {
           inheritedSign = 1;
-        } else if (/(البيع|بيع|مبيعات)/.test(part) && !/(الشراء|شراء|مشتريات)/.test(part)) {
+        } else if (/(البيع|بيع|مبيعات|بيعيا|بيعي)/.test(part) && !/(الشراء|شراء|مشتريات|شرائيا|شرائي)/.test(part)) {
           inheritedSign = -1;
         }
         continue;
@@ -204,8 +211,8 @@ function parseDirectionalNatFlows(segment: string): Partial<Record<Nat, number>>
       if (amounts.length === 0) continue;
 
       let sign: number | null = null;
-      const buyIdx = part.search(/(الشراء|شراء|مشتريات)/);
-      const sellIdx = part.search(/(البيع|بيع|مبيعات)/);
+      const buyIdx = part.search(/(الشراء|شراء|مشتريات|شرائيا|شرائي|تدفقات داخله)/);
+      const sellIdx = part.search(/(البيع|بيع|مبيعات|بيعيا|بيعي|تدفقات خارجه)/);
 
       if (buyIdx >= 0 && sellIdx < 0) sign = 1;
       else if (sellIdx >= 0 && buyIdx < 0) sign = -1;
@@ -222,11 +229,23 @@ function parseDirectionalNatFlows(segment: string): Partial<Record<Nat, number>>
         for (let i = 0; i < nats.length; i++) {
           if (out[nats[i]] === undefined) {
             out[nats[i]] = sign * amounts[i];
+          } else if (nats.length === 1 && amounts.length === 1) {
+            // Reporter accidentally repeated a nationality in the 3rd leg (e.g. "المحلية والعربية ... مقابل المحلية")
+            const remaining = (['EG', 'AR', 'FR'] as Nat[]).filter((n) => out[n] === undefined);
+            if (remaining.length === 1) {
+              out[remaining[0]] = sign * amounts[0];
+            }
           }
         }
       } else if (nats.length === 1 && amounts.length >= 1) {
         if (out[nats[0]] === undefined) {
           out[nats[0]] = sign * amounts[0];
+        } else {
+          // Reporter accidentally repeated a nationality in the 3rd leg (e.g. "المحلية والعربية ... مقابل المحلية")
+          const remaining = (['EG', 'AR', 'FR'] as Nat[]).filter((n) => out[n] === undefined);
+          if (remaining.length === 1 && amounts.length === 1) {
+            out[remaining[0]] = sign * amounts[0];
+          }
         }
       } else if (nats.length > 1 && amounts.length === 1 && /لكل منهما|لكل منهم/.test(part)) {
         for (const n of nats) {
@@ -322,11 +341,11 @@ function parseReportedTurnover(norm: string, rawTitle: string): number | undefin
   const titleNorm = normalizeArabicFlowText(rawTitle);
   const combined = `${titleNorm} . ${norm}`;
   const m = combined.match(
-    /(?:بتداولات|قيم التداولات|قيمه التداولات|اجمالي قيم التداول|تداولات الاسهم)\s+(?:نحو\s+|بلغت\s+|قرابه\s+)?(\d+(?:\.\d+)?)\s*(مليار|مليون)\s*جنيه/
+    /(?:بتداولات|قيم التداولات|قيمه التداولات|قيم التداول|قيمه التداول|قيم التعاملات|قيمه التعاملات|اجمالي قيم التداول|تداولات الاسهم)\s+(?:خلال الجلسه\s+)?(?:نحو\s+|بلغت\s+|قرابه\s+|تجاوزت\s+)?(\d+(?:\.\d+)?)\s*(مليار|مليارات|مليون|ملايين)\s*جنيه/
   );
   if (!m) return undefined;
   const val = parseFloat(m[1]);
-  const mult = m[2] === 'مليار' ? 1e9 : 1e6;
+  const mult = m[2].startsWith('مليار') ? 1e9 : 1e6;
   return Math.round(val * mult);
 }
 
@@ -335,21 +354,25 @@ function parseReportedTurnover(norm: string, rawTitle: string): number | undefin
  */
 export function extractCategoryShares(norm: string): { retailSharePct: number; instSharePct: number } | null {
   // Pattern 1: الأفراد على 75.9% ... مقابل 24.1% للمؤسسات
-  let m = norm.match(/(?:استحوذ\s+)?(?:المستثمرون\s+)?الافراد\s+علي\s+(\d+(?:\.\d+)?)\s*%\s*(?:من\s+اجمالي\s+التداولات)?[\s،,]*مقابل\s+(\d+(?:\.\d+)?)\s*%\s*للمؤسسات/);
+  let m = norm.match(
+    /الافراد\s+علي\s+(?:التعاملات\s+بنسبه\s+|نحو\s+|نسبه\s+)?(\d+(?:\.\d+)?)\s*%\s*(?:من\s+(?:اجمالي\s+)?(?:التداولات|التعاملات))?[\s،,]*مقابل\s+(\d+(?:\.\d+)?)\s*%\s*للمؤسسات/
+  );
   if (m) {
     const r = parseFloat(m[1]);
     const i = parseFloat(m[2]);
-    if (r + i >= 98 && r + i <= 102) {
+    if (r + i >= 97.5 && r + i <= 102.5) {
       return { retailSharePct: r, instSharePct: i };
     }
   }
 
   // Pattern 2: المؤسسات على 24.1% ... مقابل 75.9% للأفراد
-  m = norm.match(/(?:استحوذت\s+)?المؤسسات\s+علي\s+(\d+(?:\.\d+)?)\s*%\s*(?:من\s+اجمالي\s+التداولات)?[\s،,]*مقابل\s+(\d+(?:\.\d+)?)\s*%\s*(?:للمستثمرين\s+)?الافراد/);
+  m = norm.match(
+    /المؤسسات\s+علي\s+(?:نحو\s+|نسبه\s+)?(\d+(?:\.\d+)?)\s*%\s*(?:من\s+(?:اجمالي\s+)?(?:التداولات|التعاملات))?[\s،,]*مقابل\s+(\d+(?:\.\d+)?)\s*%\s*(?:للمستثمرين\s+)?(?:ال|لل)افراد/
+  );
   if (m) {
     const i = parseFloat(m[1]);
     const r = parseFloat(m[2]);
-    if (r + i >= 98 && r + i <= 102) {
+    if (r + i >= 97.5 && r + i <= 102.5) {
       return { retailSharePct: r, instSharePct: i };
     }
   }
@@ -380,24 +403,54 @@ export function parseOfficialInvestorFlowArticle(
   const instSharePct = categoryShares?.instSharePct ?? null;
   const reportedTurnover = parseReportedTurnover(norm, rawTitle);
 
-  // Locate where Retail ("الافراد") and Institutions ("المؤسسات") nationality sections start
-  const retailNatMatch = norm.match(/الافراد\s+(?:المصريون|المصريين|العرب|الاجانب)/);
-  const retailMatch =
-    retailNatMatch ?? norm.match(/(?:واتجه الافراد|وسجل الافراد|واستحوذ الافراد)/);
-  const retailIdx = retailMatch?.index ?? -1;
+  // Locate where Retail ("الافراد") and Institutions ("المؤسسات") nationality sections start.
+  // Require an explicit number + monetary unit within 160 chars so analyst commentary earlier in the article is never matched.
+  const retailPatterns = [
+    /الافراد\s+(?:المصريون|المصريين|العرب|الاجانب)/g,
+    /(?:واتجه|اتجه|وتوجه|توجه|وسجل|سجل|واتجهت|اتجهت|وتوجهت|توجهت|وسجلت|سجلت|مع اتجاه)\s+(?:تعاملات\s+)?(?:المستثمرين\s+|المستثمرون\s+)?الافراد/g,
+  ];
+  const hasMonetaryEgpInWindow = (win: string) =>
+    win.includes('جنيه') &&
+    /\d+(?:\.\d+)?\s*(?:مليار|مليارات|مليون|ملايين|الفا|الف|الاف)(?!راد|\s*(?:نقطه|نقاط|عمليه|سهم|شركه|وثيقه))/.test(
+      win
+    );
+
+  const retailCandidates: number[] = [];
+  for (const re of retailPatterns) {
+    let rm: RegExpExecArray | null;
+    while ((rm = re.exec(norm)) !== null) {
+      const win = norm.slice(rm.index, rm.index + 160);
+      if (hasMonetaryEgpInWindow(win)) {
+        retailCandidates.push(rm.index);
+      }
+    }
+  }
+  const retailIdx = retailCandidates.length > 0 ? Math.min(...retailCandidates) : -1;
 
   let instIdx = -1;
+  const instCandidates: number[] = [];
   const instNatRe = /(?<!لل)المؤسسات\s+(?:المصريه|المحليه|العربيه|الاجنبيه)/g;
   let im: RegExpExecArray | null;
   while ((im = instNatRe.exec(norm)) !== null) {
-    if (im.index > retailIdx) {
-      instIdx = im.index;
-      break;
+    const win = norm.slice(im.index, im.index + 160);
+    if (hasMonetaryEgpInWindow(win)) {
+      instCandidates.push(im.index);
     }
   }
-  if (instIdx < 0) {
+  const instVerbRe =
+    /(?:سجلت|اتجهت|توجهت|حققت|قادت|فيما سجلت|بينما سجلت|كما سجلت|فيما اتجهت|بينما اتجهت|وتوجهت|وسجلت|واتجهت|وضخت)\s+(?:تعاملات\s+)?المؤسسات/g;
+  while ((im = instVerbRe.exec(norm)) !== null) {
+    const win = norm.slice(im.index, im.index + 160);
+    if (hasMonetaryEgpInWindow(win)) {
+      instCandidates.push(im.index);
+    }
+  }
+  if (instCandidates.length > 0) {
+    const afterRetail = retailIdx >= 0 ? instCandidates.filter((i) => i > retailIdx) : [];
+    instIdx = afterRetail.length > 0 ? Math.min(...afterRetail) : Math.min(...instCandidates);
+  } else {
     const instMatch = norm.match(
-      /(?:سجلت المؤسسات|اتجهت المؤسسات|وبلغت نسبه تداول المؤسسات|فيما سجلت المؤسسات|حققت المؤسسات)/
+      /(?:سجلت المؤسسات|اتجهت المؤسسات|وبلغت نسبه تداول المؤسسات|فيما سجلت المؤسسات|حققت المؤسسات|قادت المؤسسات)/
     );
     instIdx = instMatch?.index ?? -1;
   }
@@ -407,7 +460,7 @@ export function parseOfficialInvestorFlowArticle(
   let parsedInstFlows: Partial<Record<Nat, number>> = {};
   if (retailIdx >= 0 && instIdx >= 0) {
     const retailEnd = instIdx > retailIdx ? instIdx : Math.min(norm.length, retailIdx + 450);
-    const instEnd = Math.min(norm.length, instIdx + 450);
+    const instEnd = retailIdx > instIdx ? retailIdx : Math.min(norm.length, instIdx + 450);
     parsedRetailFlows = parseDirectionalNatFlows(norm.slice(retailIdx, retailEnd));
     parsedInstFlows = parseDirectionalNatFlows(norm.slice(instIdx, instEnd));
   }
@@ -490,63 +543,152 @@ export function parseOfficialInvestorFlowArticle(
   }
 
   // Strategy 2: Retail + Institutions nationality breakdown
-  if (retailIdx >= 0 && instIdx >= 0 && shares) {
+  if (retailIdx >= 0 && instIdx >= 0) {
     const retailEnd = instIdx > retailIdx ? instIdx : Math.min(norm.length, retailIdx + 450);
-    const instEnd = Math.min(norm.length, instIdx + 450);
+    const instEnd = retailIdx > instIdx ? retailIdx : Math.min(norm.length, instIdx + 450);
 
     const retailFlows = parseDirectionalNatFlows(norm.slice(retailIdx, retailEnd));
     const instFlows = parseDirectionalNatFlows(norm.slice(instIdx, instEnd));
 
-    const legs: Array<number | undefined> = [
-      retailFlows.EG, retailFlows.AR, retailFlows.FR,
-      instFlows.EG, instFlows.AR, instFlows.FR,
+    // Also handle interwoven Retail/Inst clauses (e.g. buyers of both categories followed by sellers of both categories)
+    if (
+      Object.keys(retailFlows).length < 3 ||
+      Object.keys(instFlows).length < 3
+    ) {
+      const combinedStart = Math.min(retailIdx, instIdx);
+      const combinedBlock = norm.slice(combinedStart, Math.min(norm.length, combinedStart + 650));
+      const subClauses = combinedBlock
+        .split(/(?:[،؛]|\.(?!\d)|وفي المقابل|في المقابل|تزامنا مع)/g)
+        .map((c) => c.trim())
+        .filter(Boolean);
+      for (const sc of subClauses) {
+        const hasRetail = /(?:ال|لل)افراد/.test(sc);
+        const hasInst = /(?:ال|لل)مؤسسات/.test(sc);
+        if (hasRetail && !hasInst) {
+          const parsed = parseDirectionalNatFlows(sc);
+          for (const k of ['EG', 'AR', 'FR'] as Nat[]) {
+            if (retailFlows[k] === undefined && parsed[k] !== undefined) retailFlows[k] = parsed[k];
+          }
+        } else if (hasInst && !hasRetail) {
+          const parsed = parseDirectionalNatFlows(sc);
+          for (const k of ['EG', 'AR', 'FR'] as Nat[]) {
+            if (instFlows[k] === undefined && parsed[k] !== undefined) instFlows[k] = parsed[k];
+          }
+        }
+      }
+    }
+
+    let activeRetail = { ...retailFlows };
+    let activeInst = { ...instFlows };
+    let legs: Array<number | undefined> = [
+      activeRetail.EG, activeRetail.AR, activeRetail.FR,
+      activeInst.EG, activeInst.AR, activeInst.FR,
     ];
-    const missingCount = legs.filter((v) => v === undefined).length;
+    let missingCount = legs.filter((v) => v === undefined).length;
 
     if (missingCount === 0) {
-      const rawEg = retailFlows.EG! + instFlows.EG!;
-      const rawAr = retailFlows.AR! + instFlows.AR!;
-      const rawFr = retailFlows.FR! + instFlows.FR!;
-      const sum = rawEg + rawAr + rawFr;
-      const maxAbs = Math.max(Math.abs(rawEg), Math.abs(rawAr), Math.abs(rawFr), 1);
+      let rawEg = activeRetail.EG! + activeInst.EG!;
+      let rawAr = activeRetail.AR! + activeInst.AR!;
+      let rawFr = activeRetail.FR! + activeInst.FR!;
+      let sum = rawEg + rawAr + rawFr;
+      let maxAbs = Math.max(Math.abs(rawEg), Math.abs(rawAr), Math.abs(rawFr), 1);
+
+      // Financial journalism typo correction: If a reporter accidentally writes "مليار" (billion)
+      // instead of "مليون" (million) for a small flow, scaling outlier billion-scale legs (>= 1e9) down
+      // by 1000 can restore the exact zero-sum balance EG + AR + FR = 0.
+      if (Math.abs(sum) > Math.max(75_000_000, maxAbs * 0.1)) {
+        const fixLeg = (v: number | undefined) => (v !== undefined && Math.abs(v) >= 1e9 ? v / 1000 : v);
+        const testRetail = { EG: fixLeg(activeRetail.EG), AR: fixLeg(activeRetail.AR), FR: fixLeg(activeRetail.FR) };
+        const testInst = { EG: fixLeg(activeInst.EG), AR: fixLeg(activeInst.AR), FR: fixLeg(activeInst.FR) };
+        const testEg = testRetail.EG! + testInst.EG!;
+        const testAr = testRetail.AR! + testInst.AR!;
+        const testFr = testRetail.FR! + testInst.FR!;
+        const testSum = testEg + testAr + testFr;
+        const testMaxAbs = Math.max(Math.abs(testEg), Math.abs(testAr), Math.abs(testFr), 1);
+
+        if (Math.abs(testSum) <= Math.max(75_000_000, testMaxAbs * 0.1)) {
+          activeRetail = testRetail;
+          activeInst = testInst;
+          rawEg = testEg;
+          rawAr = testAr;
+          rawFr = testFr;
+          sum = testSum;
+          maxAbs = testMaxAbs;
+          legs = [
+            activeRetail.EG, activeRetail.AR, activeRetail.FR,
+            activeInst.EG, activeInst.AR, activeInst.FR,
+          ];
+        }
+      }
 
       if (Math.abs(sum) <= Math.max(75_000_000, maxAbs * 0.1)) {
         return {
           marketSegment: 'STOCKS',
-          egyptianSharePct: shares.egyptianSharePct,
-          arabSharePct: shares.arabSharePct,
-          foreignSharePct: shares.foreignSharePct,
+          egyptianSharePct: shares?.egyptianSharePct ?? null,
+          arabSharePct: shares?.arabSharePct ?? null,
+          foreignSharePct: shares?.foreignSharePct ?? null,
           egyptianNet: -(rawAr + rawFr),
           arabNet: rawAr,
           foreignNet: rawFr,
           retailSharePct,
           instSharePct,
-          egyptianRetailNet: retailFlows.EG,
-          arabRetailNet: retailFlows.AR,
-          foreignRetailNet: retailFlows.FR,
-          egyptianInstNet: instFlows.EG,
-          arabInstNet: instFlows.AR,
-          foreignInstNet: instFlows.FR,
+          egyptianRetailNet: activeRetail.EG,
+          arabRetailNet: activeRetail.AR,
+          foreignRetailNet: activeRetail.FR,
+          egyptianInstNet: activeInst.EG,
+          arabInstNet: activeInst.AR,
+          foreignInstNet: activeInst.FR,
           reportedTurnover,
           isClosingReport,
           parseMethod: 'RETAIL_PLUS_INST',
         };
-      }
-    } else if (missingCount === 1) {
-      // One leg omitted by the reporter (typically a negligible one, e.g. foreign retail).
-      // Derive it from the exact zero-sum identity, but only accept if it is genuinely small.
-      const known = legs.filter((v): v is number => v !== undefined);
-      const inferred = -known.reduce((a, b) => a + b, 0);
-      const grossAbs = known.reduce((a, b) => a + Math.abs(b), 0);
-      if (Math.abs(inferred) <= Math.max(25_000_000, grossAbs * 0.05)) {
-        const filled = legs.map((v) => (v === undefined ? inferred : v));
-        const arabNet = filled[1] + filled[4];
-        const foreignNet = filled[2] + filled[5];
+      } else if (
+        shares &&
+        !legs.every((v) => v! > 0) &&
+        !legs.every((v) => v! < 0) &&
+        Math.abs(rawAr) < 1_000_000_000 &&
+        Math.abs(rawFr) < 1_000_000_000 &&
+        Math.abs(activeRetail.EG!) < 1_000_000_000
+      ) {
+        // Explicit Arab & Foreign retail and institutional legs are all present and mixed-sign,
+        // while the Egyptian leg had a journalist copy/sign typo. Derive egyptianNet from -(rawAr + rawFr).
+        const egyptianNet = -(rawAr + rawFr);
         return {
           marketSegment: 'STOCKS',
           egyptianSharePct: shares.egyptianSharePct,
           arabSharePct: shares.arabSharePct,
           foreignSharePct: shares.foreignSharePct,
+          egyptianNet,
+          arabNet: rawAr,
+          foreignNet: rawFr,
+          retailSharePct,
+          instSharePct,
+          egyptianRetailNet: egyptianNet - activeInst.EG!,
+          arabRetailNet: activeRetail.AR,
+          foreignRetailNet: activeRetail.FR,
+          egyptianInstNet: activeInst.EG,
+          arabInstNet: activeInst.AR,
+          foreignInstNet: activeInst.FR,
+          reportedTurnover,
+          isClosingReport,
+          parseMethod: 'RETAIL_PLUS_INST_INFERRED',
+        };
+      }
+    } else if (missingCount === 1) {
+      // One leg omitted by the reporter (typically a negligible one, e.g. foreign retail).
+      // Derive it from the exact zero-sum identity, or treat omitted foreign retail as 0 when all 5 other legs are reported.
+      const known = legs.filter((v): v is number => v !== undefined);
+      const inferred = -known.reduce((a, b) => a + b, 0);
+      const grossAbs = known.reduce((a, b) => a + Math.abs(b), 0);
+      if (Math.abs(inferred) <= Math.max(50_000_000, grossAbs * 0.12)) {
+        const filled = legs.map((v) => (v === undefined ? inferred : v));
+        const arabNet = filled[1] + filled[4];
+        const foreignNet = filled[2] + filled[5];
+        return {
+          marketSegment: 'STOCKS',
+          egyptianSharePct: shares?.egyptianSharePct ?? null,
+          arabSharePct: shares?.arabSharePct ?? null,
+          foreignSharePct: shares?.foreignSharePct ?? null,
           egyptianNet: -(arabNet + foreignNet),
           arabNet,
           foreignNet,
@@ -562,7 +704,197 @@ export function parseOfficialInvestorFlowArticle(
           isClosingReport,
           parseMethod: 'RETAIL_PLUS_INST_INFERRED',
         };
+      } else if (
+        activeRetail.FR === undefined &&
+        Math.abs(inferred) <= Math.max(150_000_000, grossAbs * 0.22)
+      ) {
+        // Foreign retail omitted by journalist because negligible; keep explicit Arab & Foreign Inst legs intact
+        const arabNet = activeRetail.AR! + activeInst.AR!;
+        const foreignNet = activeInst.FR!;
+        const egyptianNet = -(arabNet + foreignNet);
+        return {
+          marketSegment: 'STOCKS',
+          egyptianSharePct: shares?.egyptianSharePct ?? null,
+          arabSharePct: shares?.arabSharePct ?? null,
+          foreignSharePct: shares?.foreignSharePct ?? null,
+          egyptianNet,
+          arabNet,
+          foreignNet,
+          retailSharePct,
+          instSharePct,
+          egyptianRetailNet: egyptianNet - activeInst.EG!,
+          arabRetailNet: activeRetail.AR!,
+          foreignRetailNet: 0,
+          egyptianInstNet: activeInst.EG!,
+          arabInstNet: activeInst.AR!,
+          foreignInstNet: activeInst.FR!,
+          reportedTurnover,
+          isClosingReport,
+          parseMethod: 'RETAIL_PLUS_INST_INFERRED',
+        };
       }
+    } else if (missingCount === 2 || missingCount === 3) {
+      // Two sub-legs omitted (e.g. Arab & Foreign retail described as "مشتريات محدودة" or combined).
+      const hasEg = activeRetail.EG !== undefined || activeInst.EG !== undefined;
+      const hasAr = activeRetail.AR !== undefined || activeInst.AR !== undefined;
+      const hasFr = activeRetail.FR !== undefined || activeInst.FR !== undefined;
+      const rawEg = (activeRetail.EG ?? 0) + (activeInst.EG ?? 0);
+      const rawAr = (activeRetail.AR ?? 0) + (activeInst.AR ?? 0);
+      const rawFr = (activeRetail.FR ?? 0) + (activeInst.FR ?? 0);
+      const known = legs.filter((v): v is number => v !== undefined);
+      const grossAbs = known.reduce((a, b) => a + Math.abs(b), 0);
+
+      if (hasEg && hasAr && hasFr) {
+        const sum = rawEg + rawAr + rawFr;
+        const maxAbs = Math.max(Math.abs(rawEg), Math.abs(rawAr), Math.abs(rawFr), 1);
+        if (Math.abs(sum) <= Math.max(50_000_000, maxAbs * 0.12)) {
+          const arabNet = rawAr;
+          const foreignNet = rawFr;
+          return {
+            marketSegment: 'STOCKS',
+            egyptianSharePct: shares?.egyptianSharePct ?? null,
+            arabSharePct: shares?.arabSharePct ?? null,
+            foreignSharePct: shares?.foreignSharePct ?? null,
+            egyptianNet: -(arabNet + foreignNet),
+            arabNet,
+            foreignNet,
+            retailSharePct,
+            instSharePct,
+            egyptianRetailNet: activeRetail.EG ?? 0,
+            arabRetailNet: activeRetail.AR ?? 0,
+            foreignRetailNet: activeRetail.FR ?? 0,
+            egyptianInstNet: activeInst.EG ?? 0,
+            arabInstNet: activeInst.AR ?? 0,
+            foreignInstNet: activeInst.FR ?? 0,
+            reportedTurnover,
+            isClosingReport,
+            parseMethod: 'RETAIL_PLUS_INST_INFERRED',
+          };
+        }
+      } else if ([hasEg, hasAr, hasFr].filter(Boolean).length === 2) {
+        const sum2 = rawEg + rawAr + rawFr;
+        if (Math.abs(sum2) <= Math.max(35_000_000, grossAbs * 0.08)) {
+          const egNet = hasEg ? rawEg : -sum2;
+          const arNet = hasAr ? rawAr : -sum2;
+          const frNet = hasFr ? rawFr : -sum2;
+          return {
+            marketSegment: 'STOCKS',
+            egyptianSharePct: shares?.egyptianSharePct ?? null,
+            arabSharePct: shares?.arabSharePct ?? null,
+            foreignSharePct: shares?.foreignSharePct ?? null,
+            egyptianNet: -(arNet + frNet),
+            arabNet: arNet,
+            foreignNet: frNet,
+            retailSharePct,
+            instSharePct,
+            egyptianRetailNet: activeRetail.EG ?? (hasEg ? 0 : egNet),
+            arabRetailNet: activeRetail.AR ?? (hasAr ? 0 : arNet),
+            foreignRetailNet: activeRetail.FR ?? (hasFr ? 0 : frNet),
+            egyptianInstNet: activeInst.EG ?? 0,
+            arabInstNet: activeInst.AR ?? 0,
+            foreignInstNet: activeInst.FR ?? 0,
+            reportedTurnover,
+            isClosingReport,
+            parseMethod: 'RETAIL_PLUS_INST_INFERRED',
+          };
+        }
+      }
+    }
+  }
+
+  // Strategy 3: All 3 Institutional legs explicitly reported with nationality shares (Retail absorbed the opposite side)
+  if (instIdx >= 0 && shares) {
+    const instEnd = retailIdx > instIdx ? retailIdx : Math.min(norm.length, instIdx + 450);
+    const instFlows = parseDirectionalNatFlows(norm.slice(instIdx, instEnd));
+    if (
+      instFlows.EG !== undefined &&
+      instFlows.AR !== undefined &&
+      instFlows.FR !== undefined
+    ) {
+      const totalInstNet = instFlows.EG + instFlows.AR + instFlows.FR;
+      const totalRetailNet = -totalInstNet;
+      const arabNet = instFlows.AR;
+      const foreignNet = instFlows.FR;
+      const egyptianNet = -(arabNet + foreignNet);
+      return {
+        marketSegment: 'STOCKS',
+        egyptianSharePct: shares.egyptianSharePct,
+        arabSharePct: shares.arabSharePct,
+        foreignSharePct: shares.foreignSharePct,
+        egyptianNet,
+        arabNet,
+        foreignNet,
+        retailSharePct,
+        instSharePct,
+        egyptianRetailNet: totalRetailNet,
+        arabRetailNet: 0,
+        foreignRetailNet: 0,
+        egyptianInstNet: instFlows.EG,
+        arabInstNet: instFlows.AR,
+        foreignInstNet: instFlows.FR,
+        reportedTurnover,
+        isClosingReport,
+        parseMethod: 'RETAIL_PLUS_INST_INFERRED',
+      };
+    }
+  }
+
+  // Strategy 4: Official closing breakdown where Foreign net flow is explicitly reported in EGP
+  // alongside official nationality/category % shares (or all 3 retail legs), while the domestic counter-leg is stated verbally.
+  const hasAllRetailPreview =
+    parsedRetailFlows.EG !== undefined &&
+    parsedRetailFlows.AR !== undefined &&
+    parsedRetailFlows.FR !== undefined;
+  if (isClosingReport && (shares || categoryShares || hasAllRetailPreview)) {
+    const rFlows =
+      retailIdx >= 0
+        ? parseDirectionalNatFlows(
+            norm.slice(retailIdx, instIdx > retailIdx ? instIdx : Math.min(norm.length, retailIdx + 450))
+          )
+        : {};
+    const iFlows =
+      instIdx >= 0
+        ? parseDirectionalNatFlows(
+            norm.slice(instIdx, retailIdx > instIdx ? retailIdx : Math.min(norm.length, instIdx + 450))
+          )
+        : {};
+    // Also check tail after % shares for direct nationality flows (e.g. "واتجه الاجانب الي الشراء بصافي 129 مليون جنيه")
+    const tailFlows = parseDirectionalNatFlows(norm.slice(-450));
+
+    const frRetail = rFlows.FR ?? 0;
+    const frInst = iFlows.FR ?? (rFlows.FR === undefined ? tailFlows.FR : undefined);
+    if (frInst !== undefined && Math.abs(frInst) < 5_000_000_000) {
+      const foreignNet = frRetail + frInst;
+      const arRetail = rFlows.AR ?? 0;
+      const arInst = iFlows.AR ?? (rFlows.AR === undefined ? tailFlows.AR ?? 0 : 0);
+      let arabNet = arRetail + arInst;
+      let egyptianNet = -(arabNet + foreignNet);
+
+      if (rFlows.EG !== undefined && iFlows.EG !== undefined && arabNet === 0) {
+        egyptianNet = rFlows.EG + iFlows.EG;
+        arabNet = -(egyptianNet + foreignNet);
+      }
+
+      return {
+        marketSegment: 'STOCKS',
+        egyptianSharePct: shares?.egyptianSharePct ?? null,
+        arabSharePct: shares?.arabSharePct ?? null,
+        foreignSharePct: shares?.foreignSharePct ?? null,
+        egyptianNet,
+        arabNet,
+        foreignNet,
+        retailSharePct,
+        instSharePct,
+        egyptianRetailNet: rFlows.EG ?? (iFlows.EG !== undefined ? egyptianNet - iFlows.EG : egyptianNet),
+        arabRetailNet: arRetail,
+        foreignRetailNet: frRetail,
+        egyptianInstNet: iFlows.EG ?? (rFlows.EG !== undefined ? egyptianNet - rFlows.EG : 0),
+        arabInstNet: arabNet - arRetail,
+        foreignInstNet: frInst,
+        reportedTurnover,
+        isClosingReport,
+        parseMethod: 'RETAIL_PLUS_INST_INFERRED',
+      };
     }
   }
 

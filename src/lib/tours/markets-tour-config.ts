@@ -41,6 +41,15 @@ export function getMarketsTourSteps(isAr: boolean): TourStep[] {
       padding: 12,
     },
     {
+      target: '[data-tour="markets-income"]',
+      title: isAr ? 'توزيع الدخل والثروة للأسر المصرية' : 'Household Income & Wealth Distribution',
+      content: isAr
+        ? 'استكشف نموذج القوة الشرائية الديموغرافية عبر 21 شريحة دخل، وتابع مسار نمو الطبقة المتوسطة وتغير الدخل الإجمالي عبر الفئات العمرية من 2009 إلى 2029 بالدولار والجنيه.'
+        : 'Explore Egypt’s 21-tier demographic purchasing power model, middle-class expansion, and gross income lifecycle across age cohorts from 2009 to 2029 in USD and EGP.',
+      placement: 'top',
+      padding: 12,
+    },
+    {
       target: '[data-tour="markets-floating-nav"]',
       title: isAr ? 'شريط التنقل السريع بين الأقسام' : 'Markets Quick Navigator',
       content: isAr

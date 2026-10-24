@@ -85,10 +85,16 @@ export default function TickerPositionsDrawer({
   }, [order?.tickerSymbol]);
 
   const symbol = order ? order.tickerSymbol : '';
-  const cleanSymbol = symbol.replace('.CA', '').trim().toUpperCase();
+  const cleanSymbol = symbol.replace(/\.ca$/i, '').trim().toUpperCase();
   const displaySymbol = cleanSymbol;
   const currentPrice = order?.currentPrice ?? 0;
   const router = useRouter();
+
+  const signalData = (exitSignal as any)?.signal;
+  const signalAction = signalData?.signal;
+  const strategyLabel = (exitSignal as any)?.strategyLabel || (exitSignal as any)?.strategyShortName || 'Champion Strategy';
+  const signalReason = signalData?.reasoning;
+  const signalDate = signalData?.date;
 
   const strategyId = (exitSignal as any)?.strategyId;
   const strategyParam = strategyId ? `&strategy=${encodeURIComponent(strategyId)}` : '';
@@ -329,14 +335,67 @@ export default function TickerPositionsDrawer({
                       </div>
                     </div>
                   ) : (
-                    <TickerPositions
-                      symbol={symbol}
-                      companyName={order?.companyName}
-                      logoUrl={order?.logoUrl}
-                      orders={orders}
-                      currentPrice={currentPrice}
-                      chartData={[]}
-                      onOrdersChange={() => setPositionsRefreshKey((k) => k + 1)}
+                    <>
+                      {signalAction === 'SELL' && (
+                        <div className="mx-4 sm:mx-6 mt-4 p-3 rounded-lg border border-rose-500/30 bg-rose-500/10 flex items-start justify-between gap-3 font-sans">
+                          <div className="flex items-start gap-2.5 min-w-0">
+                            <div className="w-2 h-2 rounded-full bg-rose-500 mt-1.5 shrink-0 animate-ping" />
+                            <div>
+                              <div className="text-xs font-semibold text-rose-400 flex items-center gap-1.5 flex-wrap">
+                                <span>{isArabic ? `إشارة بيع نشطة من ${strategyLabel}` : `Active SELL Signal from ${strategyLabel}`}</span>
+                                {signalDate && <span className="text-[11px] font-normal text-rose-300/80">({signalDate})</span>}
+                              </div>
+                              {signalReason && (
+                                <p className="text-[11px] text-text-muted mt-0.5 leading-relaxed">
+                                  {signalReason}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <Link
+                            href={chartUrl}
+                            onClick={handleGoToChart}
+                            className="text-[11px] font-semibold text-rose-400 hover:text-rose-300 underline underline-offset-2 shrink-0"
+                          >
+                            {isArabic ? 'عرض على الشارت' : 'View on Chart'}
+                          </Link>
+                        </div>
+                      )}
+
+                      {signalAction === 'BUY' && (
+                        <div className="mx-4 sm:mx-6 mt-4 p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 flex items-start justify-between gap-3 font-sans">
+                          <div className="flex items-start gap-2.5 min-w-0">
+                            <div className="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+                            <div>
+                              <div className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5 flex-wrap">
+                                <span>{isArabic ? `إشارة شراء نشطة من ${strategyLabel}` : `Active BUY Signal from ${strategyLabel}`}</span>
+                                {signalDate && <span className="text-[11px] font-normal text-emerald-300/80">({signalDate})</span>}
+                              </div>
+                              {signalReason && (
+                                <p className="text-[11px] text-text-muted mt-0.5 leading-relaxed">
+                                  {signalReason}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <Link
+                            href={chartUrl}
+                            onClick={handleGoToChart}
+                            className="text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 underline underline-offset-2 shrink-0"
+                          >
+                            {isArabic ? 'عرض على الشارت' : 'View on Chart'}
+                          </Link>
+                        </div>
+                      )}
+
+                      <TickerPositions
+                        symbol={symbol}
+                        companyName={order?.companyName}
+                        logoUrl={order?.logoUrl}
+                        orders={orders}
+                        currentPrice={currentPrice}
+                        chartData={[]}
+                        onOrdersChange={() => setPositionsRefreshKey((k) => k + 1)}
                       onDeletePosition={() => {
                         onClose();
                         onPositionsChanged?.();
@@ -368,6 +427,7 @@ export default function TickerPositionsDrawer({
                       }
                       onAddNew={() => setIsAddOrderOpen(true)}
                     />
+                    </>
                   )}
                 </div>
               </motion.div>

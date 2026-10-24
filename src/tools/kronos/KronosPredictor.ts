@@ -1,6 +1,18 @@
 import path from 'path';
 import { getOnnxRuntime, createSafeInferenceSession } from '@/lib/onnx-loader';
 
+export interface KronosPredictOptions {
+  sampleCount?: number;
+  temperature?: number;
+  topP?: number;
+}
+
+export interface KronosPredictResult {
+  outNorm: Float32Array;
+  upper80?: Float32Array;
+  lower80?: Float32Array;
+}
+
 export class KronosPredictor {
   private sessionEnc: any = null;
   private sessionDecS1: any = null;
@@ -98,89 +110,127 @@ export class KronosPredictor {
   /**
    * Run autoregressive prediction.
    */
-  async predict(x: Float32Array, x_stamp: Float32Array, y_stamp: Float32Array, seq_len: number, pred_len: number): Promise<Float32Array> {
+  async predict(
+    x: Float32Array,
+    x_stamp: Float32Array,
+    y_stamp: Float32Array,
+    seq_len: number,
+    pred_len: number,
+    options?: KronosPredictOptions
+  ): Promise<KronosPredictResult> {
     if (!this.initialized) await this.init();
     const ort = await getOnnxRuntime();
     if (!ort) {
       throw new Error('No ONNX runtime (native or WASM) available in this environment');
     }
 
+    const sampleCount = Math.max(1, Math.min(options?.sampleCount ?? 1, 10));
+    const temperature = Math.max(0.1, Math.min(options?.temperature ?? 0.6, 2.0));
+    const topP = Math.max(0.1, Math.min(options?.topP ?? 0.90, 1.0));
+
     const xTensor = new ort.Tensor('float32', x, [1, seq_len, 6]);
 
     // 1. Encode
     const encResult = await this.sessionEnc!.run({ x: xTensor });
-    const s1Ids = encResult.s1_ids;
-    const s2Ids = encResult.s2_ids;
-
-    const s1Data = Array.from(s1Ids.data as BigInt64Array);
-    const s2Data = Array.from(s2Ids.data as BigInt64Array);
+    const baseS1 = Array.from(encResult.s1_ids.data as BigInt64Array);
+    const baseS2 = Array.from(encResult.s2_ids.data as BigInt64Array);
 
     const xStampData = Array.from(x_stamp);
     const yStampData = Array.from(y_stamp);
 
-    for (let step = 0; step < pred_len; step++) {
-      // Build current stamp: x_stamp + y_stamp up to `step`
-      const currentStampLen = seq_len + step;
-      const currentStampData = new Float32Array(currentStampLen * 5);
-      currentStampData.set(xStampData, 0);
-      currentStampData.set(yStampData.slice(0, step * 5), seq_len * 5);
-      const stampTensor = new ort.Tensor('float32', currentStampData, [1, currentStampLen, 5]);
+    const samplePaths: Float32Array[] = [];
 
-      const s1IdsTensor = new ort.Tensor('int64', new BigInt64Array(s1Data), [1, s1Data.length]);
-      const s2IdsTensor = new ort.Tensor('int64', new BigInt64Array(s2Data), [1, s2Data.length]);
+    for (let pathIdx = 0; pathIdx < sampleCount; pathIdx++) {
+      const s1Data = [...baseS1];
+      const s2Data = [...baseS2];
 
-      // 2. Decode S1
-      const decS1Result = await this.sessionDecS1!.run({
-        s1_ids: s1IdsTensor,
-        s2_ids: s2IdsTensor,
-        stamp: stampTensor
+      for (let step = 0; step < pred_len; step++) {
+        // Build current stamp: x_stamp + y_stamp up to `step`
+        const currentStampLen = seq_len + step;
+        const currentStampData = new Float32Array(currentStampLen * 5);
+        currentStampData.set(xStampData, 0);
+        currentStampData.set(yStampData.slice(0, step * 5), seq_len * 5);
+        const stampTensor = new ort.Tensor('float32', currentStampData, [1, currentStampLen, 5]);
+
+        const s1IdsTensor = new ort.Tensor('int64', new BigInt64Array(s1Data), [1, s1Data.length]);
+        const s2IdsTensor = new ort.Tensor('int64', new BigInt64Array(s2Data), [1, s2Data.length]);
+
+        // 2. Decode S1
+        const decS1Result = await this.sessionDecS1!.run({
+          s1_ids: s1IdsTensor,
+          s2_ids: s2IdsTensor,
+          stamp: stampTensor,
+        });
+
+        const s1Logits = decS1Result.s1_logits.data as Float32Array;
+        const context = decS1Result.context;
+
+        // Extract last token logits (vocab size 1024)
+        const vocabSize = 1024;
+        const lastTokenIdx = currentStampLen - 1;
+        const lastS1Logits = s1Logits.subarray(lastTokenIdx * vocabSize, (lastTokenIdx + 1) * vocabSize);
+
+        // Sample next S1 with temperature and Top-P
+        const nextS1 = this.sampleLogits(lastS1Logits, temperature, topP);
+        s1Data.push(BigInt(nextS1));
+
+        // 3. Decode S2
+        const nextS1Tensor = new ort.Tensor('int64', new BigInt64Array([BigInt(nextS1)]), [1, 1]);
+        const decS2Result = await this.sessionDecS2!.run({
+          context: context,
+          s1_ids: nextS1Tensor,
+        });
+
+        const s2Logits = decS2Result.s2_logits.data as Float32Array;
+        const lastS2Logits = s2Logits.subarray(0, vocabSize);
+
+        // Sample next S2
+        const nextS2 = this.sampleLogits(lastS2Logits, temperature, topP);
+        s2Data.push(BigInt(nextS2));
+      }
+
+      // 4. Decode full token sequence back to time series (preserving convolutional receptive field)
+      const maxContext = 512;
+      const totalTokens = s1Data.length;
+      const contextStart = Math.max(0, totalTokens - maxContext);
+      const decodeS1 = s1Data.slice(contextStart);
+      const decodeS2 = s2Data.slice(contextStart);
+      const decodeLen = decodeS1.length;
+
+      const predS1Tensor = new ort.Tensor('int64', new BigInt64Array(decodeS1), [1, decodeLen]);
+      const predS2Tensor = new ort.Tensor('int64', new BigInt64Array(decodeS2), [1, decodeLen]);
+
+      const decResult = await this.sessionDec!.run({
+        s1_ids: predS1Tensor,
+        s2_ids: predS2Tensor,
       });
 
-      const s1Logits = decS1Result.s1_logits.data as Float32Array;
-      const context = decS1Result.context;
-
-      // Extract last token logits (vocab size 1024)
-      const vocabSize = 1024;
-      const lastTokenIdx = currentStampLen - 1;
-      const lastS1Logits = s1Logits.subarray(lastTokenIdx * vocabSize, (lastTokenIdx + 1) * vocabSize);
-
-      // Sample next S1 with temperature and Top-P
-      const nextS1 = this.sampleLogits(lastS1Logits, 0.6, 0.90);
-      s1Data.push(BigInt(nextS1));
-
-      // 3. Decode S2
-      const nextS1Tensor = new ort.Tensor('int64', new BigInt64Array([BigInt(nextS1)]), [1, 1]);
-      const decS2Result = await this.sessionDecS2!.run({
-        context: context,
-        s1_ids: nextS1Tensor
-      });
-
-      const s2Logits = decS2Result.s2_logits.data as Float32Array;
-      const lastS2Logits = s2Logits.subarray(0, vocabSize);
-
-      // Sample next S2
-      const nextS2 = this.sampleLogits(lastS2Logits, 0.6, 0.90);
-      s2Data.push(BigInt(nextS2));
+      const allDecoded = decResult.x_pred.data as Float32Array; // shape: (1, decodeLen, 6)
+      const predStart = (decodeLen - pred_len) * 6;
+      samplePaths.push(new Float32Array(allDecoded.subarray(predStart, predStart + pred_len * 6)));
     }
 
-    // 4. Decode full token sequence back to time series (preserving convolutional receptive field)
-    const maxContext = 512;
-    const totalTokens = s1Data.length;
-    const contextStart = Math.max(0, totalTokens - maxContext);
-    const decodeS1 = s1Data.slice(contextStart);
-    const decodeS2 = s2Data.slice(contextStart);
-    const decodeLen = decodeS1.length;
+    if (samplePaths.length === 1) {
+      return { outNorm: samplePaths[0] };
+    }
 
-    const predS1Tensor = new ort.Tensor('int64', new BigInt64Array(decodeS1), [1, decodeLen]);
-    const predS2Tensor = new ort.Tensor('int64', new BigInt64Array(decodeS2), [1, decodeLen]);
+    // Compute median and 80% confidence interval across sample paths
+    const totalPoints = pred_len * 6;
+    const outNorm = new Float32Array(totalPoints);
+    const upper80 = new Float32Array(totalPoints);
+    const lower80 = new Float32Array(totalPoints);
 
-    const decResult = await this.sessionDec!.run({
-      s1_ids: predS1Tensor,
-      s2_ids: predS2Tensor
-    });
+    for (let i = 0; i < totalPoints; i++) {
+      const values = samplePaths.map((p) => p[i]).sort((a, b) => a - b);
+      const mid = Math.floor(values.length / 2);
+      outNorm[i] = values[mid];
 
-    const allDecoded = decResult.x_pred.data as Float32Array; // shape: (1, decodeLen, 6)
-    const predStart = (decodeLen - pred_len) * 6;
-    return allDecoded.subarray(predStart, predStart + pred_len * 6);
+      const lowIdx = Math.max(0, Math.floor(values.length * 0.1));
+      const highIdx = Math.min(values.length - 1, Math.ceil(values.length * 0.9) - 1);
+      lower80[i] = values[lowIdx];
+      upper80[i] = values[highIdx];
+    }
+
+    return { outNorm, upper80, lower80 };
   }
 }

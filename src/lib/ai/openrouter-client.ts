@@ -60,19 +60,9 @@ export interface AICompletionResult {
 // Cascaded model tiers using verified active free models on OpenRouter
 // (OpenRouter enforces max 3 items in 'models' array)
 const MODEL_TIERS: string[][] = [
-  [
-    'liquid/lfm-2.5-2.6b:free',
-    'cohere/north-mini-code:free',
-  ],
-  [
-    'cohere/north-mini-code:free',
-    'liquid/lfm-2.5-2.6b:free',
-  ],
-  [
-    'dots-studio/dots-3-note-preview:free',
-    'google/gemma-4-31b-it:free',
-    'google/gemma-4-26b-a4b-it:free',
-  ],
+  ['minimax/minimax-m3.1-flash:free'],
+  ['dots-studio/dots-3-note-preview:free'],
+  ['liquid/lfm-2.5-2.6b:free'],
 ];
 
 // In-memory key state store (persists across requests in node process)
@@ -197,7 +187,7 @@ function getOrderedCandidates(keys: string[]): KeyState[] {
  * Sanitize AI model output by stripping thinking scratchpads, markdown preambles, and meta tags
  */
 export function sanitizeInsightText(rawText: string): string {
-  let text = rawText || '';
+  let text = (rawText || '').trim();
 
   // 1. Remove XML/HTML thinking tags: <think>...</think> and unclosed <think>...
   text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
@@ -207,17 +197,14 @@ export function sanitizeInsightText(rawText: string): string {
   text = text.replace(/^Here('s| is) a thinking process:[\s\S]*?\n\n/i, '').trim();
   text = text.replace(/^(here is|briefing|summary|market update:)[\s\S]*?\n/i, '').trim();
 
-  // 3. Strip markdown code fences and raw bold/heading markers
-  text = text.replace(/^```[a-z]*\n([\s\S]*?)\n```$/i, '$1').trim();
-  text = text.replace(/\*\*/g, '').replace(/__/g, '').replace(/^#+\s+/gm, '').trim();
-
-  // 4. If output was cut off mid-sentence at the end, trim back to the last complete sentence if available
-  if (text.length > 80 && !/[.!?؟%)"»\]0-9]$/.test(text)) {
-    const lastPeriod = Math.max(text.lastIndexOf('. '), text.lastIndexOf('! '), text.lastIndexOf('? '), text.lastIndexOf('.\n'));
-    if (lastPeriod >= 45) {
-      text = text.slice(0, lastPeriod + 1).trim();
-    }
+  // 3. Extract JSON from code fence if present
+  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (codeBlockMatch && codeBlockMatch[1]) {
+    return codeBlockMatch[1].trim();
   }
+
+  // 4. Strip markdown bold/heading markers
+  text = text.replace(/\*\*/g, '').replace(/__/g, '').replace(/^#+\s+/gm, '').trim();
 
   return text;
 }
@@ -228,8 +215,8 @@ export function sanitizeInsightText(rawText: string): string {
 export function defaultValidateOutput(text: string): boolean {
   if (!text || text.length < 35) return false;
 
-  // Reject mid-word / mid-sentence cutoffs that lack terminal punctuation
-  if (!/[.!?؟%)"»\]]$/.test(text.trim())) return false;
+  // Reject mid-word / mid-sentence cutoffs that lack terminal punctuation (including JSON closing braces)
+  if (!/[.!?؟%)"»\]\}]$/.test(text.trim())) return false;
 
   const lower = text.toLowerCase();
   const isScratchpad =
@@ -341,7 +328,8 @@ export async function completeWithKeyPool(
           const isUpstreamModelLimit =
             status === 429 &&
             (bodyText.includes('Provider returned error') ||
-              bodyText.includes('temporarily rate-limited upstream'));
+              bodyText.includes('temporarily rate-limited upstream') ||
+              bodyText.includes('Rate limit exceeded: free-models-per-day'));
 
           if (isUpstreamModelLimit) {
             lastFailureReason = `Upstream model tier ${tierIdx} rate-limited. Trying next model tier.`;
@@ -350,14 +338,20 @@ export async function completeWithKeyPool(
           }
 
           // Set cooldown for this specific API key
-          const cooldownMinutes = status === 402 ? 30 : 10;
+          const cooldownMinutes = status === 402 ? 30 : orderedCandidates.length > 1 ? 5 : 0.25;
           candidate.cooldownUntil = Date.now() + cooldownMinutes * 60 * 1000;
           candidate.failureCount++;
           candidate.lastError = `HTTP ${status}: ${bodyText.slice(0, 100)}`;
-          lastFailureReason = `Key ${candidate.maskedKey} rate limited (${status}). Rotating to next key.`;
+          lastFailureReason = `Key ${candidate.maskedKey} rate limited (${status}).`;
           console.warn(`[openrouter-client] ${lastFailureReason}`);
-          // Break model tier loop immediately to switch to the NEXT key in the pool!
-          break;
+          if (orderedCandidates.length > 1) {
+            // Rotate to next key in pool
+            break;
+          } else {
+            // Only 1 key: pause briefly and try next model tier
+            await new Promise((r) => setTimeout(r, 1200));
+            continue;
+          }
         }
 
         if (!ok) {

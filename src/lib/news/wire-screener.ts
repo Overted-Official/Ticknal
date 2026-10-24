@@ -671,11 +671,18 @@ export async function screenAndIngestWires(options?: { targetDateOnly?: string }
       continue;
     }
 
+    // Assets managed by the 24-hour daily AI summary service (GOLD, SILVER, and listed equities)
+    // strictly have 1 consolidated post per day via generateDailyTickerSummaries, never individual wire posts.
+    if (wire.assetKey === 'GOLD' || wire.assetKey === 'SILVER') {
+      droppedNoise++;
+      continue;
+    }
+
     // Cluster key: cap precious metals and EGX30 market roundups to 1 per day/catalyst so EN+AR duplicates merge
     const dateBucket = wire.publishedAt.toISOString().slice(0, 10);
     const clusterKey = `${wire.assetKey}:${dateBucket}:${catalystEn.type}`;
     const maxPerCluster =
-      wire.assetKey === 'GOLD' || wire.assetKey === 'SILVER' || wire.assetKey === 'EGX30' ? 1 : 2;
+      wire.assetKey === 'EGX30' ? 1 : 2;
     const countInCluster = storyClusterCount.get(clusterKey) || 0;
     if (countInCluster >= maxPerCluster) {
       droppedNoise++;

@@ -9,7 +9,6 @@ import { type ClosedTradeItem, type TransactionsTimeframe } from './types';
 import TransactionsHeader from './TransactionsHeader';
 import TransactionsFloatingNav from './TransactionsFloatingNav';
 import TransactionsOverviewSection from './TransactionsOverviewSection';
-import AccountsRail from './AccountsRail';
 import MonthlyCloseoutArchive from './MonthlyCloseoutArchive';
 import TransactionsLedgerSection from './TransactionsLedgerSection';
 import { Tour, useTour } from '@/components/ui/tour';
@@ -192,11 +191,11 @@ export default function TransactionsPageView({
       </div>
 
       {/* 2. Sticky Floating Top Navigation Bar */}
-      <TransactionsFloatingNav />
+      <TransactionsFloatingNav hasSummaries={summaries.length > 0} />
 
       {/* 3. Main Sections Stack */}
       <div className="app-page page-sections-stack pb-28 md:pb-20 pt-1 space-y-8">
-        {/* Section 1: Transactions Overview (Header + KPI Rail + Analytics Charts) */}
+        {/* Section 1: Overview (Header + KPI Rail + Accounts Rail + Analytics Charts) */}
         <TransactionsOverviewSection
           transactions={transactions}
           filteredTransactions={filteredTransactions}
@@ -208,29 +207,22 @@ export default function TransactionsPageView({
           totalLiquidEgp={totalLiquidEgp}
           latestSummary={latestSummary}
           summaries={summaries}
+          onBalanceUpdated={handleBalanceUpdated}
+          onOpenAddAccount={() => setIsAddAccountOpen(true)}
         />
 
-        {/* Section 2: Surface 1 - Accounts & Liquidity Grid with fast inline updating */}
-        <section id="section-accounts-rail" className="section-container">
-          <AccountsRail
-            accounts={realAccounts}
-            usdRate={usdRate}
-            isArabic={isRTL}
-            onBalanceUpdated={handleBalanceUpdated}
-            onOpenAddAccount={() => setIsAddAccountOpen(true)}
-          />
-        </section>
+        {/* Section 2: Monthly Wealth Closeouts & Expense Breakdown Archive (Rendered when summaries exist) */}
+        {summaries.length > 0 && (
+          <section id="section-closeout-archive" className="section-container">
+            <MonthlyCloseoutArchive
+              summaries={summaries}
+              isArabic={isRTL}
+              onOpenCheckIn={() => setIsCheckInOpen(true)}
+            />
+          </section>
+        )}
 
-        {/* Section 3: Surface 4 - Monthly Wealth Closeouts & Expense Breakdown Archive */}
-        <section id="section-closeout-archive" className="section-container">
-          <MonthlyCloseoutArchive
-            summaries={summaries}
-            isArabic={isRTL}
-            onOpenCheckIn={() => setIsCheckInOpen(true)}
-          />
-        </section>
-
-        {/* Section 4: Master Activity & Trades Ledger for audit & trade settlement tracking */}
+        {/* Section 3: Master Activity & Trades Ledger for audit & trade settlement tracking */}
         <section id="section-activity-ledger" className="section-container">
           <TransactionsLedgerSection
             transactions={transactions}
@@ -242,15 +234,17 @@ export default function TransactionsPageView({
         </section>
       </div>
 
-      {/* Surface 2: 90-Second Monthly Check-In Drawer */}
+      {/* Monthly Balance Update Drawer */}
       <MonthlyCheckInDrawer
         isOpen={isCheckInOpen}
         onClose={() => setIsCheckInOpen(false)}
         accounts={realAccounts}
+        availableBanks={availableBanks}
         usdRate={usdRate}
         isArabic={isRTL}
         previousSummary={latestSummary}
         onCheckInComplete={handleCheckInComplete}
+        onOpenAddAccount={() => setIsAddAccountOpen(true)}
       />
 
       {/* Add Account Modal Drawer */}

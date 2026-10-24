@@ -260,7 +260,6 @@ export default function MarketOverviewSection({
       value: locale === 'ar' ? marketStatus.labelAr : marketStatus.label,
       changeText: `EGX 30 ${egx30Return >= 0 ? '+' : ''}${egx30Return.toFixed(1)}%`,
       changeColorClass: egx30Return >= 0 ? 'text-profit-num' : 'text-loss-num',
-      metaText: locale === 'ar' ? `إطار ${timeframe}` : `${timeframe} Horizon`,
       sparklinePoints: egx30SparklinePoints,
       sparklineTrend: egx30Return >= 0 ? 'up' : 'down',
       showSparkline: true,
@@ -277,7 +276,6 @@ export default function MarketOverviewSection({
       unit: locale === 'ar' ? 'صاعد' : 'ADVANCERS',
       changeText: locale === 'ar' ? `${totalGainers} صاعد • ${totalLosers} هابط` : `${totalGainers} Up • ${totalLosers} Down`,
       changeColorClass: 'text-text-primary',
-      metaText: locale === 'ar' ? `(${totalStocks} سهم)` : `(${totalStocks} Tickers)`,
       showSparkline: false,
       customBottomContent: (
         <div className="space-y-1 w-full">
@@ -320,7 +318,6 @@ export default function MarketOverviewSection({
       badgeClass: 'bg-brand-blue/15 text-brand-blue border-brand-blue/25',
       changeText: locale === 'ar' ? `${macroData?.timeframe?.tradingDaysCount || 1} جلسات` : `${macroData?.timeframe?.tradingDaysCount || 1} Sessions`,
       changeColorClass: 'text-text-primary',
-      metaText: locale === 'ar' ? 'إجمالي السيولة المتداولة' : 'Total Traded Liquidity',
       sparklinePoints: turnoverSparklinePoints,
       sparklineTrend: 'neutral',
       showSparkline: true,
@@ -344,7 +341,6 @@ export default function MarketOverviewSection({
             ? (locale === 'ar' ? 'صافي تدفق وارد' : 'Net Cumulative Inflow')
             : (locale === 'ar' ? 'صافي تدفق خارج' : 'Net Cumulative Outflow')),
       changeColorClass: netHotMoneyValue >= 0 ? 'text-profit-num' : 'text-loss-num',
-      metaText: locale === 'ar' ? `أجانب + عرب • إطار ${timeframe}` : `Foreigners + Arabs • ${timeframe}`,
       sparklinePoints: hotMoneySparklinePoints,
       sparklineTrend: netHotMoneyValue >= 0 ? 'up' : 'down',
       showSparkline: true,
@@ -360,10 +356,9 @@ export default function MarketOverviewSection({
       value: `${egyPct}%`,
       unit: locale === 'ar' ? 'محلي' : 'DOMESTIC',
       changeText: locale === 'ar'
-        ? `المصريون ${egyPct}% • العرب ${arabPct}%`
-        : `Egyptians ${egyPct}% • Arabs ${arabPct}%`,
+        ? `المصريون ${egyPct}% • العرب ${arabPct}% • الأجانب ${forPct}%`
+        : `Egyptians ${egyPct}% • Arabs ${arabPct}% • Foreigners ${forPct}%`,
       changeColorClass: 'text-text-primary',
-      metaText: locale === 'ar' ? `الأجانب ${forPct}%` : `Foreigners ${forPct}%`,
       showSparkline: false,
       customBottomContent: (
         <div className="space-y-1 w-full">

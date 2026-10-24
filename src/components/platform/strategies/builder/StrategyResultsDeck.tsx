@@ -7,6 +7,7 @@ import StrategyCompanyResultsPanel from './StrategyCompanyResultsPanel';
 import type { ExecutableStrategyProgram } from '../../../../lib/strategies/strategy-program';
 import { useSimpleCompanyBacktest } from './use-simple-company-backtest';
 import type { StrategyUniverseCompany } from './strategy-universe-catalog';
+import type { BacktestAssumptions } from '../../../../lib/strategies/run-simple-backtest';
 
 export type StrategyResultsMode = 'market' | 'companies';
 
@@ -22,6 +23,7 @@ interface StrategyResultsDeckProps {
   readonly resultsMode: StrategyResultsMode;
   readonly startDate: string;
   readonly endDate: string;
+  readonly assumptions: BacktestAssumptions;
   readonly simpleProgram: ExecutableStrategyProgram | null;
   readonly selectedSymbols: readonly string[] | null;
   readonly onSaveSelection?: (symbols: readonly string[]) => Promise<boolean>;
@@ -43,6 +45,7 @@ export default function StrategyResultsDeck({
   resultsMode,
   startDate,
   endDate,
+  assumptions,
   simpleProgram,
   selectedSymbols,
   onSaveSelection,
@@ -53,7 +56,7 @@ export default function StrategyResultsDeck({
 }: StrategyResultsDeckProps) {
   const companyBacktest = useSimpleCompanyBacktest({
     enabled: resultsMode === 'companies' && simpleProgram !== null,
-    program: simpleProgram, symbol: ticker, startDate, endDate,
+    program: simpleProgram, symbol: ticker, startDate, endDate, assumptions,
   });
   const handleSelectTickerFromTreemap = (symbol: string) => {
     onTickerChange(symbol);
@@ -77,6 +80,7 @@ export default function StrategyResultsDeck({
             universe={universe}
             startDate={startDate}
             endDate={endDate}
+            assumptions={assumptions}
             onChooseCompanies={() => onResultsModeChange?.('companies')}
             onSelectTicker={handleSelectTickerFromTreemap}
           />
@@ -95,6 +99,7 @@ export default function StrategyResultsDeck({
             savedSelectedSymbols={selectedSymbols}
             onSaveSelection={onSaveSelection}
             backtestPeriod={{ startDate, endDate }}
+            assumptions={assumptions}
             onTickerChange={onTickerChange}
             onFocusBlock={onFocusBlock}
           />

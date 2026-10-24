@@ -56,6 +56,36 @@ function smoothedSeries(values: Values, period: number, alpha: number, seedMode:
   return result;
 }
 
+export function rollingMedianSeries(values: Values, period: number, minPeriod?: number): (number | null)[] {
+  const sorted: number[] = [];
+  const output: (number | null)[] = [];
+  const insertionIndex = (value: number) => {
+    let low = 0;
+    let high = sorted.length;
+    while (low < high) {
+      const middle = (low + high) >>> 1;
+      if (sorted[middle] < value) low = middle + 1;
+      else high = middle;
+    }
+    return low;
+  };
+  for (let index = 0; index < values.length; index += 1) {
+    if (index >= period) {
+      const leaving = values[index - period];
+      if (leaving !== null && Number.isFinite(leaving)) sorted.splice(insertionIndex(leaving), 1);
+    }
+    const entering = values[index];
+    if (entering !== null && Number.isFinite(entering)) sorted.splice(insertionIndex(entering), 0, entering);
+    if (sorted.length < (minPeriod ?? period) || (minPeriod === undefined && index + 1 < period)) {
+      output.push(null);
+      continue;
+    }
+    const middle = sorted.length >>> 1;
+    output.push(sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2);
+  }
+  return output;
+}
+
 function calculate(operation: string, sources: Values[], index: number, period: number, lowerBound?: number, upperBound?: number, minPeriod?: number): number | null {
   if (operation === 'lag') return index >= period ? sources[0][index - period] ?? null : null;
   if (operation === 'coalesce') return sources.map((source) => source[index]).find((value) => value !== null && value !== undefined && Number.isFinite(value)) ?? null;
@@ -218,6 +248,8 @@ export function runAdvancedBacktest(program: AdvancedStrategyProgram, frame: Tim
           return values.some((value) => value === null || value === undefined) ? null
             : finite(values.reduce<number>((total, value, position) => total + (value ?? 0) * weights[position], 0) / divisor);
         }));
+      } else if (input.operation === 'median') {
+        series.set(input.id, rollingMedianSeries(sources[0]!, periodLength, input.minPeriod));
       } else {
         series.set(input.id, frame.bars.map((_, index) => calculate(input.operation, sources as Values[], index, periodLength, input.lowerBound, input.upperBound, input.minPeriod)));
       }

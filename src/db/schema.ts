@@ -201,6 +201,7 @@ export const userStrategySettings = pgTable('user_strategy_settings', {
 export const userStrategies = pgTable('user_strategies', {
   userId: uuid('user_id').notNull(),
   id: varchar('id', { length: 100 }).notNull(),
+  revision: integer('revision').default(1).notNull(),
   name: varchar('name', { length: 100 }).notNull(),
   mode: varchar('mode', { length: 12 }).notNull(),
   definition: jsonb('definition').notNull(),

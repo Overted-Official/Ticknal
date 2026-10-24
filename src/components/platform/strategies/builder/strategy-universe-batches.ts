@@ -4,6 +4,7 @@ import type { ParsedUniverseBacktestResponse } from './strategy-universe-analyti
 export const MAX_SYMBOLS_PER_BACKTEST_REQUEST = 12;
 
 export type UniverseBatchResponse = ParsedUniverseBacktestResponse | { readonly status: 'unauthorized' };
+export type UniverseRunResult = { readonly status: 'ready' | 'error' | 'unauthorized'; readonly results: readonly UniverseBacktestItem[] };
 
 export function chunkUniverseSymbols(symbols: readonly string[]): readonly (readonly string[])[] {
   const batches: string[][] = [];
@@ -18,12 +19,12 @@ export async function runUniverseBatches(
   requestBatch: (symbols: readonly string[], signal: AbortSignal) => Promise<UniverseBatchResponse>,
   signal: AbortSignal,
   onProgress: (completed: number, results: readonly UniverseBacktestItem[]) => void,
-): Promise<UniverseBatchResponse> {
+): Promise<UniverseRunResult> {
   const results: UniverseBacktestItem[] = [];
   for (const batch of chunkUniverseSymbols(symbols)) {
     if (signal.aborted) throw new DOMException('Backtest cancelled.', 'AbortError');
     const response = await requestBatch(batch, signal);
-    if (response.status !== 'ready') return response;
+    if (response.status !== 'ready') return { status: response.status, results: [...results] };
     results.push(...response.results);
     onProgress(results.length, [...results]);
   }

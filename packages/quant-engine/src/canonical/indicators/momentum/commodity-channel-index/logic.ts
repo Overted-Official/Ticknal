@@ -4,10 +4,10 @@ import { field, meanDeviation, n, sma } from "../shared";
 type Parameters = Record<string, unknown>;
 
 const compute: CategoryIndicatorSpec<Parameters>["compute"] = (frame, p) => {
-  const typical = field(frame, "close").map(
-    (close, i) =>
-      (field(frame, "high")[i] + field(frame, "low")[i] + close) / 3,
-  );
+  const high = field(frame, "high");
+  const low = field(frame, "low");
+  const close = field(frame, "close");
+  const typical = close.map((value, i) => (high[i] + low[i] + value) / 3);
   const average = sma(typical, n(p, "period"));
   const deviation = meanDeviation(typical, average, n(p, "period"));
   return {

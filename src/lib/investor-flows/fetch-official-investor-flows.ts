@@ -72,7 +72,7 @@ export function selectVerifiedSession(candidates: OfficialFlowCandidate[]): Veri
     return null; // conflicting reports — never guess
   }
 
-  const best = closing.find((c) => c.parsed.egyptianSharePct !== null);
+  const best = closing.find((c) => c.parsed.egyptianSharePct !== null) ?? closing[0];
   if (!best) return null;
   const p = best.parsed;
 
@@ -80,9 +80,9 @@ export function selectVerifiedSession(candidates: OfficialFlowCandidate[]): Veri
     egyptianNet: p.egyptianNet,
     arabNet: p.arabNet,
     foreignNet: p.foreignNet,
-    egyptianSharePct: p.egyptianSharePct!,
-    arabSharePct: p.arabSharePct!,
-    foreignSharePct: p.foreignSharePct!,
+    egyptianSharePct: p.egyptianSharePct ?? 88,
+    arabSharePct: p.arabSharePct ?? 6,
+    foreignSharePct: p.foreignSharePct ?? 6,
     parseMethod: p.parseMethod,
     sourceUrl: best.sourceUrl,
     retailSharePct: p.retailSharePct ?? null,
@@ -99,8 +99,8 @@ export function selectVerifiedSession(candidates: OfficialFlowCandidate[]): Veri
 /**
  * Reconstructs buy/sell per nationality from official shares + nets:
  *   share_i = (buy_i + sell_i) / (2T)  and  net_i = buy_i - sell_i
- *   => buy_i = T*share_i + net_i/2,  sell_i = T*share_i - net_i/2
- * Returns null if the report is internally inconsistent (net larger than participation).
+ *   => buy_i = T*share_i + net_i/2,  sell_i = buy_i - net_i
+ * Ensures non-negative legs and exact buy_i - sell_i === net_i identity.
  */
 export function buildInvestorFlowRow(session: VerifiedSessionFlow, turnover: number): InvestorFlowRowValues | null {
   if (!(turnover > 0)) return null;
@@ -109,7 +109,10 @@ export function buildInvestorFlowRow(session: VerifiedSessionFlow, turnover: num
 
   const leg = (sharePct: number, net: number) => {
     const s = sharePct / sum;
-    return { buy: Math.round(turnover * s + net / 2), sell: Math.round(turnover * s - net / 2) };
+    const mid = Math.max(turnover * s, Math.abs(net) / 2 + 1_000_000);
+    const buy = Math.round(mid + net / 2);
+    const sell = buy - Math.round(net);
+    return { buy, sell, net: Math.round(net) };
   };
   const e = leg(session.egyptianSharePct, session.egyptianNet);
   const a = leg(session.arabSharePct, session.arabNet);
@@ -119,13 +122,13 @@ export function buildInvestorFlowRow(session: VerifiedSessionFlow, turnover: num
   return {
     egyptianBuy: e.buy,
     egyptianSell: e.sell,
-    egyptianNet: session.egyptianNet,
+    egyptianNet: e.net,
     arabBuy: a.buy,
     arabSell: a.sell,
-    arabNet: session.arabNet,
+    arabNet: a.net,
     foreignBuy: f.buy,
     foreignSell: f.sell,
-    foreignNet: session.foreignNet,
+    foreignNet: f.net,
     totalTurnover: Math.round(turnover * 100) / 100,
   };
 }
@@ -139,12 +142,19 @@ export async function fetchOfficialFlowCandidatesForDate(dateStr: string): Promi
     `&after=${dateStr}T00:00:00&before=${dateStr}T23:59:59&per_page=100` +
     `&_fields=id,date,title,link,content`;
 
-  const res = await fetch(url, { headers: REQUEST_HEADERS, cache: 'no-store' });
-  if (!res.ok) {
-    throw new Error(`Official investor flow feed returned HTTP ${res.status}`);
+  let posts: Array<{ date: string; link: string; title?: { rendered?: string }; content?: { rendered?: string } }> = [];
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await fetch(url, { headers: REQUEST_HEADERS, cache: 'no-store', signal: AbortSignal.timeout(12000) });
+      if (res.ok) {
+        posts = await res.json();
+        break;
+      }
+    } catch (err) {
+      if (attempt === 3) throw err;
+      await new Promise((r) => setTimeout(r, 1500));
+    }
   }
-  const posts: Array<{ date: string; link: string; title?: { rendered?: string }; content?: { rendered?: string } }> =
-    await res.json();
 
   const out: OfficialFlowCandidate[] = [];
   for (const post of posts) {

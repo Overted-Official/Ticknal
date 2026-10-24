@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -152,6 +152,35 @@ export default function SidebarNav() {
   const { t, locale } = useTranslation();
   const { isGuest, isLoading, requireAuth } = useGuestGuard();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  // Auto-open notifications drawer when navigated from push notification (?drawer=notifications or SW message)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('drawer') === 'notifications') {
+      setIsNotificationsOpen(true);
+    }
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'OPEN_NOTIFICATIONS_DRAWER') {
+        setIsNotificationsOpen(true);
+      }
+    };
+
+    const handleCustomEvent = () => setIsNotificationsOpen(true);
+
+    window.addEventListener('ticknal:open-notifications', handleCustomEvent);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleMessage);
+    }
+
+    return () => {
+      window.removeEventListener('ticknal:open-notifications', handleCustomEvent);
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleMessage);
+      }
+    };
+  }, [pathname]);
 
   const { data: notifData } = useSWR<{ notifications: unknown[] }>(isGuest || isLoading || isHeroScene ? null : '/api/notifications', fetcher, {
     refreshInterval: process.env.NODE_ENV === 'development' ? 0 : 60000,

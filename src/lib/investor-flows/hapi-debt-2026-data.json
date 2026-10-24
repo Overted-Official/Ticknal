@@ -1,0 +1,1964 @@
+{
+  "2026-10-22": {
+    "bills": {
+      "frBuy": 361660000,
+      "frSell": 967170000,
+      "frNet": -605510000,
+      "arBuy": 170480000,
+      "arSell": 183980000,
+      "arNet": -13500000
+    },
+    "bonds": {
+      "frBuy": 34080000,
+      "frSell": 129350000,
+      "frNet": -95270000,
+      "arBuy": 15980000,
+      "arSell": 15980000,
+      "arNet": 0
+    }
+  },
+  "2026-10-21": {
+    "bills": {
+      "frBuy": 62290000,
+      "frSell": 435360000,
+      "frNet": -373070000,
+      "arBuy": 128270000.00000001,
+      "arSell": 130949999.99999999,
+      "arNet": -2679999.99999997
+    },
+    "bonds": {
+      "frBuy": 9450000,
+      "frSell": 10230000,
+      "frNet": -780000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-10-20": {
+    "bills": {
+      "frBuy": 340830000,
+      "frSell": 779650000,
+      "frNet": -438820000,
+      "arBuy": 574020000,
+      "arSell": 340100000,
+      "arNet": 233920000
+    },
+    "bonds": {
+      "frBuy": 19920000,
+      "frSell": 60450000,
+      "frNet": -40530000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-10-19": {
+    "bills": {
+      "frBuy": 74960000,
+      "frSell": 580180000,
+      "frNet": -505220000,
+      "arBuy": 52280000,
+      "arSell": 52410000,
+      "arNet": -130000
+    },
+    "bonds": {
+      "frBuy": 753800,
+      "frSell": 753800,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-10-18": {
+    "bills": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 144000,
+      "arSell": 58570,
+      "arNet": 85430
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 5740000,
+      "arSell": 5750000,
+      "arNet": -10000
+    }
+  },
+  "2026-10-15": {
+    "bills": {
+      "frBuy": 336380000,
+      "frSell": 329670000,
+      "frNet": 6710000,
+      "arBuy": 251780000,
+      "arSell": 75380000,
+      "arNet": 176400000
+    },
+    "bonds": {
+      "frBuy": 504000,
+      "frSell": 436600,
+      "frNet": 67400,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-10-14": {
+    "bills": {
+      "frBuy": 328940000,
+      "frSell": 439400000,
+      "frNet": -110460000,
+      "arBuy": 69530000,
+      "arSell": 77240000,
+      "arNet": -7710000
+    },
+    "bonds": {
+      "frBuy": 83200,
+      "frSell": 9090000,
+      "frNet": -9006800,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-10-13": {
+    "bills": {
+      "frBuy": 478360000,
+      "frSell": 89750000,
+      "frNet": 388610000,
+      "arBuy": 626970000,
+      "arSell": 739730000,
+      "arNet": -112760000
+    },
+    "bonds": {
+      "frBuy": 78300,
+      "frSell": 1000000,
+      "frNet": -921700,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-10-12": {
+    "bills": {
+      "frBuy": 81760000,
+      "frSell": 79220000,
+      "frNet": 2540000,
+      "arBuy": 82140000,
+      "arSell": 85620000,
+      "arNet": -3480000
+    },
+    "bonds": {
+      "frBuy": 959800,
+      "frSell": 0,
+      "frNet": 959800,
+      "arBuy": 572000,
+      "arSell": 572700,
+      "arNet": -700
+    }
+  },
+  "2026-10-11": {
+    "bills": {
+      "frBuy": 351400,
+      "frSell": 351400,
+      "frNet": 0,
+      "arBuy": 2120000,
+      "arSell": 1980000,
+      "arNet": 140000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-10-07": {
+    "bills": {
+      "frBuy": 152400000,
+      "frSell": 209500000,
+      "frNet": -57100000,
+      "arBuy": 1032000000,
+      "arSell": 25900000,
+      "arNet": 1006100000
+    },
+    "bonds": {
+      "frBuy": 18400000,
+      "frSell": 119400,
+      "frNet": 18280600,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-10-06": {
+    "bills": {
+      "frBuy": 247800000,
+      "frSell": 469600000,
+      "frNet": -221800000,
+      "arBuy": 742500000,
+      "arSell": 218000000,
+      "arNet": 524500000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 27500000,
+      "frNet": -27500000,
+      "arBuy": 0,
+      "arSell": 23900000,
+      "arNet": -23900000
+    }
+  },
+  "2026-10-05": {
+    "bills": {
+      "frBuy": 162900000,
+      "frSell": 176100000,
+      "frNet": -13200000,
+      "arBuy": 62800000,
+      "arSell": 39300000,
+      "arNet": 23500000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-10-04": {
+    "bills": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 15600000,
+      "arSell": 15500000,
+      "arNet": 100000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 5800000,
+      "arSell": 5800000,
+      "arNet": 0
+    }
+  },
+  "2026-10-01": {
+    "bills": {
+      "frBuy": 243300000,
+      "frSell": 180300000,
+      "frNet": 63000000,
+      "arBuy": 204100000,
+      "arSell": 202700000,
+      "arNet": 1400000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 3700000,
+      "frNet": -3700000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-30": {
+    "bills": {
+      "frBuy": 155500000,
+      "frSell": 416400000,
+      "frNet": -260900000,
+      "arBuy": 248700000,
+      "arSell": 62700000,
+      "arNet": 186000000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 1300000,
+      "frNet": -1300000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-28": {
+    "bills": {
+      "frBuy": 207600000,
+      "frSell": 123800000,
+      "frNet": 83800000,
+      "arBuy": 23300000,
+      "arSell": 13400000,
+      "arNet": 9900000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 266900,
+      "frNet": -266900,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-27": {
+    "bills": {
+      "frBuy": 21800,
+      "frSell": 0,
+      "frNet": 21800,
+      "arBuy": 21400,
+      "arSell": 2130000,
+      "arNet": -2108600
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-24": {
+    "bills": {
+      "frBuy": 531799999.99999994,
+      "frSell": 40100000,
+      "frNet": 491699999.99999994,
+      "arBuy": 31800000,
+      "arSell": 42300000,
+      "arNet": -10500000
+    },
+    "bonds": {
+      "frBuy": 90700,
+      "frSell": 2800000,
+      "frNet": -2709300,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-21": {
+    "bills": {
+      "frBuy": 219900000,
+      "frSell": 257899999.99999997,
+      "frNet": -37999999.99999997,
+      "arBuy": 84900000,
+      "arSell": 85000000,
+      "arNet": -100000
+    },
+    "bonds": {
+      "frBuy": 351800,
+      "frSell": 351800,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-20": {
+    "bills": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 4000000,
+      "arSell": 3300000,
+      "arNet": 700000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-17": {
+    "bills": {
+      "frBuy": 104800000,
+      "frSell": 360300000,
+      "frNet": -255500000,
+      "arBuy": 92300000,
+      "arSell": 104500000,
+      "arNet": -12200000
+    },
+    "bonds": {
+      "frBuy": 162700,
+      "frSell": 0,
+      "frNet": 162700,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-16": {
+    "bills": {
+      "frBuy": 121000000,
+      "frSell": 410200000,
+      "frNet": -289200000,
+      "arBuy": 172600000,
+      "arSell": 172000000,
+      "arNet": 600000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 1200000,
+      "frNet": -1200000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-15": {
+    "bills": {
+      "frBuy": 366400000,
+      "frSell": 286800000,
+      "frNet": 79600000,
+      "arBuy": 807700000,
+      "arSell": 423900000,
+      "arNet": 383800000
+    },
+    "bonds": {
+      "frBuy": 12800000,
+      "frSell": 26700000,
+      "frNet": -13900000,
+      "arBuy": 13900000,
+      "arSell": 0,
+      "arNet": 13900000
+    }
+  },
+  "2026-09-14": {
+    "bills": {
+      "frBuy": 317800000,
+      "frSell": 713100000,
+      "frNet": -395300000,
+      "arBuy": 76800000,
+      "arSell": 100300000,
+      "arNet": -23500000
+    },
+    "bonds": {
+      "frBuy": 9400000,
+      "frSell": 9400000,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-13": {
+    "bills": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 71200000,
+      "arSell": 72400000,
+      "arNet": -1200000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-10": {
+    "bills": {
+      "frBuy": 129900000,
+      "frSell": 217600000,
+      "frNet": -87700000,
+      "arBuy": 70500000,
+      "arSell": 80300000,
+      "arNet": -9800000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 12100000,
+      "frNet": -12100000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-09": {
+    "bills": {
+      "frBuy": 276800000,
+      "frSell": 157000000,
+      "frNet": 119800000,
+      "arBuy": 95000000,
+      "arSell": 72800000,
+      "arNet": 22200000
+    },
+    "bonds": {
+      "frBuy": 13900000,
+      "frSell": 12100000,
+      "frNet": 1800000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-08": {
+    "bills": {
+      "frBuy": 270700000,
+      "frSell": 231400000,
+      "frNet": 39300000,
+      "arBuy": 742900000,
+      "arSell": 399400000,
+      "arNet": 343500000
+    },
+    "bonds": {
+      "frBuy": 1500000,
+      "frSell": 4099999.9999999995,
+      "frNet": -2599999.9999999995,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-07": {
+    "bills": {
+      "frBuy": 22300000,
+      "frSell": 15800000,
+      "frNet": 6500000,
+      "arBuy": 5400000,
+      "arSell": 6300000,
+      "arNet": -900000
+    },
+    "bonds": {
+      "frBuy": 273100,
+      "frSell": 74500,
+      "frNet": 198600,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-06": {
+    "bills": {
+      "frBuy": 19200,
+      "frSell": 0,
+      "frNet": 19200,
+      "arBuy": 2720000,
+      "arSell": 2820000,
+      "arNet": -100000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-09-03": {
+    "bills": {
+      "frBuy": 394500000,
+      "frSell": 275900000,
+      "frNet": 118600000,
+      "arBuy": 243800000,
+      "arSell": 62700000,
+      "arNet": 181100000
+    },
+    "bonds": {
+      "frBuy": 21800000,
+      "frSell": 353400000,
+      "frNet": -331600000,
+      "arBuy": 0,
+      "arSell": 195800000,
+      "arNet": -195800000
+    }
+  },
+  "2026-09-02": {
+    "bills": {
+      "frBuy": 589400000,
+      "frSell": 309000000,
+      "frNet": 280400000,
+      "arBuy": 108500000,
+      "arSell": 100900000,
+      "arNet": 7600000
+    },
+    "bonds": {
+      "frBuy": 316800,
+      "frSell": 559100000,
+      "frNet": -558783200,
+      "arBuy": 316800,
+      "arSell": 316800,
+      "arNet": 0
+    }
+  },
+  "2026-09-01": {
+    "bills": {
+      "frBuy": 503200000,
+      "frSell": 668500000,
+      "frNet": -165300000,
+      "arBuy": 190700000,
+      "arSell": 313200000,
+      "arNet": -122500000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-08-31": {
+    "bills": {
+      "frBuy": 533700000.00000006,
+      "frSell": 124000000,
+      "frNet": 409700000.00000006,
+      "arBuy": 102900000,
+      "arSell": 105200000,
+      "arNet": -2300000
+    },
+    "bonds": {
+      "frBuy": 23700000,
+      "frSell": 8600000,
+      "frNet": 15100000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-08-30": {
+    "bills": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 10970,
+      "arSell": 6710000,
+      "arNet": -6699030
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-08-26": {
+    "bills": {
+      "frBuy": 1010999999.9999999,
+      "frSell": 82500000,
+      "frNet": 928499999.9999999,
+      "arBuy": 456900000,
+      "arSell": 82300000,
+      "arNet": 374600000
+    },
+    "bonds": {
+      "frBuy": 3800000,
+      "frSell": 915900000,
+      "frNet": -912100000,
+      "arBuy": 0,
+      "arSell": 461100000,
+      "arNet": -461100000
+    }
+  },
+  "2026-08-25": {
+    "bills": {
+      "frBuy": 341000000,
+      "frSell": 484900000,
+      "frNet": -143900000,
+      "arBuy": 481400000,
+      "arSell": 227200000,
+      "arNet": 254200000
+    },
+    "bonds": {
+      "frBuy": 26400000,
+      "frSell": 0,
+      "frNet": 26400000,
+      "arBuy": 0,
+      "arSell": 196700000,
+      "arNet": -196700000
+    }
+  },
+  "2026-08-24": {
+    "bills": {
+      "frBuy": 203500000,
+      "frSell": 496600000,
+      "frNet": -293100000,
+      "arBuy": 28600000,
+      "arSell": 86000000,
+      "arNet": -57400000
+    },
+    "bonds": {
+      "frBuy": 19900000,
+      "frSell": 43700000,
+      "frNet": -23800000,
+      "arBuy": 0,
+      "arSell": 67200000,
+      "arNet": -67200000
+    }
+  },
+  "2026-08-23": {
+    "bills": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 10740000,
+      "arSell": 10730000,
+      "arNet": 10000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-08-20": {
+    "bills": {
+      "frBuy": 200900000,
+      "frSell": 444500000,
+      "frNet": -243600000,
+      "arBuy": 51500000,
+      "arSell": 47600000,
+      "arNet": 3900000
+    },
+    "bonds": {
+      "frBuy": 38100000,
+      "frSell": 19100000,
+      "frNet": 19000000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-08-19": {
+    "bills": {
+      "frBuy": 405500000,
+      "frSell": 166700000,
+      "frNet": 238800000,
+      "arBuy": 452600000,
+      "arSell": 83200000,
+      "arNet": 369400000
+    },
+    "bonds": {
+      "frBuy": 19000000,
+      "frSell": 38100000,
+      "frNet": -19100000,
+      "arBuy": 2700000,
+      "arSell": 502300000,
+      "arNet": -499600000
+    }
+  },
+  "2026-08-18": {
+    "bills": {
+      "frBuy": 768500000,
+      "frSell": 555700000,
+      "frNet": 212800000,
+      "arBuy": 459100000,
+      "arSell": 540300000,
+      "arNet": -81200000
+    },
+    "bonds": {
+      "frBuy": 97400,
+      "frSell": 0,
+      "frNet": 97400,
+      "arBuy": 0,
+      "arSell": 195400000,
+      "arNet": -195400000
+    }
+  },
+  "2026-08-17": {
+    "bills": {
+      "frBuy": 315300000,
+      "frSell": 87500000,
+      "frNet": 227800000,
+      "arBuy": 11300000,
+      "arSell": 41700000,
+      "arNet": -30400000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-08-16": {
+    "bills": {
+      "frBuy": 220600,
+      "frSell": 0,
+      "frNet": 220600,
+      "arBuy": 137400,
+      "arSell": 47700,
+      "arNet": 89700
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-08-13": {
+    "bills": {
+      "frBuy": 240200000,
+      "frSell": 385200000,
+      "frNet": -145000000,
+      "arBuy": 236200000,
+      "arSell": 14700000,
+      "arNet": 221500000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 240200000,
+      "arNet": -240200000
+    }
+  },
+  "2026-08-12": {
+    "bills": {
+      "frBuy": 239800000,
+      "frSell": 223500000,
+      "frNet": 16300000,
+      "arBuy": 23700000,
+      "arSell": 27800000,
+      "arNet": -4100000
+    },
+    "bonds": {
+      "frBuy": 7360000,
+      "frSell": 6950000,
+      "frNet": 410000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-08-11": {
+    "bills": {
+      "frBuy": 831600000,
+      "frSell": 568300000,
+      "frNet": 263300000,
+      "arBuy": 270200000,
+      "arSell": 247400000,
+      "arNet": 22800000
+    },
+    "bonds": {
+      "frBuy": 162600,
+      "frSell": 0,
+      "frNet": 162600,
+      "arBuy": 0,
+      "arSell": 195300000,
+      "arNet": -195300000
+    }
+  },
+  "2026-08-10": {
+    "bills": {
+      "frBuy": 360000000,
+      "frSell": 229900000,
+      "frNet": 130100000,
+      "arBuy": 45600000,
+      "arSell": 36200000,
+      "arNet": 9400000
+    },
+    "bonds": {
+      "frBuy": 1010000,
+      "frSell": 1010000,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-08-09": {
+    "bills": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 13690000,
+      "arSell": 10420000,
+      "arNet": 3270000
+    },
+    "bonds": {
+      "frBuy": 61600,
+      "frSell": 61600,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-08-06": {
+    "bills": {
+      "frBuy": 182900000,
+      "frSell": 164400000,
+      "frNet": 18500000,
+      "arBuy": 45500000,
+      "arSell": 36700000,
+      "arNet": 8800000
+    },
+    "bonds": {
+      "frBuy": 1320000,
+      "frSell": 20620000,
+      "frNet": -19300000,
+      "arBuy": 0,
+      "arSell": 325300,
+      "arNet": -325300
+    }
+  },
+  "2026-08-05": {
+    "bills": {
+      "frBuy": 446600000,
+      "frSell": 199200000,
+      "frNet": 247400000,
+      "arBuy": 123600000,
+      "arSell": 88900000,
+      "arNet": 34700000
+    },
+    "bonds": {
+      "frBuy": 751900,
+      "frSell": 751900,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-08-04": {
+    "bills": {
+      "frBuy": 454500000,
+      "frSell": 423200000,
+      "frNet": 31300000,
+      "arBuy": 402400000,
+      "arSell": 218800000,
+      "arNet": 183600000
+    },
+    "bonds": {
+      "frBuy": 740500,
+      "frSell": 0,
+      "frNet": 740500,
+      "arBuy": 0,
+      "arSell": 194500000,
+      "arNet": -194500000
+    }
+  },
+  "2026-08-03": {
+    "bills": {
+      "frBuy": 263500000,
+      "frSell": 532799999.99999994,
+      "frNet": -269299999.99999994,
+      "arBuy": 86900000,
+      "arSell": 97200000,
+      "arNet": -10300000
+    },
+    "bonds": {
+      "frBuy": 1340000,
+      "frSell": 53600000,
+      "frNet": -52260000,
+      "arBuy": 322200,
+      "arSell": 0,
+      "arNet": 322200
+    }
+  },
+  "2026-08-02": {
+    "bills": {
+      "frBuy": 138200,
+      "frSell": 0,
+      "frNet": 138200,
+      "arBuy": 7330000,
+      "arSell": 11250000,
+      "arNet": -3920000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 2049999.9999999998,
+      "arSell": 2049999.9999999998,
+      "arNet": 0
+    }
+  },
+  "2026-07-30": {
+    "bills": {
+      "frBuy": 266200000,
+      "frSell": 117000000,
+      "frNet": 149200000,
+      "arBuy": 139000000,
+      "arSell": 129600000,
+      "arNet": 9400000
+    },
+    "bonds": {
+      "frBuy": 280500,
+      "frSell": 6290000,
+      "frNet": -6009500,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-07-29": {
+    "bills": {
+      "frBuy": 733700000,
+      "frSell": 302300000,
+      "frNet": 431400000,
+      "arBuy": 270400000,
+      "arSell": 263200000,
+      "arNet": 7200000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 223000,
+      "frNet": -223000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-07-28": {
+    "bills": {
+      "frBuy": 493200000,
+      "frSell": 510000000,
+      "frNet": -16800000,
+      "arBuy": 204300000,
+      "arSell": 407100000,
+      "arNet": -202800000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-07-27": {
+    "bills": {
+      "frBuy": 347900000,
+      "frSell": 246300000,
+      "frNet": 101600000,
+      "arBuy": 20400000,
+      "arSell": 13200000,
+      "arNet": 7200000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 310100,
+      "frNet": -310100,
+      "arBuy": 0,
+      "arSell": 1010000,
+      "arNet": -1010000
+    }
+  },
+  "2026-07-26": {
+    "bills": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 15600000,
+      "arSell": 7300000,
+      "arNet": 8300000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 993200,
+      "arSell": 0,
+      "arNet": 993200
+    }
+  },
+  "2026-07-22": {
+    "bills": {
+      "frBuy": 457900000,
+      "frSell": 366000000,
+      "frNet": 91900000,
+      "arBuy": 221600000,
+      "arSell": 300900000,
+      "arNet": -79300000
+    },
+    "bonds": {
+      "frBuy": 1270000,
+      "frSell": 445700,
+      "frNet": 824300,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-07-21": {
+    "bills": {
+      "frBuy": 714000000,
+      "frSell": 851100000,
+      "frNet": -137100000,
+      "arBuy": 461200000,
+      "arSell": 766600000,
+      "arNet": -305400000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 81700,
+      "arNet": -81700
+    }
+  },
+  "2026-07-20": {
+    "bills": {
+      "frBuy": 512799999.99999994,
+      "frSell": 561800000,
+      "frNet": -49000000.00000006,
+      "arBuy": 346800000,
+      "arSell": 335000000,
+      "arNet": 11800000
+    },
+    "bonds": {
+      "frBuy": 54970,
+      "frSell": 54970,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-07-19": {
+    "bills": {
+      "frBuy": 40900000,
+      "frSell": 23800000,
+      "frNet": 17100000,
+      "arBuy": 95800,
+      "arSell": 10400000,
+      "arNet": -10304200
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-07-16": {
+    "bills": {
+      "frBuy": 327900000,
+      "frSell": 750500000,
+      "frNet": -422600000,
+      "arBuy": 240300000,
+      "arSell": 284600000,
+      "arNet": -44300000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 8660000,
+      "frNet": -8660000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-07-15": {
+    "bills": {
+      "frBuy": 137200000,
+      "frSell": 342200000,
+      "frNet": -205000000,
+      "arBuy": 76800000,
+      "arSell": 64500000,
+      "arNet": 12300000
+    },
+    "bonds": {
+      "frBuy": 2020000,
+      "frSell": 144600,
+      "frNet": 1875400,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-07-14": {
+    "bills": {
+      "frBuy": 677200000,
+      "frSell": 562300000,
+      "frNet": 114900000,
+      "arBuy": 304000000,
+      "arSell": 268399999.99999997,
+      "arNet": 35600000.00000003
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 291800,
+      "arNet": -291800
+    }
+  },
+  "2026-07-13": {
+    "bills": {
+      "frBuy": 409700000,
+      "frSell": 1250000000,
+      "frNet": -840300000,
+      "arBuy": 183500000,
+      "arSell": 238600000,
+      "arNet": -55100000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-07-12": {
+    "bills": {
+      "frBuy": 68800000,
+      "frSell": 126200000,
+      "frNet": -57400000,
+      "arBuy": 5800000,
+      "arSell": 944300,
+      "arNet": 4855700
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-07-09": {
+    "bills": {
+      "frBuy": 266200000,
+      "frSell": 299400000,
+      "frNet": -33200000,
+      "arBuy": 113900000,
+      "arSell": 86500000,
+      "arNet": 27400000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 566500,
+      "frNet": -566500,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-07-08": {
+    "bills": {
+      "frBuy": 302900000,
+      "frSell": 136100000,
+      "frNet": 166800000,
+      "arBuy": 92500000,
+      "arSell": 72600000,
+      "arNet": 19900000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-07-06": {
+    "bills": {
+      "frBuy": 150200000,
+      "frSell": 100400000,
+      "frNet": 49800000,
+      "arBuy": 124100000,
+      "arSell": 79000000,
+      "arNet": 45100000
+    },
+    "bonds": {
+      "frBuy": 2600000,
+      "frSell": 4800000,
+      "frNet": -2200000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-07-05": {
+    "bills": {
+      "frBuy": 17040000,
+      "frSell": 0,
+      "frNet": 17040000,
+      "arBuy": 243300,
+      "arSell": 0,
+      "arNet": 243300
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-07-01": {
+    "bills": {
+      "frBuy": 326000000,
+      "frSell": 279100000,
+      "frNet": 46900000,
+      "arBuy": 90000000,
+      "arSell": 110000000,
+      "arNet": -20000000
+    },
+    "bonds": {
+      "frBuy": 6400000,
+      "frSell": 7800000,
+      "frNet": -1400000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-06-30": {
+    "bills": {
+      "frBuy": 482700000,
+      "frSell": 157800000,
+      "frNet": 324900000,
+      "arBuy": 668300000,
+      "arSell": 94200000,
+      "arNet": 574100000
+    },
+    "bonds": {
+      "frBuy": 2140000,
+      "frSell": 2140000,
+      "frNet": 0,
+      "arBuy": 765600,
+      "arSell": 0,
+      "arNet": 765600
+    }
+  },
+  "2026-06-28": {
+    "bills": {
+      "frBuy": 100100,
+      "frSell": 0,
+      "frNet": 100100,
+      "arBuy": 4250000,
+      "arSell": 4350000,
+      "arNet": -100000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-06-25": {
+    "bills": {
+      "frBuy": 207600000,
+      "frSell": 169600000,
+      "frNet": 38000000,
+      "arBuy": 252000000,
+      "arSell": 39500000,
+      "arNet": 212500000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 1680000,
+      "frNet": -1680000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-06-24": {
+    "bills": {
+      "frBuy": 514600000,
+      "frSell": 393100000,
+      "frNet": 121500000,
+      "arBuy": 45300000,
+      "arSell": 45500000,
+      "arNet": -200000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 3430000,
+      "frNet": -3430000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-06-22": {
+    "bills": {
+      "frBuy": 538500000,
+      "frSell": 276200000,
+      "frNet": 262300000,
+      "arBuy": 129400000,
+      "arSell": 113000000,
+      "arNet": 16400000
+    },
+    "bonds": {
+      "frBuy": 5990000,
+      "frSell": 4990000,
+      "frNet": 1000000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-06-21": {
+    "bills": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 8369999.999999999,
+      "arSell": 7870000,
+      "arNet": 499999.99999999907
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-06-17": {
+    "bills": {
+      "frBuy": 3050000000,
+      "frSell": 248800000,
+      "frNet": 2801200000,
+      "arBuy": 239800000,
+      "arSell": 130100000,
+      "arNet": 109700000
+    },
+    "bonds": {
+      "frBuy": 12400000,
+      "frSell": 12500000,
+      "frNet": -100000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-06-16": {
+    "bills": {
+      "frBuy": 1240000000,
+      "frSell": 192000000,
+      "frNet": 1048000000,
+      "arBuy": 346500000,
+      "arSell": 300400000,
+      "arNet": 46100000
+    },
+    "bonds": {
+      "frBuy": 12700000,
+      "frSell": 0,
+      "frNet": 12700000,
+      "arBuy": 3470000,
+      "arSell": 3470000,
+      "arNet": 0
+    }
+  },
+  "2026-06-15": {
+    "bills": {
+      "frBuy": 81300000,
+      "frSell": 75100000,
+      "frNet": 6200000,
+      "arBuy": 36300000,
+      "arSell": 9300000,
+      "arNet": 27000000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-06-14": {
+    "bills": {
+      "frBuy": 3650000,
+      "frSell": 3650000,
+      "frNet": 0,
+      "arBuy": 261600.00000000003,
+      "arSell": 0,
+      "arNet": 261600.00000000003
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 50900,
+      "frNet": -50900,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-06-11": {
+    "bills": {
+      "frBuy": 260100000.00000003,
+      "frSell": 94800000,
+      "frNet": 165300000.00000003,
+      "arBuy": 93200000,
+      "arSell": 48100000,
+      "arNet": 45100000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 11100000,
+      "frNet": -11100000,
+      "arBuy": 0,
+      "arSell": 6300000,
+      "arNet": -6300000
+    }
+  },
+  "2026-06-10": {
+    "bills": {
+      "frBuy": 190800000,
+      "frSell": 379100000,
+      "frNet": -188300000,
+      "arBuy": 422000000,
+      "arSell": 22300000,
+      "arNet": 399700000
+    },
+    "bonds": {
+      "frBuy": 5200000,
+      "frSell": 16100000.000000002,
+      "frNet": -10900000.000000002,
+      "arBuy": 0,
+      "arSell": 9500000,
+      "arNet": -9500000
+    }
+  },
+  "2026-06-09": {
+    "bills": {
+      "frBuy": 445100000,
+      "frSell": 155400000,
+      "frNet": 289700000,
+      "arBuy": 390500000,
+      "arSell": 322500000,
+      "arNet": 68000000
+    },
+    "bonds": {
+      "frBuy": 632800,
+      "frSell": 632800,
+      "frNet": 0,
+      "arBuy": 15800000,
+      "arSell": 0,
+      "arNet": 15800000
+    }
+  },
+  "2026-06-08": {
+    "bills": {
+      "frBuy": 147000000,
+      "frSell": 270900000,
+      "frNet": -123900000,
+      "arBuy": 10600000,
+      "arSell": 52800000,
+      "arNet": -42200000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 59000,
+      "frNet": -59000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-06-07": {
+    "bills": {
+      "frBuy": 7480000,
+      "frSell": 382000,
+      "frNet": 7098000,
+      "arBuy": 7450000,
+      "arSell": 7430000,
+      "arNet": 20000
+    },
+    "bonds": {
+      "frBuy": 85000,
+      "frSell": 85000,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-06-04": {
+    "bills": {
+      "frBuy": 399900000,
+      "frSell": 154300000,
+      "frNet": 245600000,
+      "arBuy": 103500000,
+      "arSell": 16800000,
+      "arNet": 86700000
+    },
+    "bonds": {
+      "frBuy": 990700000,
+      "frSell": 0,
+      "frNet": 990700000,
+      "arBuy": 0,
+      "arSell": 851,
+      "arNet": -851
+    }
+  },
+  "2026-06-03": {
+    "bills": {
+      "frBuy": 394700000,
+      "frSell": 245600000,
+      "frNet": 149100000,
+      "arBuy": 64400000.00000001,
+      "arSell": 118000000,
+      "arNet": -53599999.99999999
+    },
+    "bonds": {
+      "frBuy": 6600000,
+      "frSell": 12700000,
+      "frNet": -6100000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-06-02": {
+    "bills": {
+      "frBuy": 1240000000,
+      "frSell": 256700000,
+      "frNet": 983300000,
+      "arBuy": 430900000,
+      "arSell": 401000000,
+      "arNet": 29900000
+    },
+    "bonds": {
+      "frBuy": 134700,
+      "frSell": 134700,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 4000,
+      "arNet": -4000
+    }
+  },
+  "2026-06-01": {
+    "bills": {
+      "frBuy": 376400000,
+      "frSell": 402500000,
+      "frNet": -26100000,
+      "arBuy": 259200000,
+      "arSell": 329100000,
+      "arNet": -69900000
+    },
+    "bonds": {
+      "frBuy": 1500000,
+      "frSell": 26600000,
+      "frNet": -25100000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-05-25": {
+    "bills": {
+      "frBuy": 200700000,
+      "frSell": 413600000,
+      "frNet": -212900000,
+      "arBuy": 148000000,
+      "arSell": 127000000,
+      "arNet": 21000000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 10900000,
+      "frNet": -10900000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-05-24": {
+    "bills": {
+      "frBuy": 8390000,
+      "frSell": 3930000,
+      "frNet": 4460000,
+      "arBuy": 8610000,
+      "arSell": 10080000,
+      "arNet": -1470000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-05-21": {
+    "bills": {
+      "frBuy": 507500000,
+      "frSell": 563800000,
+      "frNet": -56300000,
+      "arBuy": 201700000,
+      "arSell": 229300000,
+      "arNet": -27600000
+    },
+    "bonds": {
+      "frBuy": 1020000000,
+      "frSell": 34600000,
+      "frNet": 985400000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-05-20": {
+    "bills": {
+      "frBuy": 102400000,
+      "frSell": 208800000,
+      "frNet": -106400000,
+      "arBuy": 21000000,
+      "arSell": 21100000,
+      "arNet": -100000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-05-19": {
+    "bills": {
+      "frBuy": 291800000,
+      "frSell": 282700000,
+      "frNet": 9100000,
+      "arBuy": 109400000,
+      "arSell": 278000000,
+      "arNet": -168600000
+    },
+    "bonds": {
+      "frBuy": 5340000,
+      "frSell": 10680000,
+      "frNet": -5340000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-05-18": {
+    "bills": {
+      "frBuy": 204200000,
+      "frSell": 167700000,
+      "frNet": 36500000,
+      "arBuy": 13600000,
+      "arSell": 7600000,
+      "arNet": 6000000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 24300000,
+      "frNet": -24300000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-05-13": {
+    "bills": {
+      "frBuy": 317300000,
+      "frSell": 197800000,
+      "frNet": 119500000,
+      "arBuy": 45900000,
+      "arSell": 72100000,
+      "arNet": -26200000
+    },
+    "bonds": {
+      "frBuy": 15370000,
+      "frSell": 10660000,
+      "frNet": 4710000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-05-12": {
+    "bills": {
+      "frBuy": 1250000000,
+      "frSell": 84400000,
+      "frNet": 1165600000,
+      "arBuy": 325700000,
+      "arSell": 384200000,
+      "arNet": -58500000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 16900000,
+      "frNet": -16900000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-05-11": {
+    "bills": {
+      "frBuy": 175900000,
+      "frSell": 172300000,
+      "frNet": 3600000,
+      "arBuy": 13500000,
+      "arSell": 17500000,
+      "arNet": -4000000
+    },
+    "bonds": {
+      "frBuy": 1900000,
+      "frSell": 0,
+      "frNet": 1900000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-05-10": {
+    "bills": {
+      "frBuy": 10000,
+      "frSell": 0,
+      "frNet": 10000,
+      "arBuy": 1890000,
+      "arSell": 511000,
+      "arNet": 1379000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-05-05": {
+    "bills": {
+      "frBuy": 352600000,
+      "frSell": 388500000,
+      "frNet": -35900000,
+      "arBuy": 72800000,
+      "arSell": 207000000,
+      "arNet": -134200000
+    },
+    "bonds": {
+      "frBuy": 772500,
+      "frSell": 63200000,
+      "frNet": -62427500,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-04-20": {
+    "bills": {
+      "frBuy": 753200000,
+      "frSell": 389600000,
+      "frNet": 363600000,
+      "arBuy": 89100000,
+      "arSell": 63800000,
+      "arNet": 25300000
+    },
+    "bonds": {
+      "frBuy": 11800000,
+      "frSell": 12200000,
+      "frNet": -400000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-04-19": {
+    "bills": {
+      "frBuy": 11980000,
+      "frSell": 1140000,
+      "frNet": 10840000,
+      "arBuy": 5370000,
+      "arSell": 3120000,
+      "arNet": 2250000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 5805000,
+      "arSell": 5809000,
+      "arNet": -4000
+    }
+  },
+  "2026-04-14": {
+    "bills": {
+      "frBuy": 1590000000,
+      "frSell": 253400000,
+      "frNet": 1336600000,
+      "arBuy": 252900000,
+      "arSell": 254100000,
+      "arNet": -1200000
+    },
+    "bonds": {
+      "frBuy": 1240000,
+      "frSell": 979900,
+      "frNet": 260100,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-04-08": {
+    "bills": {
+      "frBuy": 256000000,
+      "frSell": 26100000,
+      "frNet": 229900000,
+      "arBuy": 131800000,
+      "arSell": 112000000,
+      "arNet": 19800000
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 11800000,
+      "frNet": -11800000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-04-16": {
+    "bills": {
+      "frBuy": 1140000000,
+      "frSell": 104000000,
+      "frNet": 1036000000,
+      "arBuy": 135500000,
+      "arSell": 110900000,
+      "arNet": 24600000
+    },
+    "bonds": {
+      "frBuy": 2450000,
+      "frSell": 263800,
+      "frNet": 2186200,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  }
+}

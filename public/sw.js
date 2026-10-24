@@ -52,7 +52,21 @@ self.addEventListener('push', (event) => {
       adverseExcursion: payload.adverseExcursion,
       returnToMae: payload.returnToMae,
     },
-    actions: (payload.url?.startsWith('/news') || payload.type === 'news')
+    actions: (payload.type === 'buy_digest' || targetUrl.includes('drawer=notifications'))
+      ? [
+          {
+            action: 'open_drawer',
+            title: '🔔 Open Drawer',
+          },
+        ]
+      : (payload.type === 'sell_alert')
+      ? [
+          {
+            action: 'open_chart',
+            title: '⚠️ Review Position',
+          },
+        ]
+      : (payload.url?.startsWith('/news') || payload.type === 'news')
       ? [
           {
             action: 'open_news',
@@ -73,7 +87,7 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const targetUrl = event.notification.data?.url || '/invest?view=chart';
+  const targetUrl = event.notification.data?.url || '/home';
   const url = new URL(targetUrl, self.location.origin).href;
 
   event.waitUntil(
@@ -81,6 +95,9 @@ self.addEventListener('notificationclick', (event) => {
       for (const client of clientList) {
         if ('focus' in client) {
           client.navigate(url);
+          if (targetUrl.includes('drawer=notifications') || event.notification.data?.type === 'buy_digest') {
+            client.postMessage({ type: 'OPEN_NOTIFICATIONS_DRAWER' });
+          }
           return client.focus();
         }
       }

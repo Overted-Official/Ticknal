@@ -2,6 +2,7 @@ import { createClient } from '../../../../lib/supabase/server';
 import { parseUniverseBacktestRequest } from '../../../../lib/strategies/server/parse-universe-backtest-request';
 import { runSimpleBacktestForSymbol } from '../../../../lib/strategies/server/run-simple-backtest-for-symbol';
 import { runSimpleUniverseBacktest } from '../../../../lib/strategies/server/run-simple-universe-backtest';
+import { projectCompanyBacktestDetail } from '../../../../lib/strategies/server/project-company-backtest-detail';
 import { MAX_STRATEGY_REQUEST_BYTES } from '../../../../lib/strategies/strategy-program';
 
 export const runtime = 'nodejs';
@@ -65,6 +66,11 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ status: 'invalid', error: parsed.error }, { status: 400, headers: NO_STORE_HEADERS });
     }
 
+    if (parsed.value.detail) {
+      const symbol = parsed.value.symbols[0];
+      const company = await runSimpleBacktestForSymbol(symbol, parsed.value.program, parsed.value.assumptions, parsed.value.period);
+      return Response.json({ status: 'ok', results: [projectCompanyBacktestDetail(symbol, company)] }, { headers: NO_STORE_HEADERS });
+    }
     const result = await runSimpleUniverseBacktest(parsed.value, runSimpleBacktestForSymbol);
     return Response.json({ status: 'ok', ...result }, { headers: NO_STORE_HEADERS });
   } catch (error) {

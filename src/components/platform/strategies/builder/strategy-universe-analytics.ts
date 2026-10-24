@@ -43,6 +43,7 @@ export interface UniverseGroupSummary {
   readonly selected: number;
   readonly completed: number;
   readonly unavailable: number;
+  readonly pending: number;
   readonly meanReturnPct: number | null;
   readonly closedTrades: number;
   readonly items: readonly UniverseBacktestItem[];
@@ -52,6 +53,7 @@ export interface UniverseSummary {
   readonly selected: number;
   readonly completed: number;
   readonly unavailable: number;
+  readonly pending: number;
   readonly profitable: number;
   readonly meanReturnPct: number | null;
   readonly closedTrades: number;
@@ -82,16 +84,20 @@ export function summarizeUniverseBacktest(items: readonly UniverseBacktestItem[]
   const groups = groupSources.map((group): UniverseGroupSummary => {
     const groupItems = items.filter((item) => group.symbols.has(item.symbol));
     const groupCompleted = groupItems.filter((item) => item.status === 'ok');
+    const selected = universe ? group.symbols.size : groupItems.length;
     return {
       id: group.id, name: group.name, nameAr: group.nameAr,
-      selected: groupItems.length, completed: groupCompleted.length, unavailable: groupItems.length - groupCompleted.length,
+      selected, completed: groupCompleted.length, unavailable: groupItems.length - groupCompleted.length,
+      pending: selected - groupItems.length,
       meanReturnPct: meanReturn(groupItems),
       closedTrades: groupCompleted.reduce((sum, item) => sum + item.metrics.closedTrades, 0),
       items: groupItems,
     };
   }).filter((group) => group.selected > 0);
+  const selected = universe ? new Set(universe.map((company) => company.symbol)).size : items.length;
   return {
-    selected: items.length, completed: completed.length, unavailable: items.length - completed.length,
+    selected, completed: completed.length, unavailable: items.length - completed.length,
+    pending: selected - items.length,
     profitable: completed.filter((item) => item.metrics.totalReturnPct > 0).length,
     meanReturnPct: meanReturn(items),
     closedTrades: completed.reduce((sum, item) => sum + item.metrics.closedTrades, 0),

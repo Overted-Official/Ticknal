@@ -67,6 +67,9 @@ drop_tables.ts
 scripts/db/drop_tables.ts
 _archived/
 _*/
+!_technical_support/
+_technical_support/*
+!_technical_support/strategy-ship/
 .agents/
 
 # Local builds & assets

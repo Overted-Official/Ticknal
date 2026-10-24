@@ -3,13 +3,7 @@
 import React from 'react';
 import {
   Calendar,
-  TrendingUp,
-  TrendingDown,
   PieChart,
-  ArrowDownLeft,
-  ArrowUpRight,
-  Wallet,
-  Sparkles,
 } from '@/components/ui/icon-library';
 import { type MonthlyCashflowSummary } from '@/types/bank';
 
@@ -26,7 +20,7 @@ const CATEGORY_COLORS = [
   '#EC4899', // Pink
   '#8B5CF6', // Purple
   '#06B6D4', // Cyan
-  '#64748B', // Slate / General
+  '#64748B', // Slate
 ];
 
 function formatYearMonth(ym: string, isAr: boolean): string {
@@ -49,43 +43,20 @@ function formatYearMonth(ym: string, isAr: boolean): string {
 export default function MonthlyCloseoutArchive({
   summaries = [],
   isArabic = false,
-  onOpenCheckIn,
 }: MonthlyCloseoutArchiveProps) {
+  // If there are no summaries, return null (eliminating the big empty card)
   if (summaries.length === 0) {
-    return (
-      <div className="p-8 border border-white/10 bg-black text-center font-sans">
-        <div className="w-12 h-12 rounded-full border border-white/10 bg-white/5 flex items-center justify-center mx-auto mb-3">
-          <Calendar className="w-5 h-5 text-brand-blue" />
-        </div>
-        <h3 className="text-sm font-bold text-text-primary mb-1">
-          {isArabic ? 'لا توجد مراجعات شهرية مسجلة بعد' : 'No Monthly Closeouts Yet'}
-        </h3>
-        <p className="text-xs text-text-muted max-w-md mx-auto mb-4">
-          {isArabic
-            ? 'ابدأ أول مراجعة مالية لشهرك الآن في 90 ثانية فقط لحساب تدفقاتك وصافي مصروفاتك بدقة دون إرهاق تسجيل المعاملات الفردية.'
-            : 'Start your first 90-second monthly wealth check-in to derive true monthly spend and track authentic net worth growth.'}
-        </p>
-        {onOpenCheckIn && (
-          <button
-            type="button"
-            onClick={onOpenCheckIn}
-            className="px-5 py-2 text-xs font-bold bg-white text-black hover:bg-white/90 transition-colors cursor-pointer"
-          >
-            {isArabic ? 'بدء المراجعة الشهرية' : 'Start Monthly Check-In'}
-          </button>
-        )}
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="space-y-4 font-sans">
+    <div className="space-y-3 font-sans">
       <div className="flex items-center justify-between pb-1">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-text-primary">
+          <h3 className="text-xs sm:text-sm font-semibold text-text-primary tracking-tight">
             {isArabic ? 'سجل المراجعات الشهرية والتدفقات' : 'Monthly Cashflow Closeout Archive'}
           </h3>
-          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-text-muted">
+          <span className="badge-count">
             {summaries.length}
           </span>
         </div>
@@ -104,12 +75,12 @@ export default function MonthlyCloseoutArchive({
           return (
             <div
               key={summary.id || summary.yearMonth}
-              className="p-4 sm:p-5 border border-white/10 bg-black space-y-4 transition-colors hover:border-white/20"
+              className="p-4 sm:p-5 border border-border-subtle bg-black space-y-4 transition-colors hover:border-border-default"
             >
               {/* Row Header: Month Name & Key Stats */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-white/10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-border-subtle">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-none border border-white/10 bg-white/5 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-none border border-border-subtle bg-white/5 flex items-center justify-center shrink-0">
                     <Calendar className="w-4 h-4 text-brand-blue" />
                   </div>
                   <div>
@@ -140,10 +111,10 @@ export default function MonthlyCloseoutArchive({
                     <p
                       className={`text-sm sm:text-base font-bold tabular-nums ${
                         savingsRate >= 20
-                          ? 'text-emerald-400'
+                          ? 'text-profit-num'
                           : savingsRate >= 0
                           ? 'text-brand-blue'
-                          : 'text-rose-400'
+                          : 'text-loss-num'
                       }`}
                     >
                       {savingsRate > 0 ? '+' : ''}
@@ -155,7 +126,7 @@ export default function MonthlyCloseoutArchive({
 
               {/* Cashflow Equation Strip */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-                <div className="p-2.5 border border-white/5 bg-white/[0.02]">
+                <div className="p-2.5 border border-border-subtle bg-white/[0.02]">
                   <span className="text-[10px] text-text-muted block">
                     {isArabic ? 'رصيد البداية' : 'Starting Cash'}
                   </span>
@@ -164,16 +135,16 @@ export default function MonthlyCloseoutArchive({
                   </span>
                 </div>
 
-                <div className="p-2.5 border border-white/5 bg-white/[0.02]">
+                <div className="p-2.5 border border-border-subtle bg-white/[0.02]">
                   <span className="text-[10px] text-text-muted block">
                     {isArabic ? 'الدخل الشهري' : 'Income Inflow'}
                   </span>
-                  <span className="font-semibold text-emerald-400 tabular-nums mt-0.5 block">
+                  <span className="font-semibold text-profit-num tabular-nums mt-0.5 block">
                     +{Math.round(income).toLocaleString()} EGP
                   </span>
                 </div>
 
-                <div className="p-2.5 border border-white/5 bg-white/[0.02]">
+                <div className="p-2.5 border border-border-subtle bg-white/[0.02]">
                   <span className="text-[10px] text-text-muted block">
                     {isArabic ? 'رصيد النهاية' : 'Ending Cash'}
                   </span>
@@ -182,13 +153,13 @@ export default function MonthlyCloseoutArchive({
                   </span>
                 </div>
 
-                <div className="p-2.5 border border-white/5 bg-white/[0.02]">
+                <div className="p-2.5 border border-border-subtle bg-white/[0.02]">
                   <span className="text-[10px] text-text-muted block">
                     {isArabic ? 'صافي التغير' : 'Net Cash Delta'}
                   </span>
                   <span
                     className={`font-semibold tabular-nums mt-0.5 block ${
-                      delta >= 0 ? 'text-emerald-400' : 'text-amber-400'
+                      delta >= 0 ? 'text-profit-num' : 'text-loss-num'
                     }`}
                   >
                     {delta >= 0 ? '+' : ''}
@@ -234,7 +205,7 @@ export default function MonthlyCloseoutArchive({
                       return (
                         <div
                           key={item.category}
-                          className="flex items-center gap-1.5 text-[11px] text-text-muted px-2 py-0.5 border border-white/5 bg-white/[0.02]"
+                          className="flex items-center gap-1.5 text-[11px] text-text-muted px-2 py-0.5 border border-border-subtle bg-white/[0.02]"
                         >
                           <span
                             className="w-2 h-2 rounded-full shrink-0"
@@ -254,7 +225,7 @@ export default function MonthlyCloseoutArchive({
 
               {/* Notes */}
               {summary.notes && (
-                <div className="p-2.5 border border-white/5 bg-white/[0.01] text-xs text-text-muted">
+                <div className="p-2.5 border border-border-subtle bg-white/[0.01] text-xs text-text-muted">
                   <span className="font-semibold text-text-secondary mr-1">
                     {isArabic ? 'ملاحظات:' : 'Notes:'}
                   </span>

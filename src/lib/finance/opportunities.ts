@@ -347,7 +347,7 @@ export async function _getRecentOpportunities(
             if (!isSignalEligibleEquity(symbol, meta)) return null;
 
             const bars = barsByTicker.get(symbol) ?? [];
-            if (bars.length < 80) return null;
+            if (bars.length < 3) return null;
 
             const champion = await analyzeTickerChampion(symbol, bars, {
               startDate: DEFAULT_START_DATE,
@@ -400,7 +400,7 @@ export async function _getRecentOpportunities(
           const snapshot = indexedSignal.snapshot;
           if (!snapshot?.metrics) {
             const bars = barsByTicker.get(symbol) ?? [];
-            if (bars.length < 80) continue;
+            if (bars.length < 3) continue;
             analysis = await analyzeStrategy(symbol, bars, indexedSignal.strategyId, {
               startDate: DEFAULT_START_DATE,
               lookbackBars: limitBars,
@@ -529,7 +529,7 @@ export async function getExitSignalsForHoldings(symbols: string[], limitBars = 5
 
   const signalPromises = cleanSymbols.map(async (symbol): Promise<OpportunitySignal | null> => {
     const bars = barsByTicker.get(symbol) ?? [];
-    if (bars.length < 80) return null;
+    if (bars.length < 3) return null;
 
     const lastBarDate = bars[bars.length - 1]?.date ?? '';
     const cacheKey = `${symbol}:${limitBars}`;

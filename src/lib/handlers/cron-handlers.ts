@@ -19,7 +19,7 @@ import { ALL_SNDUK_FUNDS, type SndukFund } from '@/lib/funds/snduk-funds-list';
 import { syncDailyInvestorFlows } from '@/lib/investor-flows/sync-investor-flows';
 import { syncDailySmartMoney } from '@/lib/smart-money/sync-smart-money';
 import { syncOfficialMacroData } from '@/lib/macro/sync-official-macro';
-import { screenAndIngestWires } from '@/lib/news/wire-screener';
+import { generateDailyTickerSummaries } from '@/lib/news/ticker-summary-service';
 import { generateAllDailyTakes, retryPendingTicknalTakePosts } from '@/lib/news/ticknal-take-generator';
 import { syncEGXTickersFromExchange } from '@/lib/market/egx-ticker-sync';
 
@@ -692,10 +692,10 @@ export async function handleUpdateFunds(req: Request) {
 // 3. UPDATE COMMODITIES
 // ----------------------------------------------------
 const GLOBAL_ASSETS = [
+  { symbol: 'USDEGP', tvSymbol: 'FX_IDC:USDEGP', name: 'USD to EGP', exchange: 'FX_IDC', sector: 'Macro', industry: 'Forex', currency: 'EGP', logoUrl: 'https://s3-symbol-logo.tradingview.com/country/US.svg' },
+  { symbol: 'EUREGP', tvSymbol: 'FX_IDC:EUREGP', name: 'EUR to EGP', exchange: 'FX_IDC', sector: 'Macro', industry: 'Forex', currency: 'EGP', logoUrl: 'https://s3-symbol-logo.tradingview.com/country/EU.svg' },
   { symbol: 'GC1!', tvSymbol: 'COMEX:GC1!', name: 'Gold (EGP/g)', exchange: 'COMEX', sector: 'Macro', industry: 'Precious Metals', currency: 'EGP', logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/gold.svg' },
   { symbol: 'SI1!', tvSymbol: 'COMEX:SI1!', name: 'Silver (EGP/g)', exchange: 'COMEX', sector: 'Macro', industry: 'Precious Metals', currency: 'EGP', logoUrl: 'https://s3-symbol-logo.tradingview.com/metal/silver.svg' },
-  { symbol: 'USDEGP', tvSymbol: 'FX_IDC:USDEGP', name: 'USD to EGP', exchange: 'FX_IDC', sector: 'Macro', industry: 'Forex', currency: 'EGP', logoUrl: 'https://s3-symbol-logo.tradingview.com/country/US.svg' },
-  { symbol: 'EUREGP', tvSymbol: 'FX_IDC:EUREGP', name: 'EUR to EGP', exchange: 'FX_IDC', sector: 'Macro', industry: 'Forex', currency: 'EGP', logoUrl: 'https://s3-symbol-logo.tradingview.com/country/EU.svg' }
 ];
 
 function fetchCommodityPeriods(client: TradingViewClient, tvSymbol: string, rangeBars: number = 30): Promise<TradingViewPeriod[]> {
@@ -787,10 +787,14 @@ export async function handleUpdateCommodities(req: Request) {
         const periods = await fetchCommodityPeriods(client, asset.tvSymbol, 30);
         if (!periods || periods.length === 0) continue;
 
+        const threeDaysAgo = new Date();
+        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+        const cutoffDate = threeDaysAgo.toISOString().split('T')[0];
+
         const lastDate = lastDateMap.get(asset.symbol);
         const newPeriods = periods.filter((p) => {
           const dateStr = new Date(p.time * 1000).toISOString().split('T')[0];
-          return !lastDate || dateStr > lastDate;
+          return !lastDate || dateStr > lastDate || dateStr >= cutoffDate;
         });
 
         if (newPeriods.length === 0) continue;
@@ -1017,24 +1021,33 @@ export async function handleProcessSignals(req: Request) {
   const authErr = verifyCronAuth(req);
   if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
+  const startTime = Date.now();
   try {
+    await db.insert(systemLogs).values({
+      source: 'cron-signals',
+      level: 'INFO',
+      message: 'Starting signal scan and notification dispatch...',
+    });
+
     const notificationResult = await dispatchSignalNotifications({ lookbackBars: 1 });
+    const durationMs = Date.now() - startTime;
     
     await db.insert(systemLogs).values({
       source: 'cron-signals',
       level: 'INFO',
-      message: 'Successfully processed and dispatched trade signals.',
-      metadata: { notificationResult }
+      message: `Successfully processed and dispatched trade signals in ${Math.round(durationMs / 1000)}s.`,
+      metadata: { notificationResult, durationMs }
     });
 
-    return NextResponse.json({ message: 'Signals processed successfully', notificationResult }, { status: 200 });
+    return NextResponse.json({ message: 'Signals processed successfully', notificationResult, durationMs }, { status: 200 });
   } catch (error) {
+    const durationMs = Date.now() - startTime;
     console.error('Error dispatching signal notifications:', error);
     await db.insert(systemLogs).values({
       source: 'cron-signals',
       level: 'ERROR',
-      message: 'Failed to process and dispatch trade signals',
-      metadata: { error: (error as Error).message }
+      message: `Failed to process and dispatch trade signals after ${Math.round(durationMs / 1000)}s: ${(error as Error).message}`,
+      metadata: { error: (error as Error).message, durationMs }
     });
     return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
   }
@@ -1201,10 +1214,10 @@ export async function handleWatchdog(req: Request) {
             }
           }
 
-          // Also keep live external wires fresh via watchdog
-          const wireRes = await screenAndIngestWires();
-          if (wireRes.inserted > 0) {
-            triggersTriggered.push(`update-news (+${wireRes.inserted})`);
+          // Also keep daily asset 24-hour consolidated summaries fresh via watchdog
+          const summaryRes = await generateDailyTickerSummaries();
+          if (summaryRes.postsCreated > 0) {
+            triggersTriggered.push(`daily-summaries (+${summaryRes.postsCreated})`);
           }
         }
       } catch (e) {
@@ -1280,7 +1293,7 @@ export async function handleUpdateNews(req: Request) {
   if (authErr) return NextResponse.json({ error: authErr.error }, { status: authErr.status });
 
   try {
-    const result = await screenAndIngestWires();
+    const result = await generateDailyTickerSummaries();
 
     try {
       revalidatePath('/news');
@@ -1291,7 +1304,7 @@ export async function handleUpdateNews(req: Request) {
     await db.insert(systemLogs).values({
       source: 'cron-update-news',
       level: result.success ? 'INFO' : 'ERROR',
-      message: `Wire screener and AI gate completed: ${result.inserted} inserted, ${result.droppedNoise} dropped noise (${result.screened} screened)`,
+      message: `Daily asset summaries completed: ${result.postsCreated} posts created across ${result.tickersProcessed.length} tickers`,
       metadata: result,
     });
 

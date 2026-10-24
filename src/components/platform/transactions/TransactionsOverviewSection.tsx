@@ -6,6 +6,7 @@ import { type BankAccount, type BankTransaction, type MonthlyCashflowSummary } f
 import { isBrokerageAccount } from '@/lib/portfolio-finance';
 import { type ClosedTradeItem, type TransactionsTimeframe } from './types';
 import TransactionsKPIRail from './TransactionsKPIRail';
+import AccountsRail from './AccountsRail';
 import TransactionsAnalyticsSection from './TransactionsAnalyticsSection';
 
 export type TransactionsOverviewView = 'all' | 'banking' | 'investments';
@@ -21,6 +22,8 @@ interface TransactionsOverviewSectionProps {
   totalLiquidEgp?: number;
   latestSummary?: MonthlyCashflowSummary | null;
   summaries?: MonthlyCashflowSummary[];
+  onBalanceUpdated?: (accountId: number, newBalance: number) => void;
+  onOpenAddAccount?: () => void;
 }
 
 const TIMEFRAMES: TransactionsTimeframe[] = ['3M', '6M', '1Y', 'All'];
@@ -36,6 +39,8 @@ export default function TransactionsOverviewSection({
   totalLiquidEgp,
   latestSummary,
   summaries = [],
+  onBalanceUpdated,
+  onOpenAddAccount,
 }: TransactionsOverviewSectionProps) {
   const { locale } = useTranslation();
   const [overviewView, setOverviewView] = useState<TransactionsOverviewView>('all');
@@ -79,7 +84,7 @@ export default function TransactionsOverviewSection({
   }, [closedTrades, overviewView]);
 
   return (
-    <section id="section-transactions-overview" className="section-container section-viewport-fit space-y-3 sm:space-y-4">
+    <section id="section-transactions-overview" className="section-container section-viewport-fit space-y-4">
       {/* 1. Header with Section Title, View Switcher & Timeframe Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-border-subtle">
         <div className="flex flex-col gap-0.5 min-w-0">
@@ -159,6 +164,17 @@ export default function TransactionsOverviewSection({
           totalLiquidEgp={totalLiquidEgp}
           latestSummary={latestSummary}
           accountsCount={accounts.length}
+        />
+      </div>
+
+      {/* Surface 1: Accounts & Liquidity Pills Rail (Right after KPI cards) */}
+      <div id="section-accounts-rail" className="w-full pt-1">
+        <AccountsRail
+          accounts={accounts}
+          usdRate={usdRate}
+          isArabic={locale === 'ar'}
+          onBalanceUpdated={onBalanceUpdated}
+          onOpenAddAccount={onOpenAddAccount}
         />
       </div>
 

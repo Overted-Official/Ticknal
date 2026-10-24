@@ -12,7 +12,10 @@ const DEV_USER = {
 };
 
 export async function createClient() {
-  const cookieStore = await cookies();
+  let cookieStore: any = null;
+  try {
+    cookieStore = await cookies();
+  } catch {}
 
   const client = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,12 +23,12 @@ export async function createClient() {
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll();
+          return cookieStore ? cookieStore.getAll() : [];
         },
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
+              cookieStore?.set(name, value, options);
             });
           } catch (error) {
             // The `set` method was called from a Server Component.
@@ -35,7 +38,7 @@ export async function createClient() {
     }
   );
 
-  if (process.env.NODE_ENV !== 'production' && process.env.USE_LOCAL_DB === 'true') {
+  if (process.env.NODE_ENV !== 'production' && (!cookieStore || process.env.USE_LOCAL_DB === 'true')) {
     const originalGetUser = client.auth.getUser.bind(client.auth);
     client.auth.getUser = async (jwt?: string) => {
       try {

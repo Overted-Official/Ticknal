@@ -10,6 +10,7 @@ export interface UniverseBacktestRequest {
   readonly program: ExecutableStrategyProgram;
   readonly assumptions: BacktestAssumptions;
   readonly period: BacktestPeriod;
+  readonly detail?: boolean;
 }
 
 export type UniverseBacktestItem =

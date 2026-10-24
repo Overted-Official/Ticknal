@@ -1,14 +1,16 @@
 import { db } from '@/db';
 import { dailyPrices, egxInvestorFlows, systemLogs, tickers } from '@/db/schema';
-import { sql, eq, and, notInArray, desc } from 'drizzle-orm';
+import { sql, eq, and, notInArray, desc, ne } from 'drizzle-orm';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import {
   fetchOfficialInvestorFlowForDate,
   buildInvestorFlowRow,
 } from '@/lib/investor-flows/fetch-official-investor-flows';
+import { fetchOfficialEgxMultiSegmentFlows } from '@/lib/investor-flows/fetch-egx-official-page';
 
 export interface ManualInvestorFlowInput {
   date: string;
+  marketSegment?: 'TOTAL' | 'STOCKS' | 'BONDS' | 'BILLS';
   egyptianBuy: number | string;
   egyptianSell: number | string;
   egyptianNet: number | string;
@@ -29,29 +31,33 @@ export interface SyncInvestorFlowResult {
   egyptianNet: number;
   arabNet: number;
   foreignSharePct: number;
-  source: 'MANUAL_PAYLOAD' | 'OFFICIAL_FEED';
+  source: 'MANUAL_PAYLOAD' | 'OFFICIAL_EGX_DIRECT' | 'OFFICIAL_FEED';
   message: string;
 }
 
 /**
  * Synchronizes the EGX investor category flow (Egyptians, Arabs, Foreigners)
- * for a target trading session.
+ * across all 4 segments (TOTAL, STOCKS, BONDS, BILLS) for a target trading session.
  */
 export async function syncDailyInvestorFlows(options?: {
   targetDate?: string;
   manualData?: ManualInvestorFlowInput;
+  forceRefresh?: boolean;
 }): Promise<SyncInvestorFlowResult> {
   // 1. If manual payload is provided, directly store the verified official figures
   if (options?.manualData) {
     const m = options.manualData;
     const dateStr = m.date;
-    const totalTurnover = Number(m.totalTurnover || (Number(m.egyptianBuy) + Number(m.arabBuy) + Number(m.foreignBuy)));
+    const seg = m.marketSegment || 'TOTAL';
+    const totalTurnover = Number(
+      m.totalTurnover || Number(m.egyptianBuy) + Number(m.arabBuy) + Number(m.foreignBuy)
+    );
 
     await db
       .insert(egxInvestorFlows)
       .values({
         date: dateStr,
-        marketSegment: 'TOTAL',
+        marketSegment: seg,
         egyptianBuy: String(m.egyptianBuy),
         egyptianSell: String(m.egyptianSell),
         egyptianNet: String(m.egyptianNet),
@@ -89,14 +95,19 @@ export async function syncDailyInvestorFlows(options?: {
     const egyptianNet = Number(m.egyptianNet);
     const arabNet = Number(m.arabNet);
     const foreignVol = Number(m.foreignBuy) + Number(m.foreignSell);
-    const grandVol = foreignVol + Number(m.egyptianBuy) + Number(m.egyptianSell) + Number(m.arabBuy) + Number(m.arabSell);
+    const grandVol =
+      foreignVol +
+      Number(m.egyptianBuy) +
+      Number(m.egyptianSell) +
+      Number(m.arabBuy) +
+      Number(m.arabSell);
     const foreignSharePct = grandVol > 0 ? Math.round((foreignVol / grandVol) * 1000) / 10 : 0;
 
     await db.insert(systemLogs).values({
       source: 'cron-investor-flows',
       level: 'INFO',
-      message: `Manual EGX investor flow updated for ${dateStr}: Foreign net ${foreignNet > 0 ? '+' : ''}${Math.round(foreignNet / 1e6)}M EGP (${foreignSharePct}% share).`,
-      metadata: { date: dateStr, totalTurnover, foreignNet, egyptianNet, arabNet },
+      message: `Manual EGX investor flow updated for ${dateStr} [${seg}]: Foreign net ${foreignNet > 0 ? '+' : ''}${Math.round(foreignNet / 1e6)}M EGP (${foreignSharePct}% share).`,
+      metadata: { date: dateStr, segment: seg, totalTurnover, foreignNet, egyptianNet, arabNet },
     });
 
     return {
@@ -108,7 +119,7 @@ export async function syncDailyInvestorFlows(options?: {
       arabNet,
       foreignSharePct,
       source: 'MANUAL_PAYLOAD',
-      message: `Successfully ingested official investor flow for ${dateStr}`,
+      message: `Successfully ingested official investor flow for ${dateStr} [${seg}]`,
     };
   }
 
@@ -131,7 +142,10 @@ export async function syncDailyInvestorFlows(options?: {
     if (!latestPrice[0] || !latestPrice[0].date) {
       throw new Error('No trading session data found in daily_prices to sync investor flows.');
     }
-    dateStr = typeof latestPrice[0].date === 'string' ? latestPrice[0].date : new Date(latestPrice[0].date).toISOString().split('T')[0];
+    dateStr =
+      typeof latestPrice[0].date === 'string'
+        ? latestPrice[0].date
+        : new Date(latestPrice[0].date).toISOString().split('T')[0];
   }
 
   // Check day of week (EGX trading days are Sun-Thu; Fri=5, Sat=6 are non-trading days)
@@ -177,8 +191,6 @@ export async function syncDailyInvestorFlows(options?: {
   const realTurnover = Number(turnoverRow?.total_turnover || 0);
   const activeTickers = Number(turnoverRow?.active_tickers || 0);
 
-  // EGX regular sessions have 200+ traded equities and billions in turnover.
-  // Holidays or closed sessions have 0 active equities (or rare isolated anomalies).
   if (activeTickers < 20 || realTurnover < 100_000_000) {
     await db.insert(systemLogs).values({
       source: 'cron-investor-flows',
@@ -200,37 +212,130 @@ export async function syncDailyInvestorFlows(options?: {
     };
   }
 
-  // 4. Check if we already have an existing entry for this date
-  const existingRows = await db
+  // 4. Check if all 4 official segments (including BILLS) already exist for this date
+  const existingSegments = await db
     .select()
     .from(egxInvestorFlows)
-    .where(eq(egxInvestorFlows.date, dateStr))
-    .limit(1);
-  const existingFlow = existingRows[0];
+    .where(eq(egxInvestorFlows.date, dateStr));
 
-  // If already present with valid non-zero values, preserve it unless explicitly forced
-  if (existingFlow && Number(existingFlow.totalTurnover) >= 100_000_000) {
-    const foreignNet = Number(existingFlow.foreignNet);
-    const egyptianNet = Number(existingFlow.egyptianNet);
-    const arabNet = Number(existingFlow.arabNet);
-    const fVol = Number(existingFlow.foreignBuy) + Number(existingFlow.foreignSell);
-    const totVol = fVol + Number(existingFlow.egyptianBuy) + Number(existingFlow.egyptianSell) + Number(existingFlow.arabBuy) + Number(existingFlow.arabSell);
+  const existingTotalRow = existingSegments.find((r) => r.marketSegment === 'TOTAL');
+  const existingBillsRow = existingSegments.find((r) => r.marketSegment === 'BILLS');
+
+  if (
+    !options?.forceRefresh &&
+    existingTotalRow &&
+    existingBillsRow &&
+    Number(existingTotalRow.totalTurnover) >= 100_000_000
+  ) {
+    const foreignNet = Number(existingTotalRow.foreignNet);
+    const egyptianNet = Number(existingTotalRow.egyptianNet);
+    const arabNet = Number(existingTotalRow.arabNet);
+    const fVol = Number(existingTotalRow.foreignBuy) + Number(existingTotalRow.foreignSell);
+    const totVol =
+      fVol +
+      Number(existingTotalRow.egyptianBuy) +
+      Number(existingTotalRow.egyptianSell) +
+      Number(existingTotalRow.arabBuy) +
+      Number(existingTotalRow.arabSell);
     const foreignSharePct = totVol > 0 ? Math.round((fVol / totVol) * 1000) / 10 : 8.0;
 
     return {
       success: true,
       date: dateStr,
-      totalTurnover: Number(existingFlow.totalTurnover),
+      totalTurnover: Number(existingTotalRow.totalTurnover),
       foreignNet,
       egyptianNet,
       arabNet,
       foreignSharePct,
-      source: 'OFFICIAL_FEED',
-      message: `Investor flow already recorded for session ${dateStr}.`,
+      source: 'OFFICIAL_EGX_DIRECT',
+      message: `Multi-segment official investor flows already recorded for session ${dateStr}.`,
     };
   }
 
-  // 5. Fetch and verify official EGX investor flow report
+  // 5. Primary Source: Scrape Official EGX Multi-Segment Page (TOTAL, STOCKS, BONDS, BILLS)
+  // Only attempt direct live scrape if targetDate is the latest session (within 3 days of current date)
+  const diffDays = Math.abs(Date.now() - targetDateObj.getTime()) / (1000 * 3600 * 24);
+  if (diffDays <= 4) {
+    const officialSegments = await fetchOfficialEgxMultiSegmentFlows();
+    const scrapedTotal = officialSegments?.find((s) => s.marketSegment === 'TOTAL');
+
+    if (officialSegments && officialSegments.length >= 2 && scrapedTotal) {
+      // Stale-rollover protection: verify scraped TOTAL does not match a prior date's TOTAL row
+      const priorTotalRows = await db
+        .select()
+        .from(egxInvestorFlows)
+        .where(
+          and(eq(egxInvestorFlows.marketSegment, 'TOTAL'), ne(egxInvestorFlows.date, dateStr))
+        )
+        .orderBy(desc(egxInvestorFlows.date))
+        .limit(3);
+
+      const isDuplicateOfPriorSession = priorTotalRows.some(
+        (p) =>
+          Math.abs(Number(p.egyptianBuy) - Number(scrapedTotal.egyptianBuy)) < 1000 &&
+          Math.abs(Number(p.egyptianSell) - Number(scrapedTotal.egyptianSell)) < 1000
+      );
+
+      if (!isDuplicateOfPriorSession) {
+        for (const segRow of officialSegments) {
+          await db
+            .insert(egxInvestorFlows)
+            .values({
+              date: dateStr,
+              ...segRow,
+            })
+            .onConflictDoUpdate({
+              target: [egxInvestorFlows.date, egxInvestorFlows.marketSegment],
+              set: {
+                ...segRow,
+                updatedAt: new Date(),
+              },
+            });
+        }
+
+        try {
+          revalidateTag('investor-flows', { expire: 0 });
+          revalidatePath('/markets');
+        } catch {}
+
+        const foreignNet = Number(scrapedTotal.foreignNet);
+        const egyptianNet = Number(scrapedTotal.egyptianNet);
+        const arabNet = Number(scrapedTotal.arabNet);
+        const totalTurnover = Number(scrapedTotal.totalTurnover);
+        const fVol = Number(scrapedTotal.foreignBuy) + Number(scrapedTotal.foreignSell);
+        const foreignSharePct =
+          totalTurnover > 0 ? Math.round((fVol / (2 * totalTurnover)) * 1000) / 10 : 0;
+
+        await db.insert(systemLogs).values({
+          source: 'cron-investor-flows',
+          level: 'INFO',
+          message: `Synced all ${officialSegments.length} official EGX investor flow segments for ${dateStr} [OFFICIAL_EGX_DIRECT]. Total Turnover: ${(totalTurnover / 1e9).toFixed(2)}B EGP, Hot Money Net: ${((foreignNet + arabNet) / 1e6).toFixed(1)}M EGP.`,
+          metadata: {
+            date: dateStr,
+            segments: officialSegments.map((s) => s.marketSegment),
+            totalTurnover,
+            foreignNet,
+            arabNet,
+            egyptianNet,
+          },
+        });
+
+        return {
+          success: true,
+          date: dateStr,
+          totalTurnover,
+          foreignNet,
+          egyptianNet,
+          arabNet,
+          foreignSharePct,
+          source: 'OFFICIAL_EGX_DIRECT',
+          message: `Successfully synchronized all ${officialSegments.length} official EGX segments for ${dateStr}`,
+        };
+      }
+    }
+  }
+
+  // 6. Secondary Fallback Source: Verified Official Closing Bulletin via Al Borsa (STOCKS segment)
   const verifiedSession = await fetchOfficialInvestorFlowForDate(dateStr);
   if (!verifiedSession) {
     await db.insert(systemLogs).values({
@@ -288,15 +393,21 @@ export async function syncDailyInvestorFlows(options?: {
     totalTurnover: String(realTurnover),
     retailSharePct: verifiedSession.retailSharePct ? String(verifiedSession.retailSharePct) : null,
     instSharePct: verifiedSession.instSharePct ? String(verifiedSession.instSharePct) : null,
-    egyptianRetailNet: verifiedSession.egyptianRetailNet ? String(verifiedSession.egyptianRetailNet) : null,
+    egyptianRetailNet: verifiedSession.egyptianRetailNet
+      ? String(verifiedSession.egyptianRetailNet)
+      : null,
     arabRetailNet: verifiedSession.arabRetailNet ? String(verifiedSession.arabRetailNet) : null,
-    foreignRetailNet: verifiedSession.foreignRetailNet ? String(verifiedSession.foreignRetailNet) : null,
-    egyptianInstNet: verifiedSession.egyptianInstNet ? String(verifiedSession.egyptianInstNet) : null,
+    foreignRetailNet: verifiedSession.foreignRetailNet
+      ? String(verifiedSession.foreignRetailNet)
+      : null,
+    egyptianInstNet: verifiedSession.egyptianInstNet
+      ? String(verifiedSession.egyptianInstNet)
+      : null,
     arabInstNet: verifiedSession.arabInstNet ? String(verifiedSession.arabInstNet) : null,
     foreignInstNet: verifiedSession.foreignInstNet ? String(verifiedSession.foreignInstNet) : null,
   };
 
-  // Upsert STOCKS row
+  // Upsert STOCKS row only (never write a partial TOTAL row without BONDS and BILLS)
   await db
     .insert(egxInvestorFlows)
     .values({
@@ -312,29 +423,6 @@ export async function syncDailyInvestorFlows(options?: {
       },
     });
 
-  // Also upsert TOTAL row (unless already populated with comprehensive debt bulletin)
-  await db
-    .insert(egxInvestorFlows)
-    .values({
-      date: dateStr,
-      marketSegment: 'TOTAL',
-      ...commonValues,
-    })
-    .onConflictDoUpdate({
-      target: [egxInvestorFlows.date, egxInvestorFlows.marketSegment],
-      set: {
-        retailSharePct: commonValues.retailSharePct,
-        instSharePct: commonValues.instSharePct,
-        egyptianRetailNet: commonValues.egyptianRetailNet,
-        arabRetailNet: commonValues.arabRetailNet,
-        foreignRetailNet: commonValues.foreignRetailNet,
-        egyptianInstNet: commonValues.egyptianInstNet,
-        arabInstNet: commonValues.arabInstNet,
-        foreignInstNet: commonValues.foreignInstNet,
-        updatedAt: new Date(),
-      },
-    });
-
   try {
     revalidateTag('investor-flows', { expire: 0 });
     revalidatePath('/markets');
@@ -345,7 +433,7 @@ export async function syncDailyInvestorFlows(options?: {
   await db.insert(systemLogs).values({
     source: 'cron-investor-flows',
     level: 'INFO',
-    message: `Synced official EGX investor flow for session ${dateStr} [${verifiedSession.parseMethod}]. Foreign Net: ${row.foreignNet >= 0 ? '+' : ''}${(row.foreignNet / 1e6).toFixed(1)}M EGP (${foreignSharePct}% share).`,
+    message: `Synced official EGX equity investor flow for session ${dateStr} [${verifiedSession.parseMethod}]. Foreign Net: ${row.foreignNet >= 0 ? '+' : ''}${(row.foreignNet / 1e6).toFixed(1)}M EGP (${foreignSharePct}% share).`,
     metadata: {
       date: dateStr,
       totalTurnover: realTurnover,
@@ -366,6 +454,6 @@ export async function syncDailyInvestorFlows(options?: {
     arabNet: row.arabNet,
     foreignSharePct,
     source: 'OFFICIAL_FEED',
-    message: `Successfully synchronized official investor flow for session ${dateStr}`,
+    message: `Successfully synchronized official equity investor flow for session ${dateStr}`,
   };
 }

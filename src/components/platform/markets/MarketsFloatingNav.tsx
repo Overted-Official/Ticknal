@@ -26,6 +26,7 @@ export default function MarketsFloatingNav({
       { id: 'fx-devaluation', label: locale === 'ar' ? 'العملات والتحوط' : 'FX & Currency', shortLabel: locale === 'ar' ? 'العملات' : 'FX' },
       { id: 'sector-rotation', label: locale === 'ar' ? 'دوران القطاعات' : 'Sector Rotation', shortLabel: t('markets.sectors') },
       { id: 'market-heatmap', label: locale === 'ar' ? 'خريطة السوق' : 'Market Heatmap', shortLabel: locale === 'ar' ? 'الخريطة' : 'Heatmap' },
+      { id: 'household-income', label: locale === 'ar' ? 'توزيع الدخل' : 'Income & Wealth', shortLabel: locale === 'ar' ? 'الدخل' : 'Income' },
     ],
     [t, locale]
   );

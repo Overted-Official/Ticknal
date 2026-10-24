@@ -6,6 +6,7 @@ import type { ComputedReportMetrics } from '../types';
 import KeyStatsGrid from '../components/KeyStatsGrid';
 import EquityCurveChart from '../components/EquityCurveChart';
 import ExecutionLevelsCard from '../components/ExecutionLevelsCard';
+import StrategyAiCopilotCard from '@/components/platform/strategy/StrategyAiCopilotCard';
 
 interface PerformanceOverviewTabProps {
   report: FullBacktestReport;
@@ -23,6 +24,8 @@ interface PerformanceOverviewTabProps {
   masterIndex: number | null;
   mdm: number | null;
   initialCapital: number;
+  symbol?: string;
+  chartData?: any[];
 }
 
 export default function PerformanceOverviewTab({
@@ -41,6 +44,8 @@ export default function PerformanceOverviewTab({
   masterIndex,
   mdm,
   initialCapital,
+  symbol,
+  chartData,
 }: PerformanceOverviewTabProps) {
   const { stats, equityCurve } = report;
 
@@ -62,6 +67,18 @@ export default function PerformanceOverviewTab({
         masterIndex={masterIndex}
         mdm={mdm}
       />
+
+      {/* 1.5 AI Strategy Copilot (Kronos Foundation Model) */}
+      {symbol && triggerPrice && triggerPrice > 0 && (
+        <StrategyAiCopilotCard
+          symbol={symbol}
+          triggerPrice={triggerPrice}
+          signalAction={signalAction}
+          avgBarsHeld={report.stats?.avgBarsHeld || 8}
+          chartData={chartData}
+          currencySymbol={metrics.currencySymbol}
+        />
+      )}
 
       {/* 2. Key Stats 8-Card Grid */}
       <KeyStatsGrid

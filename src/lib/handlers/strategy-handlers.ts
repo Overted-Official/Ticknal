@@ -18,12 +18,11 @@ import { userStrategies } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { compileSavedStrategy } from '@/lib/strategies/server/compile-saved-strategy';
 import { runSimpleBacktestForSymbol } from '@/lib/strategies/server/run-simple-backtest-for-symbol';
+import { runKronosPrediction } from '@/tools/kronos/run-kronos-prediction';
 
 const STRATEGY_CACHE_HEADERS = {
   'Cache-Control': 'private, no-store',
 };
-
-let predictorInstance: any = null;
 
 export async function handleSignalsGet(request: Request) {
   try {
@@ -588,142 +587,43 @@ export async function handlePredictPost(req: Request) {
     }
 
     const body = await req.json();
-    const { history, predictDays } = body;
+    const {
+      history,
+      predictDays,
+      sampleCount: rawSampleCount,
+      temperature: rawTemperature,
+      symbol: rawSymbol,
+    } = body;
 
     if (!history || !Array.isArray(history) || history.length === 0) {
       return NextResponse.json({ error: 'Missing or invalid history data.' }, { status: 400 });
     }
 
     const nDays = predictDays ? parseInt(predictDays, 10) : 10;
-    const seqLen = history.length;
+    const sampleCount = Math.max(1, Math.min(Number(rawSampleCount) || 1, 5));
+    const temperature = Math.max(0.2, Math.min(Number(rawTemperature) || 0.6, 1.2));
+    const lastBar = history[history.length - 1];
+    const lastRowTime = lastBar?.time || 'unknown';
 
-    const x = new Float32Array(seqLen * 6);
-    const x_stamp = new Float32Array(seqLen * 5);
+    // Build deterministic daily cache key
+    const ticker = typeof rawSymbol === 'string' && rawSymbol.trim()
+      ? rawSymbol.trim().toUpperCase().replace('.CA', '')
+      : null;
+    const identifier = ticker || `HIST_${history.length}_${history[0]?.time}_${lastBar?.close}`;
+    const customCacheKey = `${identifier}:${lastRowTime}:${nDays}:${sampleCount}:${temperature.toFixed(2)}`;
 
-    const featureSums = new Float64Array(6);
-    const featureSqSums = new Float64Array(6);
-
-    for (let i = 0; i < seqLen; i++) {
-      const row = history[i];
-      const open = Number(row.open) || 0;
-      const high = Number(row.high) || open;
-      const low = Number(row.low) || open;
-      const close = Number(row.close) || open;
-      const volume = Number(row.volume) || 0;
-      const amount = Number(row.amount) || (volume * ((open + high + low + close) / 4));
-
-      const f = [open, high, low, close, volume, amount];
-
-      for (let j = 0; j < 6; j++) {
-        x[i * 6 + j] = f[j];
-        featureSums[j] += f[j];
-        featureSqSums[j] += f[j] * f[j];
-      }
-
-      const [year, month, day] = row.time.split('-').map(Number);
-      const dt = new Date(Date.UTC(year, month - 1, day));
-      
-      const jsDay = dt.getUTCDay();
-      const pyWeekday = jsDay === 0 ? 6 : jsDay - 1;
-      
-      x_stamp[i * 5 + 0] = dt.getUTCMinutes();
-      x_stamp[i * 5 + 1] = dt.getUTCHours();
-      x_stamp[i * 5 + 2] = pyWeekday; 
-      x_stamp[i * 5 + 3] = dt.getUTCDate();
-      x_stamp[i * 5 + 4] = dt.getUTCMonth() + 1;
-    }
-
-    const means = new Float32Array(6);
-    const stds = new Float32Array(6);
-    for (let j = 0; j < 6; j++) {
-      const mean = featureSums[j] / seqLen;
-      const variance = (featureSqSums[j] / seqLen) - (mean * mean);
-      const std = Math.sqrt(Math.max(variance, 1e-5));
-      means[j] = mean;
-      stds[j] = std;
-
-      for (let i = 0; i < seqLen; i++) {
-        x[i * 6 + j] = (x[i * 6 + j] - mean) / std;
-      }
-    }
-
-    const y_stamp = new Float32Array(nDays * 5);
-    const lastRowTime = history[history.length - 1].time;
-    const [lYear, lMonth, lDay] = lastRowTime.split('-').map(Number);
-    let currentDate = new Date(Date.UTC(lYear, lMonth - 1, lDay));
-
-    let generatedDays = 0;
-    const futureDates: string[] = [];
-
-    while (generatedDays < nDays) {
-      currentDate.setUTCDate(currentDate.getUTCDate() + 1);
-
-      const dayOfWeek = currentDate.getUTCDay();
-      if (dayOfWeek === 5 || dayOfWeek === 6) continue; // Skip Friday and Saturday for EGX
-
-      const pyWeekday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-      
-      y_stamp[generatedDays * 5 + 0] = currentDate.getUTCMinutes();
-      y_stamp[generatedDays * 5 + 1] = currentDate.getUTCHours();
-      y_stamp[generatedDays * 5 + 2] = pyWeekday; 
-      y_stamp[generatedDays * 5 + 3] = currentDate.getUTCDate();
-      y_stamp[generatedDays * 5 + 4] = currentDate.getUTCMonth() + 1;
-
-      const yyyy = currentDate.getUTCFullYear();
-      const mm = String(currentDate.getUTCMonth() + 1).padStart(2, '0');
-      const dd = String(currentDate.getUTCDate()).padStart(2, '0');
-      futureDates.push(`${yyyy}-${mm}-${dd}`);
-
-      generatedDays++;
-    }
-
-    if (!predictorInstance) {
-      const { KronosPredictor } = await import('@/tools/kronos/KronosPredictor');
-      predictorInstance = new KronosPredictor();
-    }
-
-    const outNorm = await predictorInstance.predict(x, x_stamp, y_stamp, seqLen, nDays);
-    const rawPredictions = [];
-    for (let i = 0; i < nDays; i++) {
-      const idx = i * 6;
-      const denormOpen = (outNorm[idx + 0] * stds[0]) + means[0];
-      const denormHigh = (outNorm[idx + 1] * stds[1]) + means[1];
-      const denormLow = (outNorm[idx + 2] * stds[2]) + means[2];
-      const denormClose = (outNorm[idx + 3] * stds[3]) + means[3];
-      
-      rawPredictions.push({
-        date: futureDates[i],
-        open: denormOpen,
-        high: denormHigh,
-        low: denormLow,
-        close: denormClose
-      });
-    }
-
-    const lastHistoricalClose = Number(history[seqLen - 1].close);
-    const firstPredictedOpen = rawPredictions[0]?.open || lastHistoricalClose;
-    
-    const scaleRatio = (firstPredictedOpen > 0 && lastHistoricalClose > 0)
-      ? lastHistoricalClose / firstPredictedOpen
-      : 1.0;
-
-    const predictions = rawPredictions.map((p) => {
-      const scaledOpen = p.open * scaleRatio;
-      const scaledClose = p.close * scaleRatio;
-      const scaledHigh = Math.max(p.high * scaleRatio, scaledOpen, scaledClose);
-      const scaledLow = Math.min(p.low * scaleRatio, scaledOpen, scaledClose);
-
-      return {
-        time: p.date,
-        date: p.date,
-        open: Number(scaledOpen.toFixed(2)),
-        high: Number(scaledHigh.toFixed(2)),
-        low: Number(scaledLow.toFixed(2)),
-        close: Number(scaledClose.toFixed(2)),
-      };
+    const { result, cacheStatus } = await runKronosPrediction(history, nDays, {
+      sampleCount,
+      temperature,
+      customCacheKey,
     });
 
-    return NextResponse.json({ predictions });
+    return NextResponse.json(result, {
+      headers: {
+        'X-Ticknal-Cache': cacheStatus,
+        'Cache-Control': 'private, max-age=3600',
+      },
+    });
   } catch (error: any) {
     console.error('Error during prediction:', error);
     return NextResponse.json({ error: error.message || 'Internal error' }, { status: 500 });

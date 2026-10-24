@@ -124,6 +124,42 @@ export async function handlePositionsGet(request: Request) {
   }
 }
 
+export async function handleHoldingsSignalsGet(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const symbolsParam = searchParams.get('symbols');
+  let symbols: string[] = [];
+  if (symbolsParam) {
+    symbols = symbolsParam.split(',').map((s) => normalizeTickerSymbol(s.trim())).filter(Boolean);
+  } else {
+    const userPositions = await db.select({ tickerSymbol: positions.tickerSymbol })
+      .from(positions)
+      .where(and(eq(positions.userId, user.id), eq(positions.status, 'OPEN')));
+    symbols = Array.from(new Set(userPositions.map((p) => normalizeTickerSymbol(p.tickerSymbol)).filter(Boolean)));
+  }
+
+  if (symbols.length === 0) {
+    return NextResponse.json({ signals: [] });
+  }
+
+  try {
+    const { getExitSignalsForHoldings } = await import('@/lib/finance/opportunities');
+    const signals = await getExitSignalsForHoldings(symbols, 5);
+    return NextResponse.json({ signals }, {
+      headers: { 'Cache-Control': 'private, no-cache' },
+    });
+  } catch (err: any) {
+    console.error('Error in handleHoldingsSignalsGet:', err);
+    return NextResponse.json({ signals: [] });
+  }
+}
+
 export async function handlePositionsPost(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

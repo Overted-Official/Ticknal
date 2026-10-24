@@ -54,7 +54,7 @@ export async function handlePortfolioAnalysisGet(request: Request) {
       volume: Number(record.volume || 0),
     })).filter((bar) => bar.open > 0 && bar.high > 0 && bar.low > 0 && bar.close > 0);
 
-    if (bars.length < 80) return null;
+    if (bars.length < 3) return null;
     return { symbol, latestData: bars[bars.length - 1].date, consensus: await evaluateHoldingConsensus(symbol, bars, lookback) };
   }));
 

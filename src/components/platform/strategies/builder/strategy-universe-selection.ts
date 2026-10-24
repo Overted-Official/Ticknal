@@ -1,7 +1,20 @@
 import { BACKTEST_GROUPS } from './strategy-builder-fixtures';
+import type { StrategyUniverseCompany } from './strategy-universe-catalog';
 
 export const UNIVERSE_STORAGE_PREFIX = 'ticknal.strategy-studio.company-universe.v1.';
 export const STRATEGY_UNIVERSE_SYMBOLS = BACKTEST_GROUPS.flatMap((group) => group.tickers.map((ticker) => ticker.symbol));
+
+export function resolveStrategyUniverseScope(universe: readonly StrategyUniverseCompany[], selectedSymbols: readonly string[]): {
+  readonly evaluationSymbols: string[];
+  readonly enabledSymbols: string[];
+} {
+  const evaluationSymbols = [...new Set(universe.map((company) => company.symbol))];
+  const known = new Set(evaluationSymbols);
+  return {
+    evaluationSymbols,
+    enabledSymbols: [...new Set(selectedSymbols.filter((symbol) => known.has(symbol)))],
+  };
+}
 
 export function parseSelectedUniverse(raw: string | null, knownSymbols: readonly string[] = STRATEGY_UNIVERSE_SYMBOLS): string[] {
   if (raw === null) return [...knownSymbols];

@@ -3,10 +3,10 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { dailyPrices, marketNews } from '@/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
-import { screenAndIngestWires } from '@/lib/news/wire-screener';
 import { generateAllDailyTakes } from '@/lib/news/ticknal-take-generator';
 import { generateDailyTickerSummaries, seedHistoricalTickerSummaries } from '@/lib/news/ticker-summary-service';
 import { purgeLegacyNews, ensureMarketNewsTable } from '@/lib/news/news-service';
+import { syncInstitutionalMacroNews } from '@/lib/news/institutional-collector';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
@@ -40,17 +40,38 @@ async function handleNewsSync(request: NextRequest) {
         result = { action: 'reseed_historical_tickers', count };
         break;
       }
+      case 'institutional':
+      case 'macro': {
+        const startParam = url.searchParams.get('start_date');
+        const endParam = url.searchParams.get('end_date');
+        const maxAiParam = url.searchParams.get('max_ai');
+        const startDate = startParam ? new Date(startParam) : undefined;
+        const endDate = endParam ? new Date(endParam) : undefined;
+        const maxAiSynthesized = maxAiParam ? parseInt(maxAiParam, 10) : undefined;
+        const instResult = await syncInstitutionalMacroNews({
+          startDate,
+          endDate,
+          maxAiSynthesized,
+        });
+        result = { action: 'institutional', ...instResult };
+        break;
+      }
       case 'full':
       case 'full_pipeline': {
         const tickerResult = await generateDailyTickerSummaries();
         const takesResult = await generateAllDailyTakes();
-        result = { action: 'full_pipeline', tickers: tickerResult, takes: takesResult };
+        const instResult = await syncInstitutionalMacroNews();
+        result = { action: 'full_pipeline', tickers: tickerResult, takes: takesResult, institutional: instResult };
         break;
       }
       case 'wire':
       default: {
         const tickerResult = await generateDailyTickerSummaries();
         let takesResult: unknown = undefined;
+        let instResult: unknown = undefined;
+        try {
+          instResult = await syncInstitutionalMacroNews({ maxAiSynthesized: 4 });
+        } catch {}
         try {
           await ensureMarketNewsTable();
           const latestEgxRow = await db
@@ -65,12 +86,17 @@ async function handleNewsSync(request: NextRequest) {
               .select({ count: sql<number>`count(*)` })
               .from(marketNews)
               .where(sql`${marketNews.id} LIKE ${`take-${latestDate}-%`}`);
-            if (Number(existingTakes[0]?.count || 0) < 5) {
+            if (Number(existingTakes[0]?.count || 0) < 6) {
               takesResult = await generateAllDailyTakes();
             }
           }
         } catch {}
-        result = { action: 'wire', tickers: tickerResult, ...(takesResult ? { takes: takesResult } : {}) };
+        result = {
+          action: 'wire',
+          tickers: tickerResult,
+          ...(takesResult ? { takes: takesResult } : {}),
+          ...(instResult ? { institutional: instResult } : {}),
+        };
         break;
       }
     }

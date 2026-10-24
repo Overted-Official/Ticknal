@@ -35,7 +35,7 @@ export default function PositionRowItem({
   const positionVal = order.currentPrice * order.quantity;
   const weightPct = totalMarketValue > 0 ? (order.marketValueEgp / totalMarketValue) * 100 : 0;
   const isPositive = order.profitLoss >= 0;
-  const cleanSymbol = order.tickerSymbol.replace('.CA', '').trim().toUpperCase();
+  const cleanSymbol = order.tickerSymbol.replace(/\.ca$/i, '').trim().toUpperCase();
   const initial = cleanSymbol.slice(0, 2);
 
   const signalType = exitSignal?.signal?.signal;
@@ -132,7 +132,11 @@ export default function PositionRowItem({
                 onSellClick(order);
               }}
               className="w-[56px] sm:w-[64px] py-1 text-center rounded-[6px] text-xs font-semibold transition-all cursor-pointer shadow-xs bg-loss-chart text-white hover:bg-loss-hover animate-pulse"
-              title={isArabic ? 'إغلاق أو تخفيض المركز' : 'Sell or close position'}
+              title={
+                isArabic
+                  ? `${exitSignal?.strategyLabel || exitSignal?.strategyShortName || 'إشارة فنية'}: بيع (${exitSignal?.signal?.date || ''})`
+                  : `${exitSignal?.strategyLabel || exitSignal?.strategyShortName || 'Technical Strategy'}: SELL (${exitSignal?.signal?.date || ''})`
+              }
             >
               {isArabic ? 'بيع' : 'Sell'}
             </button>
@@ -148,7 +152,11 @@ export default function PositionRowItem({
                 }
               }}
               className="w-[56px] sm:w-[64px] py-1 text-center rounded-[6px] text-xs font-semibold transition-all cursor-pointer shadow-xs bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600 hover:text-white"
-              title={isArabic ? 'إضافة إلى المركز' : 'Add to position'}
+              title={
+                isArabic
+                  ? `${exitSignal?.strategyLabel || exitSignal?.strategyShortName || 'إشارة فنية'}: شراء (${exitSignal?.signal?.date || ''})`
+                  : `${exitSignal?.strategyLabel || exitSignal?.strategyShortName || 'Technical Strategy'}: BUY (${exitSignal?.signal?.date || ''})`
+              }
             >
               {isArabic ? 'شراء' : 'Buy'}
             </button>
@@ -160,7 +168,7 @@ export default function PositionRowItem({
                 onTickerClick(order);
               }}
               className="w-[56px] sm:w-[64px] py-1 text-center rounded-[6px] text-xs font-medium transition-all cursor-pointer shadow-xs bg-plt-hover text-plt-subtle border border-plt-border hover:border-plt-border-active hover:bg-plt-active hover:text-plt-text"
-              title={isArabic ? 'مركز نشط - عرض التفاصيل' : 'Active position - View details'}
+              title={isArabic ? 'مركز نشط - احتفاظ (لا توجد إشارة خروج فنية)' : 'Active holding - Hold (No active exit signal)'}
             >
               {isArabic ? 'احتفاظ' : 'Hold'}
             </button>

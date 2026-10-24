@@ -6,6 +6,7 @@ import { MAX_ADVANCED_WORKFLOW_NODES } from '../strategy-program';
 
 export interface SavedStrategyRecord {
   readonly id: string;
+  readonly revision?: number;
   readonly name: string;
   readonly mode: 'simple' | 'advanced';
   readonly draft: StrategyDraft;

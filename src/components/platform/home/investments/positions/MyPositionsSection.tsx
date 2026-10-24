@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n';
@@ -131,15 +131,46 @@ export default function MyPositionsSection({
     return `${sign}${formatted} ${cur}`;
   };
 
+  const [liveSignals, setLiveSignals] = useState<Opportunity[]>(exitSignals);
+
+  useEffect(() => {
+    if (exitSignals && exitSignals.length > 0) {
+      setLiveSignals(exitSignals);
+    }
+  }, [exitSignals]);
+
+  // Client-side fallback: fetch exit signals if SSR was empty or timed out
+  useEffect(() => {
+    if (orders.length === 0 || liveSignals.length > 0) return;
+
+    const symbols = Array.from(
+      new Set(orders.map((o) => o.tickerSymbol.replace(/\.ca$/i, '').trim().toUpperCase()))
+    ).join(',');
+
+    let isMounted = true;
+    fetch(`/api/positions/signals?symbols=${encodeURIComponent(symbols)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data?.signals && Array.isArray(data.signals)) {
+          setLiveSignals(data.signals);
+        }
+      })
+      .catch((err) => console.warn('Failed to load live holdings exit signals:', err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, [orders, liveSignals.length]);
+
   // Map exit signals by symbol for fast lookup
   const exitSignalsMap = useMemo(() => {
     const map = new Map<string, Opportunity>();
-    for (const sig of exitSignals) {
-      const sym = sig.symbol.replace('.CA', '').trim().toUpperCase();
+    for (const sig of liveSignals) {
+      const sym = sig.symbol.replace(/\.ca$/i, '').trim().toUpperCase();
       map.set(sym, sig);
     }
     return map;
-  }, [exitSignals]);
+  }, [liveSignals]);
 
   // Gainers: open orders with profitLoss > 0, sorted descending by profitLossPct
   const gainers = useMemo(() => {
@@ -188,7 +219,7 @@ export default function MyPositionsSection({
               formatMoney={formatMoney}
               isPrivacy={isPrivacy}
               exitSignal={exitSignalsMap.get(
-                order.tickerSymbol.replace('.CA', '').trim().toUpperCase()
+                order.tickerSymbol.replace(/\.ca$/i, '').trim().toUpperCase()
               )}
               onTickerClick={handleTickerClick}
               onSellClick={handleSellClick}
@@ -240,7 +271,7 @@ export default function MyPositionsSection({
               formatMoney={formatMoney}
               isPrivacy={isPrivacy}
               exitSignal={exitSignalsMap.get(
-                order.tickerSymbol.replace('.CA', '').trim().toUpperCase()
+                order.tickerSymbol.replace(/\.ca$/i, '').trim().toUpperCase()
               )}
               onTickerClick={handleTickerClick}
               onSellClick={handleSellClick}
@@ -407,7 +438,7 @@ export default function MyPositionsSection({
         exitSignal={
           activeTickerOrder
             ? exitSignalsMap.get(
-                activeTickerOrder.tickerSymbol.replace('.CA', '').trim().toUpperCase()
+                activeTickerOrder.tickerSymbol.replace(/\.ca$/i, '').trim().toUpperCase()
               )
             : undefined
         }

@@ -179,6 +179,50 @@ export interface UsdEgpUpdateChartData {
   history20d?: FxHistoryPoint[];
 }
 
+export interface TrendBreakoutHistoryPoint {
+  date: string;
+  new20dHighs: number;
+  new20dLows: number;
+  net20d: number;
+  aboveSma50Pct: number;
+  total: number;
+}
+
+export interface TrendBreakoutTickerItem {
+  ticker: string;
+  close: number;
+  changePct: number;
+  levelLabel: string;
+}
+
+export interface TrendBreakoutsChartData {
+  date: string;
+  totalStocks: number;
+  new20dHighs: number;
+  new20dHighsPct: number;
+  new20dLows: number;
+  new20dLowsPct: number;
+  new60dHighs: number;
+  new60dHighsPct: number;
+  new60dLows: number;
+  new60dLowsPct: number;
+  new52wHighs: number;
+  new52wHighsPct: number;
+  new52wLows: number;
+  new52wLowsPct: number;
+  aboveSma20: number;
+  aboveSma20Pct: number;
+  aboveSma50: number;
+  aboveSma50Pct: number;
+  aboveSma200: number;
+  aboveSma200Pct: number;
+  crossedAboveSma50: number;
+  crossedBelowSma50: number;
+  topBreakouts: TrendBreakoutTickerItem[];
+  topBreakdowns: TrendBreakoutTickerItem[];
+  history10d?: TrendBreakoutHistoryPoint[];
+}
+
 export interface SnapshotIndexPoint {
   close: number;
   changePct: number;
@@ -792,8 +836,6 @@ export function generateHotMoneyChartSvg(
       }
       ${xLabels}
     </g>
-      ${xLabels}
-    </g>
 
     ${footerBlock(W, H, ar ? 'محرك تكنال للتحليل الكمي · بيانات تدفقات المستثمرين بالبورصة المصرية' : 'Ticknal Quantitative Flow Engine · Verified EGX Institutional Flow Data', ar)}
   `;
@@ -1287,9 +1329,9 @@ export function generateMarketBreadthChartSvg(
         ${
           ar
             ? `<text x="446" y="32" fill="#ffffff" font-size="15.5" font-weight="700" text-anchor="end">ميزان الصعود والهبوط</text>
-               <text x="22" y="32" fill="${CYAN}" font-size="13.5" font-weight="700" text-anchor="start">${data.totalStocks} سهم متداول</text>`
+               <text x="22" y="32" fill="${CYAN}" font-size="13.5" font-weight="700" text-anchor="start">${data.totalStocks} سهم مقيد</text>`
             : `<text x="22" y="32" fill="#ffffff" font-size="15.5" font-weight="700">Session Breadth Gauge</text>
-               <text x="446" y="32" fill="${CYAN}" font-size="13.5" font-weight="700" text-anchor="end">${data.totalStocks} Traded Equities</text>`
+               <text x="446" y="32" fill="${CYAN}" font-size="13.5" font-weight="700" text-anchor="end">${data.totalStocks} Listed Equities</text>`
         }
 
         <g transform="translate(132, 172)">
@@ -1452,7 +1494,7 @@ export function generateMarketBreadthChartSvg(
     ${headerBlock(
       W,
       ar ? 'ميزان الجلسة: حركة الأسهم الصاعدة والهابطة' : 'EGX Market Breadth & Sector Participation',
-      ar ? 'توزيع الأسهم الصاعدة والهابطة في الجلسة ونشاط القطاعات' : `Verified participation across ${data.totalStocks} actively traded EGX listed equities (excluding mutual funds)`,
+      ar ? 'توزيع الأسهم الصاعدة والهابطة في الجلسة ونشاط القطاعات' : `Verified participation across ${data.totalStocks} EGX listed equities (excluding mutual funds)`,
       data.date,
       ar ? 'ميزان الجلسة' : 'Market Breadth',
       statusBadge,
@@ -1465,9 +1507,9 @@ export function generateMarketBreadthChartSvg(
       ${
         ar
           ? `<text x="446" y="28" fill="#ffffff" font-size="14" font-weight="700" text-anchor="end">ميزان الصعود والهبوط للجلسة</text>
-             <text x="22" y="28" fill="${CYAN}" font-size="12" font-weight="700" text-anchor="start">${data.totalStocks} سهم متداول</text>`
+             <text x="22" y="28" fill="${CYAN}" font-size="12" font-weight="700" text-anchor="start">${data.totalStocks} سهم مقيد</text>`
           : `<text x="22" y="28" fill="#ffffff" font-size="14" font-weight="700">Session Advance / Decline Gauge</text>
-             <text x="446" y="28" fill="${CYAN}" font-size="12" font-weight="700" text-anchor="end">${data.totalStocks} Traded Equities</text>`
+             <text x="446" y="28" fill="${CYAN}" font-size="12" font-weight="700" text-anchor="end">${data.totalStocks} Listed Equities</text>`
       }
 
       <g transform="translate(132, 148)">
@@ -2554,6 +2596,356 @@ export function generateMarketSnapshotChartSvg(
 export const generateInvestorFlowsChartSvg = generateHotMoneyChartSvg;
 export const generateEgx30ChartSvg = generateTradeSummaryChartSvg;
 export const generateFxArbitrageChartSvg = generateUsdEgpUpdateChartSvg;
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * 6. TREND & BREAKOUTS — Wide (1200x675 16:9) & Square (1080x1080 1:1)
+ * ─────────────────────────────────────────────────────────────────────────── */
+export function generateTrendBreakoutsChartSvg(
+  data: TrendBreakoutsChartData,
+  locale: 'en' | 'ar' = 'en',
+  variant: ChartVariant = 'wide'
+): string {
+  const isSquare = variant === 'square';
+  const W = isSquare ? 1080 : 1200;
+  const H = isSquare ? 1080 : 675;
+  const ar = locale === 'ar';
+
+  const net20 = data.new20dHighs - data.new20dLows;
+  const isNetBullish = net20 >= 0;
+  const statusColor = isNetBullish ? GREEN : RED;
+  const statusBadge = isNetBullish
+    ? ar ? `توسع في القمم (+${net20})` : `BULLISH EXPANSION (+${net20} NET NH)`
+    : ar ? `سيطرة القيعان (${net20})` : `BREAKDOWN DOMINANCE (${net20} NET NL)`;
+
+  const hist =
+    data.history10d && data.history10d.length >= 2
+      ? data.history10d
+      : [{
+          date: data.date.slice(5),
+          new20dHighs: data.new20dHighs,
+          new20dLows: data.new20dLows,
+          net20d: net20,
+          aboveSma50Pct: data.aboveSma50Pct,
+          total: data.totalStocks,
+        }];
+
+  const horizons = [
+    {
+      labelEn: '20-Day (1-Month)',
+      labelAr: '٢٠ جلسة (شهر واحد)',
+      highs: data.new20dHighs,
+      highsPct: data.new20dHighsPct,
+      lows: data.new20dLows,
+      lowsPct: data.new20dLowsPct,
+    },
+    {
+      labelEn: '60-Day (3-Month)',
+      labelAr: '٦٠ جلسة (٣ أشهر)',
+      highs: data.new60dHighs,
+      highsPct: data.new60dHighsPct,
+      lows: data.new60dLows,
+      lowsPct: data.new60dLowsPct,
+    },
+    {
+      labelEn: '52-Week (1-Year)',
+      labelAr: '٥٢ أسبوعاً (سنة)',
+      highs: data.new52wHighs,
+      highsPct: data.new52wHighsPct,
+      lows: data.new52wLows,
+      lowsPct: data.new52wLowsPct,
+    },
+  ];
+
+  const smas = [
+    { labelEn: 'Above 20D SMA (Short-Term)', labelAr: 'أعلى من متوسط ٢٠ يوم (قصير الأجل)', count: data.aboveSma20, pct: data.aboveSma20Pct, color: CYAN },
+    { labelEn: 'Above 50D SMA (Medium-Term)', labelAr: 'أعلى من متوسط ٥٠ يوم (متوسط الأجل)', count: data.aboveSma50, pct: data.aboveSma50Pct, color: GREEN },
+    { labelEn: 'Above 200D SMA (Long-Term)', labelAr: 'أعلى من متوسط ٢٠٠ يوم (طويل الأجل)', count: data.aboveSma200, pct: data.aboveSma200Pct, color: AMBER },
+  ];
+
+  const breakouts = (data.topBreakouts || []).slice(0, 3);
+  const breakdowns = (data.topBreakdowns || []).slice(0, 3);
+
+  // Common Header & Footer
+  const header = headerBlock(
+    W,
+    ar ? 'اتجاهات واختراقات السوق: القمم والقيعان ومسار الأسهم' : 'EGX Trend & Breakouts: New Highs / Lows & Regimes',
+    ar ? `رصد اختراق القمم وكسر القيعان ومستويات المتوسطات عبر ${data.totalStocks} سهم مقيد` : `Multi-horizon structural breakouts across ${data.totalStocks} listed equities and moving average regimes`,
+    data.date,
+    ar ? 'اختراقات المسار' : 'Trend & Breakouts',
+    statusBadge,
+    statusColor,
+    ar
+  );
+
+  const footer = footerBlock(
+    W,
+    H,
+    ar ? 'بيانات القمم والقيعان والمتوسطات المتحركة الفعلية (دون الصناديق) · محرك تكنال الكمي' : 'Verified Donchian Highs/Lows & Moving Average Breadth · Ticknal Quantitative Engine',
+    ar
+  );
+
+  if (isSquare) {
+    // ── 1:1 SQUARE LAYOUT (1080 x 1080) ──
+    // Horizon Breakout Matrix Cards (Top Left: 476 x 270)
+    const hzRows = horizons
+      .map((h, i) => {
+        const y = 46 + i * 70;
+        const diff = h.highs - h.lows;
+        const diffColor = diff >= 0 ? GREEN : RED;
+        return `
+        <g transform="translate(16, ${y})">
+          <rect width="444" height="60" rx="8" fill="#0d0d0e" stroke="${LINE}" stroke-width="1" />
+          <text x="${ar ? 426 : 14}" y="22" fill="${SOFT}" font-size="12" font-weight="700" text-anchor="${ar ? 'end' : 'start'}">${esc(ar ? h.labelAr : h.labelEn)}</text>
+          <text x="${ar ? 14 : 426}" y="22" fill="${diffColor}" font-size="11.5" font-weight="700" text-anchor="${ar ? 'start' : 'end'}">${diff >= 0 ? '+' : ''}${diff} Net</text>
+          
+          <g transform="translate(14, 32)">
+            <text x="${ar ? 400 : 0}" y="15" fill="${GREEN}" font-size="13" font-weight="700" text-anchor="${ar ? 'end' : 'start'}">▲ ${h.highs} <tspan font-size="11" fill="${MUTED}">(${h.highsPct}%)</tspan></text>
+            <text x="${ar ? 0 : 400}" y="15" fill="${RED}" font-size="13" font-weight="700" text-anchor="${ar ? 'start' : 'end'}">▼ ${h.lows} <tspan font-size="11" fill="${MUTED}">(${h.lowsPct}%)</tspan></text>
+          </g>
+        </g>`;
+      })
+      .join('');
+
+    // SMA Regime Cards (Top Right: 504 x 270)
+    const smaBars = smas
+      .map((s, i) => {
+        const y = 46 + i * 70;
+        const barW = 460;
+        const fillW = Math.max(3, (s.pct / 100) * barW);
+        return `
+        <g transform="translate(20, ${y})">
+          <text x="${ar ? barW : 0}" y="18" fill="${SOFT}" font-size="12" font-weight="700" text-anchor="${ar ? 'end' : 'start'}">${esc(ar ? s.labelAr : s.labelEn)}</text>
+          <text x="${ar ? 0 : barW}" y="18" fill="${s.color}" font-size="13.5" font-weight="700" text-anchor="${ar ? 'start' : 'end'}">${s.pct}% <tspan font-size="11" fill="${MUTED}">(${s.count})</tspan></text>
+          <rect x="0" y="28" width="${barW}" height="14" rx="4" fill="#18181b" />
+          <rect x="${ar ? (barW - fillW).toFixed(1) : '0'}" y="28" width="${fillW.toFixed(1)}" height="14" rx="4" fill="${s.color}" />
+        </g>`;
+      })
+      .join('');
+
+    // Bottom Historical Diverging NH vs NL Chart (996 x 450)
+    const chX = 64;
+    const chW = 868;
+    const chY = 64;
+    const chH = 260;
+    const zeroY = chY + chH / 2;
+    const maxBarVal = Math.max(10, ...hist.map((h) => Math.max(h.new20dHighs, h.new20dLows)));
+    const step = hist.length > 0 ? chW / hist.length : chW;
+    const bW = Math.max(18, Math.min(48, step * 0.48));
+
+    const histDivergingBars = hist
+      .map((h, i) => {
+        const cx = chX + i * step + step / 2;
+        const bx = cx - bW / 2;
+        const hH = (h.new20dHighs / maxBarVal) * (chH / 2 - 16);
+        const lH = (h.new20dLows / maxBarVal) * (chH / 2 - 16);
+        return `
+        <g>
+          <rect x="${bx.toFixed(1)}" y="${(zeroY - hH).toFixed(1)}" width="${bW.toFixed(1)}" height="${Math.max(1, hH).toFixed(1)}" rx="3" fill="${GREEN}" />
+          <rect x="${bx.toFixed(1)}" y="${zeroY.toFixed(1)}" width="${bW.toFixed(1)}" height="${Math.max(1, lH).toFixed(1)}" rx="3" fill="${RED}" />
+          <text x="${cx.toFixed(1)}" y="${(chY + chH + 20).toFixed(1)}" fill="${MUTED}" font-size="11" font-weight="600" text-anchor="middle">${esc(h.date)}</text>
+        </g>`;
+      })
+      .join('');
+
+    // SMA50% Overlay Line
+    const smaPts = hist.map((h, i) => {
+      const x = chX + i * step + step / 2;
+      const y = chY + chH - (h.aboveSma50Pct / 100) * chH;
+      return { x, y, pct: h.aboveSma50Pct };
+    });
+    const smaPoly = smaPts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+
+    // Breakouts & Breakdowns Summary
+    const moversText = `
+      <g transform="translate(42, 930)">
+        <rect width="996" height="68" rx="10" fill="#0c0c0e" stroke="${LINE}" stroke-width="1" />
+        <text x="${ar ? 974 : 20}" y="26" fill="${GREEN}" font-size="11.5" font-weight="700" text-anchor="${ar ? 'end' : 'start'}">▲ ${esc(ar ? 'أبرز اختراقات القمم:' : 'KEY BREAKOUTS:')} <tspan fill="#ffffff">${breakouts.map((b) => `${b.ticker} (+${b.changePct}%)`).join('  ') || (ar ? 'لا يوجد' : 'None')}</tspan></text>
+        <text x="${ar ? 974 : 20}" y="50" fill="${RED}" font-size="11.5" font-weight="700" text-anchor="${ar ? 'end' : 'start'}">▼ ${esc(ar ? 'أبرز كسر القيعان:' : 'KEY BREAKDOWNS:')} <tspan fill="#ffffff">${breakdowns.map((b) => `${b.ticker} (${b.changePct}%)`).join('  ') || (ar ? 'لا يوجد' : 'None')}</tspan></text>
+      </g>`;
+
+    const sqBody = `
+      ${header}
+
+      <!-- Top Left: Multi-Horizon Highs vs Lows (476 x 272) -->
+      <g transform="translate(42, 156)">
+        <rect width="476" height="272" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
+        <text x="${ar ? 454 : 20}" y="30" fill="#ffffff" font-size="15" font-weight="700" text-anchor="${ar ? 'end' : 'start'}">${esc(ar ? 'القمم والقيعان متعددة الآجال' : 'Multi-Horizon New Highs / Lows')}</text>
+        ${hzRows}
+      </g>
+
+      <!-- Top Right: Moving Average Trend Regimes (504 x 272) -->
+      <g transform="translate(534, 156)">
+        <rect width="504" height="272" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
+        <text x="${ar ? 480 : 20}" y="30" fill="#ffffff" font-size="15" font-weight="700" text-anchor="${ar ? 'end' : 'start'}">${esc(ar ? 'نسبة الأسهم أعلى المتوسطات المتحركة' : '% of Equities Above Moving Averages')}</text>
+        ${smaBars}
+      </g>
+
+      <!-- Bottom: 10-Session NH vs NL Divergence Chart (996 x 460) -->
+      <g transform="translate(42, 448)">
+        <rect width="996" height="460" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
+        ${
+          ar
+            ? `<text x="970" y="34" fill="#ffffff" font-size="16" font-weight="700" text-anchor="end">مسار القمم والقيعان (آخر ١٠ جلسات · قمة/قاع ٢٠ يوماً)</text>
+               <rect x="26" y="22" width="12" height="12" rx="2.5" fill="${GREEN}" /><text x="44" y="32" fill="${SOFT}" font-size="11.5" font-weight="700">قمم جديدة (+)</text>
+               <rect x="150" y="22" width="12" height="12" rx="2.5" fill="${RED}" /><text x="168" y="32" fill="${SOFT}" font-size="11.5" font-weight="700">قيعان جديدة (-)</text>
+               <line x1="274" y1="28" x2="298" y2="28" stroke="${CYAN}" stroke-width="2.5" /><text x="306" y="32" fill="${CYAN}" font-size="11.5" font-weight="700">أعلى من متوسط 50D %</text>`
+            : `<text x="26" y="34" fill="#ffffff" font-size="16" font-weight="700">10-Session New Highs vs. Lows Trajectory &amp; 50D SMA Breadth</text>
+               <rect x="580" y="22" width="12" height="12" rx="2.5" fill="${GREEN}" /><text x="598" y="32" fill="${SOFT}" font-size="11.5" font-weight="600">20D Highs (+)</text>
+               <rect x="700" y="22" width="12" height="12" rx="2.5" fill="${RED}" /><text x="718" y="32" fill="${SOFT}" font-size="11.5" font-weight="600">20D Lows (-)</text>
+               <line x1="816" y1="28" x2="840" y2="28" stroke="${CYAN}" stroke-width="2.5" /><text x="848" y="32" fill="${CYAN}" font-size="11.5" font-weight="700">% Above 50D SMA</text>`
+        }
+
+        <line x1="${chX}" y1="${zeroY.toFixed(1)}" x2="${(chX + chW).toFixed(1)}" y2="${zeroY.toFixed(1)}" stroke="#333338" stroke-width="1.2" stroke-dasharray="4 4" />
+        <line x1="${chX}" y1="${chY}" x2="${(chX + chW).toFixed(1)}" y2="${chY}" stroke="${GRID}" stroke-width="1" />
+        <line x1="${chX}" y1="${chY + chH}" x2="${(chX + chW).toFixed(1)}" y2="${chY + chH}" stroke="${GRID}" stroke-width="1" />
+
+        <text x="${chX - 10}" y="${chY + 12}" fill="${GREEN}" font-size="11" font-weight="700" text-anchor="end">+${maxBarVal} NH</text>
+        <text x="${chX - 10}" y="${(zeroY + 4).toFixed(1)}" fill="${SOFT}" font-size="11" text-anchor="end">0</text>
+        <text x="${chX - 10}" y="${chY + chH}" fill="${RED}" font-size="11" font-weight="700" text-anchor="end">-${maxBarVal} NL</text>
+
+        ${histDivergingBars}
+        ${smaPts.length > 1 ? `<polyline points="${smaPoly}" fill="none" stroke="${CYAN}" stroke-width="2.5" stroke-dasharray="4 3" stroke-linejoin="round" />` : ''}
+        ${smaPts.map((p) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="${CYAN}" />`).join('')}
+
+        <text x="${(chX + chW + 8).toFixed(1)}" y="${chY + 12}" fill="${CYAN}" font-size="10.5" font-weight="600">100%</text>
+        <text x="${(chX + chW + 8).toFixed(1)}" y="${(zeroY + 4).toFixed(1)}" fill="${CYAN}" font-size="10.5" font-weight="600">50%</text>
+        <text x="${(chX + chW + 8).toFixed(1)}" y="${chY + chH}" fill="${CYAN}" font-size="10.5" font-weight="600">0%</text>
+      </g>
+
+      ${moversText}
+      ${footer}
+    `;
+
+    return toBase64Svg(svgShell(W, H, '', sqBody, ar));
+  }
+
+  // ── 16:9 WIDE DESKTOP LAYOUT (1200 x 675) ──
+  // Left Column (Horizons + Regimes: 540 x 448)
+  const wHzRows = horizons
+    .map((h, i) => {
+      const y = 40 + i * 52;
+      const diff = h.highs - h.lows;
+      const diffColor = diff >= 0 ? GREEN : RED;
+      return `
+      <g transform="translate(16, ${y})">
+        <rect width="508" height="46" rx="8" fill="#0d0d0e" stroke="${LINE}" stroke-width="1" />
+        <text x="${ar ? 490 : 14}" y="19" fill="${SOFT}" font-size="12" font-weight="700" text-anchor="${ar ? 'end' : 'start'}">${esc(ar ? h.labelAr : h.labelEn)}</text>
+        <text x="${ar ? 14 : 490}" y="19" fill="${diffColor}" font-size="11.5" font-weight="700" text-anchor="${ar ? 'start' : 'end'}">${diff >= 0 ? '+' : ''}${diff} Net</text>
+        
+        <g transform="translate(14, 25)">
+          <text x="${ar ? 462 : 0}" y="13" fill="${GREEN}" font-size="12.5" font-weight="700" text-anchor="${ar ? 'end' : 'start'}">▲ ${h.highs} <tspan font-size="10.5" fill="${MUTED}">(${h.highsPct}%)</tspan></text>
+          <text x="${ar ? 0 : 462}" y="13" fill="${RED}" font-size="12.5" font-weight="700" text-anchor="${ar ? 'start' : 'end'}">▼ ${h.lows} <tspan font-size="10.5" fill="${MUTED}">(${h.lowsPct}%)</tspan></text>
+        </g>
+      </g>`;
+    })
+    .join('');
+
+  const wSmaBars = smas
+    .map((s, i) => {
+      const y = 246 + i * 58;
+      const barW = 508;
+      const fillW = Math.max(3, (s.pct / 100) * barW);
+      return `
+      <g transform="translate(16, ${y})">
+        <text x="${ar ? barW : 0}" y="16" fill="${SOFT}" font-size="11.5" font-weight="700" text-anchor="${ar ? 'end' : 'start'}">${esc(ar ? s.labelAr : s.labelEn)}</text>
+        <text x="${ar ? 0 : barW}" y="16" fill="${s.color}" font-size="12.5" font-weight="700" text-anchor="${ar ? 'start' : 'end'}">${s.pct}% <tspan font-size="10.5" fill="${MUTED}">(${s.count})</tspan></text>
+        <rect x="0" y="24" width="${barW}" height="12" rx="3.5" fill="#18181b" />
+        <rect x="${ar ? (barW - fillW).toFixed(1) : '0'}" y="24" width="${fillW.toFixed(1)}" height="12" rx="3.5" fill="${s.color}" />
+      </g>`;
+    })
+    .join('');
+
+  // Right Column (Historical Diverging NH-NL Chart: 560 x 368 + Tickers Box 560 x 68)
+  const rChX = 52;
+  const rChW = 468;
+  const rChY = 56;
+  const rChH = 220;
+  const rZeroY = rChY + rChH / 2;
+  const rMaxVal = Math.max(10, ...hist.map((h) => Math.max(h.new20dHighs, h.new20dLows)));
+  const rStep = hist.length > 0 ? rChW / hist.length : rChW;
+  const rBarW = Math.max(16, Math.min(36, rStep * 0.52));
+
+  const rHistBars = hist
+    .map((h, i) => {
+      const cx = rChX + i * rStep + rStep / 2;
+      const bx = cx - rBarW / 2;
+      const hH = (h.new20dHighs / rMaxVal) * (rChH / 2 - 14);
+      const lH = (h.new20dLows / rMaxVal) * (rChH / 2 - 14);
+      return `
+      <g>
+        <rect x="${bx.toFixed(1)}" y="${(rZeroY - hH).toFixed(1)}" width="${rBarW.toFixed(1)}" height="${Math.max(1, hH).toFixed(1)}" rx="2.5" fill="${GREEN}" />
+        <rect x="${bx.toFixed(1)}" y="${rZeroY.toFixed(1)}" width="${rBarW.toFixed(1)}" height="${Math.max(1, lH).toFixed(1)}" rx="2.5" fill="${RED}" />
+        <text x="${cx.toFixed(1)}" y="${(rChY + rChH + 18).toFixed(1)}" fill="${MUTED}" font-size="10" font-weight="600" text-anchor="middle">${esc(h.date)}</text>
+      </g>`;
+    })
+    .join('');
+
+  const rSmaPts = hist.map((h, i) => {
+    const x = rChX + i * rStep + rStep / 2;
+    const y = rChY + rChH - (h.aboveSma50Pct / 100) * rChH;
+    return { x, y, pct: h.aboveSma50Pct };
+  });
+  const rSmaPoly = rSmaPts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+
+  const wideMovers = `
+    <g transform="translate(598, 534)">
+      <rect width="560" height="68" rx="10" fill="#0c0c0e" stroke="${LINE}" stroke-width="1" />
+      <text x="${ar ? 540 : 16}" y="26" fill="${GREEN}" font-size="11" font-weight="700" text-anchor="${ar ? 'end' : 'start'}">▲ ${esc(ar ? 'أبرز اختراقات القمم:' : 'KEY BREAKOUTS:')} <tspan fill="#ffffff">${breakouts.map((b) => `${b.ticker} (+${b.changePct}%)`).join('  ') || (ar ? 'لا يوجد' : 'None')}</tspan></text>
+      <text x="${ar ? 540 : 16}" y="50" fill="${RED}" font-size="11" font-weight="700" text-anchor="${ar ? 'end' : 'start'}">▼ ${esc(ar ? 'أبرز كسر القيعان:' : 'KEY BREAKDOWNS:')} <tspan fill="#ffffff">${breakdowns.map((b) => `${b.ticker} (${b.changePct}%)`).join('  ') || (ar ? 'لا يوجد' : 'None')}</tspan></text>
+    </g>`;
+
+  const body = `
+    ${header}
+
+    <!-- Left Box: Horizons + Moving Averages (540 x 448) -->
+    <g transform="translate(42, 154)">
+      <rect width="540" height="448" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
+      <text x="${ar ? 516 : 20}" y="28" fill="#ffffff" font-size="14" font-weight="700" text-anchor="${ar ? 'end' : 'start'}">${esc(ar ? 'القمم والقيعان متعددة الآجال (Donchian Highs/Lows)' : 'Multi-Horizon Breakouts (Donchian Highs/Lows)')}</text>
+      ${wHzRows}
+
+      <line x1="20" y1="204" x2="520" y2="204" stroke="${LINE}" stroke-width="1" />
+      <text x="${ar ? 516 : 20}" y="226" fill="#ffffff" font-size="13.5" font-weight="700" text-anchor="${ar ? 'end' : 'start'}">${esc(ar ? 'نسبة الأسهم أعلى المتوسطات المتحركة' : '% of Equities Above Moving Averages')}</text>
+      ${wSmaBars}
+    </g>
+
+    <!-- Right Box: 10-Session Historical NH vs NL Chart (560 x 366) -->
+    <g transform="translate(598, 154)">
+      <rect width="560" height="366" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
+      ${
+        ar
+          ? `<text x="536" y="28" fill="#ffffff" font-size="13.5" font-weight="700" text-anchor="end">مسار القمم والقيعان (آخر ١٠ جلسات)</text>
+             <rect x="20" y="18" width="10" height="10" rx="2" fill="${GREEN}" /><text x="36" y="27" fill="${SOFT}" font-size="10.5" font-weight="700">قمم (+)</text>
+             <rect x="96" y="18" width="10" height="10" rx="2" fill="${RED}" /><text x="112" y="27" fill="${SOFT}" font-size="10.5" font-weight="700">قيعان (-)</text>
+             <line x1="172" y1="23" x2="192" y2="23" stroke="${CYAN}" stroke-width="2" /><text x="198" y="27" fill="${CYAN}" font-size="10.5" font-weight="700">أعلى من 50D %</text>`
+          : `<text x="20" y="28" fill="#ffffff" font-size="13.5" font-weight="700">10-Session NH vs. NL Divergence</text>
+             <rect x="270" y="18" width="10" height="10" rx="2" fill="${GREEN}" /><text x="286" y="27" fill="${SOFT}" font-size="10.5" font-weight="600">Highs (+)</text>
+             <rect x="360" y="18" width="10" height="10" rx="2" fill="${RED}" /><text x="376" y="27" fill="${SOFT}" font-size="10.5" font-weight="600">Lows (-)</text>
+             <line x1="440" y1="23" x2="460" y2="23" stroke="${CYAN}" stroke-width="2" /><text x="466" y="27" fill="${CYAN}" font-size="10.5" font-weight="700">50D SMA %</text>`
+      }
+
+      <line x1="${rChX}" y1="${rZeroY.toFixed(1)}" x2="${(rChX + rChW).toFixed(1)}" y2="${rZeroY.toFixed(1)}" stroke="#333338" stroke-width="1" stroke-dasharray="3 3" />
+      <line x1="${rChX}" y1="${rChY}" x2="${(rChX + rChW).toFixed(1)}" y2="${rChY}" stroke="${GRID}" stroke-width="1" />
+      <line x1="${rChX}" y1="${rChY + rChH}" x2="${(rChX + rChW).toFixed(1)}" y2="${rChY + rChH}" stroke="${GRID}" stroke-width="1" />
+
+      <text x="${rChX - 6}" y="${rChY + 10}" fill="${GREEN}" font-size="10" font-weight="700" text-anchor="end">+${rMaxVal}</text>
+      <text x="${rChX - 6}" y="${(rZeroY + 3).toFixed(1)}" fill="${SOFT}" font-size="10" text-anchor="end">0</text>
+      <text x="${rChX - 6}" y="${rChY + rChH}" fill="${RED}" font-size="10" font-weight="700" text-anchor="end">-${rMaxVal}</text>
+
+      ${rHistBars}
+      ${rSmaPts.length > 1 ? `<polyline points="${rSmaPoly}" fill="none" stroke="${CYAN}" stroke-width="2.2" stroke-dasharray="3 3" stroke-linejoin="round" />` : ''}
+      ${rSmaPts.map((p) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="${CYAN}" />`).join('')}
+
+      <text x="${(rChX + rChW + 6).toFixed(1)}" y="${rChY + 10}" fill="${CYAN}" font-size="9.5">100%</text>
+      <text x="${(rChX + rChW + 6).toFixed(1)}" y="${(rZeroY + 3).toFixed(1)}" fill="${CYAN}" font-size="9.5">50%</text>
+      <text x="${(rChX + rChW + 6).toFixed(1)}" y="${rChY + rChH}" fill="${CYAN}" font-size="9.5">0%</text>
+    </g>
+
+    ${wideMovers}
+    ${footer}
+  `;
+
+  return toBase64Svg(svgShell(W, H, '', body, ar));
+}
 
 export function generateLocalizedTakeBundle<T>(
   generator: (data: T, locale: 'en' | 'ar', variant?: ChartVariant) => string,

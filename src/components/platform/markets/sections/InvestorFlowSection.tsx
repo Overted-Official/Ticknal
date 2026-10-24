@@ -19,14 +19,15 @@ import { useTranslation } from '@/lib/i18n';
 import { useHeroSceneMode } from '@/components/landing/hero-scenes/useHeroSceneMode';
 import { HERO_SCENE_FLOWS } from '@/components/landing/hero-scenes/hero-scene-snapshot';
 
-export type FlowHorizon = '1M' | '3M' | '6M' | 'YTD' | '1Y';
+export type FlowHorizon = '1D' | '1M' | '3M' | '6M' | 'YTD' | '1Y';
 export type FlowSegment = 'TOTAL' | 'STOCKS' | 'BONDS' | 'BILLS';
 export type FlowCategory = 'TOTAL' | 'INSTITUTIONS' | 'RETAIL';
 export type FlowChartMode = 'stacked_share' | 'net_flow';
 export type NetFlowFilter = 'all_hot_money' | 'foreign' | 'arab';
 export type FlowScaleMode = 'balanced' | 'linear';
+export type FlowCurrency = 'EGP' | 'USD';
 
-const HORIZONS: FlowHorizon[] = ['1M', '3M', '6M', 'YTD', '1Y'];
+const HORIZONS: FlowHorizon[] = ['1D', '1M', '3M', '6M', 'YTD', '1Y'];
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -34,33 +35,45 @@ interface InvestorFlowSectionProps {
   id?: string;
 }
 
-const SYMLOG_C = 100_000_000; // 100M EGP linear baseline
+const SYMLOG_C_EGP = 100_000_000; // 100M EGP linear baseline
+const SYMLOG_C_USD = 2_000_000;   // $2M USD linear baseline
 
-function toSymLog(v: number): number {
+function toSymLog(v: number, currency: FlowCurrency = 'EGP'): number {
   if (!v) return 0;
+  const c = currency === 'USD' ? SYMLOG_C_USD : SYMLOG_C_EGP;
   const sign = v > 0 ? 1 : -1;
-  return sign * Math.log1p(Math.abs(v) / SYMLOG_C);
+  return sign * Math.log1p(Math.abs(v) / c);
 }
 
-function fromSymLog(v: number): number {
+function fromSymLog(v: number, currency: FlowCurrency = 'EGP'): number {
   if (!v) return 0;
+  const c = currency === 'USD' ? SYMLOG_C_USD : SYMLOG_C_EGP;
   const sign = v > 0 ? 1 : -1;
-  return sign * SYMLOG_C * Math.expm1(Math.abs(v));
+  return sign * c * Math.expm1(Math.abs(v));
 }
 
-function formatEgpVal(val: number, locale: string, showSign = true): string {
+function formatFlowVal(
+  val: number,
+  locale: string,
+  currency: FlowCurrency = 'EGP',
+  showSign = true
+): string {
   const abs = Math.abs(val);
-  const sign = showSign && val > 0 ? '+' : '';
+  const sign = val < 0 ? '-' : showSign && val > 0 ? '+' : '';
+  const prefix = currency === 'USD' && locale !== 'ar' ? '$' : '';
+  const suffix = currency === 'USD' && locale === 'ar' ? ' $' : '';
+
   if (abs >= 1e9) {
-    return `${sign}${(val / 1e9).toFixed(2)}${locale === 'ar' ? ' مليار' : 'B'}`;
+    return `${sign}${prefix}${(abs / 1e9).toFixed(2)}${locale === 'ar' ? ' مليار' : 'B'}${suffix}`;
   }
   if (abs >= 1e6) {
-    return `${sign}${(val / 1e6).toFixed(1)}${locale === 'ar' ? 'م' : 'M'}`;
+    const decimals = currency === 'USD' && abs < 10e6 ? 2 : 1;
+    return `${sign}${prefix}${(abs / 1e6).toFixed(decimals)}${locale === 'ar' ? 'م' : 'M'}${suffix}`;
   }
   if (abs >= 1e3) {
-    return `${sign}${(val / 1e3).toFixed(0)}${locale === 'ar' ? ' ألف' : 'K'}`;
+    return `${sign}${prefix}${(abs / 1e3).toFixed(0)}${locale === 'ar' ? ' ألف' : 'K'}${suffix}`;
   }
-  return `${sign}${val.toFixed(0)}`;
+  return `${sign}${prefix}${abs.toFixed(0)}${suffix}`;
 }
 
 interface FlowDropdownOption<T extends string> {
@@ -168,6 +181,7 @@ export default function InvestorFlowSection({
   const [chartMode, setChartMode] = useState<FlowChartMode>('net_flow');
   const [netFilter, setNetFilter] = useState<NetFlowFilter>('all_hot_money');
   const [scaleMode, setScaleMode] = useState<FlowScaleMode>('balanced');
+  const [currency, setCurrency] = useState<FlowCurrency>('EGP');
 
   const { data: liveData, isLoading: liveIsLoading } = useSWR<InvestorFlowsResponse>(
     isHeroScene
@@ -181,17 +195,29 @@ export default function InvestorFlowSection({
 
   const normalizedHistory = useMemo(() => {
     return (data?.history || []).map((h) => {
-      const fNet = Number(h.foreignNet || 0);
-      const aNet = Number(h.arabNet || 0);
-      const eNet = Number(h.egyptianNet || 0);
-      const hmNet = typeof h.hotMoneyNet === 'number' ? h.hotMoneyNet : fNet + aNet;
-      const hmBuy = typeof h.hotMoneyBuy === 'number' ? h.hotMoneyBuy : Number(h.foreignBuy || 0) + Number(h.arabBuy || 0);
-      const hmSell = typeof h.hotMoneySell === 'number' ? h.hotMoneySell : Number(h.foreignSell || 0) + Number(h.arabSell || 0);
+      const fxRate = Number(h.usdEgpRate || 52.5);
+      const divisor = currency === 'USD' ? (fxRate > 0 ? fxRate : 52.5) : 1;
+
+      const rawFNet = Number(h.foreignNet || 0);
+      const rawANet = Number(h.arabNet || 0);
+      const rawENet = Number(h.egyptianNet || 0);
+      const rawHmNet = typeof h.hotMoneyNet === 'number' ? h.hotMoneyNet : rawFNet + rawANet;
+      const rawHmBuy = typeof h.hotMoneyBuy === 'number' ? h.hotMoneyBuy : Number(h.foreignBuy || 0) + Number(h.arabBuy || 0);
+      const rawHmSell = typeof h.hotMoneySell === 'number' ? h.hotMoneySell : Number(h.foreignSell || 0) + Number(h.arabSell || 0);
+      const rawTurnover = Number(h.totalTurnover || 0);
+
+      const fNet = rawFNet / divisor;
+      const aNet = rawANet / divisor;
+      const eNet = rawENet / divisor;
+      const hmNet = rawHmNet / divisor;
+      const hmBuy = rawHmBuy / divisor;
+      const hmSell = rawHmSell / divisor;
+      const totalTurnover = rawTurnover / divisor;
 
       // Defense-in-depth: clamp shares strictly >= 0 and normalize to exactly 100%
-      let rawE = Math.max(0, Number(h.egyptianSharePct || 0));
-      let rawA = Math.max(0, Number(h.arabSharePct || 0));
-      let rawF = Math.max(0, Number(h.foreignSharePct || 0));
+      const rawE = Math.max(0, Number(h.egyptianSharePct || 0));
+      const rawA = Math.max(0, Number(h.arabSharePct || 0));
+      const rawF = Math.max(0, Number(h.foreignSharePct || 0));
       const totalSum = rawE + rawA + rawF || 100;
       const eShare = Math.round((rawE / totalSum) * 1000) / 10;
       const aShare = Math.round((rawA / totalSum) * 1000) / 10;
@@ -200,30 +226,68 @@ export default function InvestorFlowSection({
 
       return {
         ...h,
+        usdEgpRate: fxRate,
         foreignNet: fNet,
         arabNet: aNet,
         egyptianNet: eNet,
         hotMoneyNet: hmNet,
         hotMoneyBuy: hmBuy,
         hotMoneySell: hmSell,
+        totalTurnover,
         hotMoneySharePct: hmShare,
         egyptianSharePct: eShare,
         arabSharePct: aShare,
         foreignSharePct: fShare,
-        foreignNetBalanced: toSymLog(fNet),
-        arabNetBalanced: toSymLog(aNet),
-        hotMoneyNetBalanced: toSymLog(hmNet),
+        foreignNetBalanced: toSymLog(fNet, currency),
+        arabNetBalanced: toSymLog(aNet, currency),
+        hotMoneyNetBalanced: toSymLog(hmNet, currency),
       };
     });
-  }, [data?.history]);
+  }, [data?.history, currency]);
 
   const summary = data?.summary;
-  const hotMoneyNetToday = typeof summary?.hotMoneyNetToday === 'number'
-    ? summary.hotMoneyNetToday
-    : (summary?.foreignNetToday || 0) + (summary?.arabNetToday || 0);
-  const hotMoneyShareToday = typeof summary?.hotMoneyShareToday === 'number'
-    ? summary.hotMoneyShareToday
-    : Math.round(((summary?.foreignShareToday || 0) + (summary?.arabShareToday || 0)) * 10) / 10;
+  const periodStats = useMemo(() => {
+    if (!summary) return null;
+    if (currency === 'EGP' || normalizedHistory.length === 0) {
+      const hmNet = typeof summary.hotMoneyNetToday === 'number'
+        ? summary.hotMoneyNetToday
+        : (summary.foreignNetToday || 0) + (summary.arabNetToday || 0);
+      return {
+        foreignNet: summary.foreignNetToday || 0,
+        arabNet: summary.arabNetToday || 0,
+        egyptianNet: summary.egyptianNetToday || 0,
+        hotMoneyNet: hmNet,
+        totalTurnover: summary.totalTurnoverToday || 0,
+        egyptianShare: summary.egyptianShareToday,
+        foreignShare: summary.foreignShareToday,
+        arabShare: summary.arabShareToday,
+      };
+    }
+
+    // In USD mode, sum each day's USD-converted flow (using that day's exchange rate)
+    let fNet = 0;
+    let aNet = 0;
+    let eNet = 0;
+    let hmNet = 0;
+    let turnover = 0;
+    for (const d of normalizedHistory) {
+      fNet += d.foreignNet;
+      aNet += d.arabNet;
+      eNet += d.egyptianNet;
+      hmNet += d.hotMoneyNet;
+      turnover += d.totalTurnover;
+    }
+    return {
+      foreignNet: fNet,
+      arabNet: aNet,
+      egyptianNet: eNet,
+      hotMoneyNet: hmNet,
+      totalTurnover: turnover,
+      egyptianShare: summary.egyptianShareToday,
+      foreignShare: summary.foreignShareToday,
+      arabShare: summary.arabShareToday,
+    };
+  }, [summary, currency, normalizedHistory]);
 
   const getBarValue = (entry: (typeof normalizedHistory)[0]) => {
     if (netFilter === 'foreign') return entry.foreignNet;
@@ -256,14 +320,20 @@ export default function InvestorFlowSection({
       if (v > maxVal) maxVal = v;
     }
 
-    const candidateMoneyTicks = [
-      -30e9, -20e9, -15e9, -10e9, -5e9, -2e9, -1e9, -500e6, -250e6, -100e6,
-      0,
-      100e6, 250e6, 500e6, 1e9, 2e9, 5e9, 10e9, 15e9, 20e9, 30e9
-    ];
+    const candidateMoneyTicks = currency === 'USD'
+      ? [
+          -2e9, -1e9, -500e6, -250e6, -100e6, -50e6, -20e6, -10e6, -5e6, -2e6,
+          0,
+          2e6, 5e6, 10e6, 20e6, 50e6, 100e6, 250e6, 500e6, 1e9, 2e9
+        ]
+      : [
+          -30e9, -20e9, -15e9, -10e9, -5e9, -2e9, -1e9, -500e6, -250e6, -100e6,
+          0,
+          100e6, 250e6, 500e6, 1e9, 2e9, 5e9, 10e9, 15e9, 20e9, 30e9
+        ];
 
     const activeMoneyTicks = candidateMoneyTicks.filter((m) => {
-      const sym = toSymLog(m);
+      const sym = toSymLog(m, currency);
       return sym >= minVal * 1.05 && sym <= maxVal * 1.05;
     });
 
@@ -280,8 +350,8 @@ export default function InvestorFlowSection({
       finalMoneyTicks = [...sampledNeg, 0, ...sampledPos];
     }
 
-    return finalMoneyTicks.map((m) => toSymLog(m));
-  }, [scaleMode, normalizedHistory, netFilter]);
+    return finalMoneyTicks.map((m) => toSymLog(m, currency));
+  }, [scaleMode, normalizedHistory, netFilter, currency]);
 
   // Mobile Dropdown state & outside click handler (Space-saving phone controls)
   const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
@@ -403,12 +473,28 @@ export default function InvestorFlowSection({
   ], [locale]);
 
   const horizonOptions = useMemo(() => [
+    { value: '1D' as FlowHorizon, label: '1D', shortLabel: '1D' },
     { value: '1M' as FlowHorizon, label: '1M', shortLabel: '1M' },
     { value: '3M' as FlowHorizon, label: '3M', shortLabel: '3M' },
     { value: '6M' as FlowHorizon, label: '6M', shortLabel: '6M' },
     { value: 'YTD' as FlowHorizon, label: 'YTD', shortLabel: 'YTD' },
     { value: '1Y' as FlowHorizon, label: '1Y', shortLabel: '1Y' },
   ], []);
+
+  const currencyOptions = useMemo(() => [
+    {
+      value: 'EGP' as FlowCurrency,
+      label: locale === 'ar' ? 'جنيه مصري (EGP)' : 'EGP',
+      shortLabel: 'EGP',
+      title: locale === 'ar' ? 'عرض القيم بالجنيه المصري' : 'Display values in Egyptian Pounds (EGP)',
+    },
+    {
+      value: 'USD' as FlowCurrency,
+      label: locale === 'ar' ? 'دولار أمريكي (USD)' : 'USD',
+      shortLabel: 'USD',
+      title: locale === 'ar' ? 'عرض القيم بالدولار وفق سعر صرف كل يوم تداول' : 'Display values in US Dollars using each session’s daily exchange rate',
+    },
+  ], [locale]);
 
   return (
     <div id={id} className="w-full pt-3 select-none font-sans">
@@ -427,7 +513,7 @@ export default function InvestorFlowSection({
             />
           </div>
 
-          {/* Instrument / Market Segment Switches (All 4 EGX Filter Options) - DESKTOP ONLY */}
+          {/* Instrument / Market Segment Switches & Currency Switch - DESKTOP ONLY */}
           <div className="hidden sm:flex items-center gap-2 flex-wrap">
             <span className="text-[11px] text-plt-muted hidden sm:inline">
               {locale === 'ar' ? 'السوق:' : 'Market:'}
@@ -474,12 +560,40 @@ export default function InvestorFlowSection({
                 {locale === 'ar' ? 'الأذون' : 'T-Bills'}
               </button>
             </div>
+
+            {/* Currency Switcher: EGP vs USD (Daily FX Rate) */}
+            <div className="seg-control h-7.5 p-0.5">
+              <button
+                type="button"
+                onClick={() => setCurrency('EGP')}
+                className={`seg-control-btn h-full px-2.5 text-[11px] rounded-md ${
+                  currency === 'EGP' ? 'seg-control-btn-active' : ''
+                }`}
+                title={locale === 'ar' ? 'عرض القيم بالجنيه المصري' : 'Display values in Egyptian Pounds (EGP)'}
+              >
+                EGP
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrency('USD')}
+                className={`seg-control-btn h-full px-2.5 text-[11px] rounded-md ${
+                  currency === 'USD' ? 'seg-control-btn-active' : ''
+                }`}
+                title={
+                  locale === 'ar'
+                    ? 'عرض القيم بالدولار الأمريكي وفق سعر صرف كل يوم تداول'
+                    : 'Display values in US Dollars using each day’s historical exchange rate'
+                }
+              >
+                USD
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Mobile Dropdown Toolbar (Phone Only - Clean Popovers matching Strategies Studio) */}
         <div ref={mobileControlsRef} className="sm:hidden flex flex-col gap-2 mb-2.5 pt-0.5">
-          {/* Row 1: Market Segment, Investor Category & Time Horizon */}
+          {/* Row 1: Market Segment, Investor Category, Currency & Time Horizon */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <FlowDropdown
               label={locale === 'ar' ? 'السوق' : 'Market'}
@@ -498,6 +612,16 @@ export default function InvestorFlowSection({
               onChange={setCategory}
               isOpen={openMobileDropdown === 'category'}
               onToggle={() => setOpenMobileDropdown((prev) => (prev === 'category' ? null : 'category'))}
+              onClose={() => setOpenMobileDropdown(null)}
+              align="start"
+            />
+            <FlowDropdown
+              label={locale === 'ar' ? 'العملة' : 'CCY'}
+              value={currency}
+              options={currencyOptions}
+              onChange={setCurrency}
+              isOpen={openMobileDropdown === 'currency'}
+              onToggle={() => setOpenMobileDropdown((prev) => (prev === 'currency' ? null : 'currency'))}
               onClose={() => setOpenMobileDropdown(null)}
               align="start"
             />
@@ -713,7 +837,7 @@ export default function InvestorFlowSection({
             <Skeleton className="h-4 w-28 rounded-none" />
             <Skeleton className="h-4 w-24 rounded-none ml-auto hidden md:block" />
           </div>
-        ) : summary && (
+        ) : periodStats && (
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 text-xs pb-2.5 border-b border-white/[0.08]">
             <div className="flex items-center gap-3 sm:gap-5 overflow-x-auto no-scrollbar">
               {chartMode === 'stacked_share' ? (
@@ -721,27 +845,27 @@ export default function InvestorFlowSection({
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="w-2 h-2 rounded-none bg-[#2962ff]"></span>
                     <span className="text-plt-muted">{locale === 'ar' ? 'المصريون:' : 'Egyptians:'}</span>
-                    <span className="font-bold text-plt-text tabular-nums">{summary.egyptianShareToday}%</span>
-                    <span className={`text-[11px] font-semibold tabular-nums ml-0.5 ${summary.egyptianNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                      ({formatEgpVal(summary.egyptianNetToday, locale)})
+                    <span className="font-bold text-plt-text tabular-nums">{periodStats.egyptianShare}%</span>
+                    <span className={`text-[11px] font-semibold tabular-nums ml-0.5 ${periodStats.egyptianNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                      ({formatFlowVal(periodStats.egyptianNet, locale, currency)})
                     </span>
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="w-2 h-2 rounded-none bg-[#f59e0b]"></span>
                     <span className="text-plt-muted">{locale === 'ar' ? 'الأجانب:' : 'Foreigners:'}</span>
-                    <span className="font-bold text-plt-text tabular-nums">{summary.foreignShareToday}%</span>
-                    <span className={`text-[11px] font-semibold tabular-nums ml-0.5 ${summary.foreignNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                      ({formatEgpVal(summary.foreignNetToday, locale)})
+                    <span className="font-bold text-plt-text tabular-nums">{periodStats.foreignShare}%</span>
+                    <span className={`text-[11px] font-semibold tabular-nums ml-0.5 ${periodStats.foreignNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                      ({formatFlowVal(periodStats.foreignNet, locale, currency)})
                     </span>
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="w-2 h-2 rounded-none bg-[#089981]"></span>
                     <span className="text-plt-muted">{locale === 'ar' ? 'العرب:' : 'Arabs:'}</span>
-                    <span className="font-bold text-plt-text tabular-nums">{summary.arabShareToday}%</span>
-                    <span className={`text-[11px] font-semibold tabular-nums ml-0.5 ${summary.arabNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                      ({formatEgpVal(summary.arabNetToday, locale)})
+                    <span className="font-bold text-plt-text tabular-nums">{periodStats.arabShare}%</span>
+                    <span className={`text-[11px] font-semibold tabular-nums ml-0.5 ${periodStats.arabNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                      ({formatFlowVal(periodStats.arabNet, locale, currency)})
                     </span>
                   </div>
                 </>
@@ -752,8 +876,8 @@ export default function InvestorFlowSection({
                     <span className="text-plt-muted">
                       {locale === 'ar' ? 'صافي الساخنة:' : 'Hot Money Net:'}
                     </span>
-                    <span className={`font-semibold tabular-nums text-[11px] ${hotMoneyNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                      {formatEgpVal(hotMoneyNetToday, locale)}
+                    <span className={`font-semibold tabular-nums text-[11px] ${periodStats.hotMoneyNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                      {formatFlowVal(periodStats.hotMoneyNet, locale, currency)}
                     </span>
                   </div>
 
@@ -761,8 +885,8 @@ export default function InvestorFlowSection({
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="w-1.5 h-1.5 rounded-none bg-[#f59e0b]"></span>
                     <span className="text-plt-muted">{locale === 'ar' ? 'الأجانب:' : 'Foreigners:'}</span>
-                    <span className={`font-semibold tabular-nums text-[11px] ${summary.foreignNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                      {formatEgpVal(summary.foreignNetToday, locale)}
+                    <span className={`font-semibold tabular-nums text-[11px] ${periodStats.foreignNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                      {formatFlowVal(periodStats.foreignNet, locale, currency)}
                     </span>
                   </div>
 
@@ -770,8 +894,8 @@ export default function InvestorFlowSection({
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="w-1.5 h-1.5 rounded-none bg-[#089981]"></span>
                     <span className="text-plt-muted">{locale === 'ar' ? 'العرب:' : 'Arabs:'}</span>
-                    <span className={`font-semibold tabular-nums text-[11px] ${summary.arabNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                      {formatEgpVal(summary.arabNetToday, locale)}
+                    <span className={`font-semibold tabular-nums text-[11px] ${periodStats.arabNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                      {formatFlowVal(periodStats.arabNet, locale, currency)}
                     </span>
                   </div>
 
@@ -779,8 +903,8 @@ export default function InvestorFlowSection({
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="w-1.5 h-1.5 rounded-none bg-[#2962ff]"></span>
                     <span className="text-plt-muted">{locale === 'ar' ? 'المحلي:' : 'Domestic:'}</span>
-                    <span className={`font-semibold tabular-nums text-[11px] ${summary.egyptianNetToday >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                      {formatEgpVal(summary.egyptianNetToday, locale)}
+                    <span className={`font-semibold tabular-nums text-[11px] ${periodStats.egyptianNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                      {formatFlowVal(periodStats.egyptianNet, locale, currency)}
                     </span>
                   </div>
                 </>
@@ -791,7 +915,7 @@ export default function InvestorFlowSection({
             <div className="hidden lg:flex items-center gap-1.5 shrink-0">
               <span className="text-plt-muted text-[11px]">{locale === 'ar' ? 'التداول:' : 'Turnover:'}</span>
               <span className="text-plt-text font-semibold text-[11px] tabular-nums">
-                {formatEgpVal(summary.totalTurnoverToday, locale, false)}
+                {formatFlowVal(periodStats.totalTurnover, locale, currency, false)}
               </span>
             </div>
           </div>
@@ -882,7 +1006,7 @@ export default function InvestorFlowSection({
                             <span className="font-bold text-white tabular-nums">
                               {d.egyptianSharePct}%{' '}
                               <span className={`text-[11px] font-semibold ml-1 ${d.egyptianNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                                ({formatEgpVal(d.egyptianNet, locale)})
+                                ({formatFlowVal(d.egyptianNet, locale, currency)})
                               </span>
                             </span>
                           </div>
@@ -894,7 +1018,7 @@ export default function InvestorFlowSection({
                             <span className="font-bold text-white tabular-nums">
                               {d.foreignSharePct}%{' '}
                               <span className={`text-[11px] font-semibold ml-1 ${d.foreignNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                                ({formatEgpVal(d.foreignNet, locale)})
+                                ({formatFlowVal(d.foreignNet, locale, currency)})
                               </span>
                             </span>
                           </div>
@@ -906,7 +1030,7 @@ export default function InvestorFlowSection({
                             <span className="font-bold text-white tabular-nums">
                               {d.arabSharePct}%{' '}
                               <span className={`text-[11px] font-semibold ml-1 ${d.arabNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                                ({formatEgpVal(d.arabNet, locale)})
+                                ({formatFlowVal(d.arabNet, locale, currency)})
                               </span>
                             </span>
                           </div>
@@ -914,9 +1038,17 @@ export default function InvestorFlowSection({
                         <div className="flex items-center justify-between gap-4 text-plt-muted text-[11px] pt-1 border-t border-plt-border-soft">
                           <span>{locale === 'ar' ? 'إجمالي التداول: ' : 'Turnover: '}</span>
                           <span className="font-semibold text-neutral-200 tabular-nums">
-                            {formatEgpVal(d.totalTurnover, locale, false)}
+                            {formatFlowVal(d.totalTurnover, locale, currency, false)}
                           </span>
                         </div>
+                        {currency === 'USD' && d.usdEgpRate && (
+                          <div className="flex items-center justify-between gap-4 text-neutral-400 text-[10px]">
+                            <span>{locale === 'ar' ? 'سعر الصرف (USD/EGP):' : 'FX Rate (USD/EGP):'}</span>
+                            <span className="tabular-nums font-medium text-neutral-300">
+                              {Number(d.usdEgpRate).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     );
                   }}
@@ -944,14 +1076,20 @@ export default function InvestorFlowSection({
                   domain={scaleMode === 'balanced' ? ['auto', 'auto'] : undefined}
                   tick={{ fill: '#888888', fontSize: 10, fontFamily: 'sans-serif' }}
                   tickFormatter={(val: number) => {
-                    const realMoney = scaleMode === 'balanced' ? fromSymLog(val) : val;
+                    const realMoney = scaleMode === 'balanced' ? fromSymLog(val, currency) : val;
                     const abs = Math.abs(realMoney);
-                    if (abs < 1e6) return '0';
+                    const minZero = currency === 'USD' ? 50_000 : 1_000_000;
+                    if (abs < minZero) return '0';
                     const sign = realMoney > 0 ? '+' : '-';
+                    const prefix = currency === 'USD' && locale !== 'ar' ? '$' : '';
+                    const suffix = currency === 'USD' && locale === 'ar' ? ' $' : '';
                     if (abs >= 1e9) {
-                      return `${sign}${(abs / 1e9).toFixed(abs >= 10e9 ? 0 : 1)}${locale === 'ar' ? ' مليار' : 'B'}`;
+                      return `${sign}${prefix}${(abs / 1e9).toFixed(abs >= 10e9 ? 0 : 1)}${locale === 'ar' ? ' مليار' : 'B'}${suffix}`;
                     }
-                    return `${sign}${(abs / 1e6).toFixed(0)}${locale === 'ar' ? 'م' : 'M'}`;
+                    if (abs >= 1e6) {
+                      return `${sign}${prefix}${(abs / 1e6).toFixed(0)}${locale === 'ar' ? 'م' : 'M'}${suffix}`;
+                    }
+                    return `${sign}${prefix}${(abs / 1e3).toFixed(0)}${locale === 'ar' ? ' ألف' : 'K'}${suffix}`;
                   }}
                   dx={2}
                 />
@@ -1021,7 +1159,7 @@ export default function InvestorFlowSection({
                               : 'Hot Money Net:'}
                           </span>
                           <span className={`font-bold tabular-nums text-sm ${isPos ? 'text-profit-num' : 'text-loss-num'}`}>
-                            {formatEgpVal(activeVal, locale)}
+                            {formatFlowVal(activeVal, locale, currency)}
                           </span>
                         </div>
 
@@ -1034,7 +1172,7 @@ export default function InvestorFlowSection({
                               <span className="text-neutral-400">{locale === 'ar' ? 'الأجانب:' : 'Foreigners:'}</span>
                             </div>
                             <span className={`font-semibold tabular-nums ${d.foreignNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                              {formatEgpVal(d.foreignNet, locale)}
+                              {formatFlowVal(d.foreignNet, locale, currency)}
                             </span>
                           </div>
 
@@ -1045,7 +1183,7 @@ export default function InvestorFlowSection({
                               <span className="text-neutral-400">{locale === 'ar' ? 'العرب:' : 'Arabs:'}</span>
                             </div>
                             <span className={`font-semibold tabular-nums ${d.arabNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                              {formatEgpVal(d.arabNet, locale)}
+                              {formatFlowVal(d.arabNet, locale, currency)}
                             </span>
                           </div>
 
@@ -1056,18 +1194,26 @@ export default function InvestorFlowSection({
                               <span className="text-neutral-400">{locale === 'ar' ? 'المصريون:' : 'Egyptians:'}</span>
                             </div>
                             <span className={`font-semibold tabular-nums ${d.egyptianNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                              {formatEgpVal(d.egyptianNet, locale)}
+                              {formatFlowVal(d.egyptianNet, locale, currency)}
                             </span>
                           </div>
                         </div>
 
-                        {/* Footer: Session Turnover */}
+                        {/* Footer: Session Turnover & FX Rate */}
                         <div className="flex items-center justify-between gap-4 text-plt-muted text-[11px] pt-1.5 border-t border-plt-border-soft">
                           <span>{locale === 'ar' ? 'إجمالي التداول: ' : 'Turnover: '}</span>
                           <span className="font-semibold text-neutral-200 tabular-nums">
-                            {formatEgpVal(d.totalTurnover, locale, false)}
+                            {formatFlowVal(d.totalTurnover, locale, currency, false)}
                           </span>
                         </div>
+                        {currency === 'USD' && d.usdEgpRate && (
+                          <div className="flex items-center justify-between gap-4 text-neutral-400 text-[10px]">
+                            <span>{locale === 'ar' ? 'سعر الصرف (USD/EGP):' : 'FX Rate (USD/EGP):'}</span>
+                            <span className="tabular-nums font-medium text-neutral-300">
+                              {Number(d.usdEgpRate).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     );
                   }}

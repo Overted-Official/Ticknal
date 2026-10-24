@@ -9,6 +9,7 @@ import { getMockBacktestPreview } from './strategy-backtest-model';
 import type { ExecutableStrategyProgram } from '../../../../lib/strategies/strategy-program';
 import StrategyLiveUniversePanel from './StrategyLiveUniversePanel';
 import type { StrategyUniverseCompany } from './strategy-universe-catalog';
+import type { BacktestAssumptions } from '../../../../lib/strategies/run-simple-backtest';
 
 interface StrategyBacktestPanelProps {
   readonly strategyId: string;
@@ -21,13 +22,14 @@ interface StrategyBacktestPanelProps {
   readonly universe: readonly StrategyUniverseCompany[];
   readonly startDate: string;
   readonly endDate: string;
+  readonly assumptions: BacktestAssumptions;
   readonly onChooseCompanies: () => void;
   readonly onSelectTicker?: (symbol: string) => void;
 }
 
 type GroupSort = 'return' | 'alpha' | 'trades';
 
-export default function StrategyBacktestPanel({ strategyId, hasRules, locale, simpleProgram, selectedSymbols, universe, startDate, endDate, onChooseCompanies, onSelectTicker }: StrategyBacktestPanelProps) {
+export default function StrategyBacktestPanel({ strategyId, hasRules, locale, simpleProgram, selectedSymbols, universe, startDate, endDate, assumptions, onChooseCompanies, onSelectTicker }: StrategyBacktestPanelProps) {
   const isAr = locale === 'ar';
   const { isPrivacy } = usePrivacyMode();
   const [viewMode, setViewMode] = useState<BacktestViewMode>('table');
@@ -42,7 +44,7 @@ export default function StrategyBacktestPanel({ strategyId, hasRules, locale, si
   const plainPercent = (value: number) => isPrivacy ? '••••' : `${value.toFixed(0)}%`;
   const count = (value: number) => isPrivacy ? '••••' : String(value);
 
-  if (simpleProgram) return <StrategyLiveUniversePanel strategyId={strategyId} program={simpleProgram} selectedSymbols={selectedSymbols} universe={universe} locale={locale} startDate={startDate} endDate={endDate} onChooseCompanies={onChooseCompanies} onSelectTicker={(symbol) => onSelectTicker?.(symbol)} />;
+  if (simpleProgram) return <StrategyLiveUniversePanel program={simpleProgram} selectedSymbols={selectedSymbols} universe={universe} locale={locale} startDate={startDate} endDate={endDate} assumptions={assumptions} onChooseCompanies={onChooseCompanies} onSelectTicker={(symbol) => onSelectTicker?.(symbol)} />;
 
   if (!preview) return <section className="flex min-h-[360px] flex-col items-center justify-center border border-dashed border-plt-border px-6 text-center" aria-label={isAr ? 'نظرة عامة على السوق' : 'Market overview'}>
     <LayoutGrid size={24} className="text-plt-faint" />

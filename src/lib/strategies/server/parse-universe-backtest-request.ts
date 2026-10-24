@@ -183,6 +183,9 @@ export function parseUniverseBacktestRequest(body: unknown): ParsedUniverseBackt
   if (symbols.some((symbol) => symbol === null) || new Set(symbols).size !== symbols.length) {
     return { success: false, error: 'Company symbols must be valid and unique.' };
   }
+  if (body.detail !== undefined && (body.detail !== true || symbols.length !== 1)) {
+    return { success: false, error: 'Detailed results require exactly one company.' };
+  }
   if (!validProgram(body.program) && !validAdvancedProgram(body.program)) {
     return { success: false, error: 'A valid, bounded daily strategy program is required.' };
   }
@@ -203,6 +206,7 @@ export function parseUniverseBacktestRequest(body: unknown): ParsedUniverseBackt
       symbols: symbols as string[], program: body.program as ExecutableStrategyProgram,
       assumptions: { initialCapital: body.assumptions.initialCapital, feeBps: body.assumptions.feeBps },
       period: { startDate: body.period.startDate, endDate: body.period.endDate },
+      ...(body.detail === true ? { detail: true } : {}),
     },
   };
 }

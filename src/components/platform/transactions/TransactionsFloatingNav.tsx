@@ -19,37 +19,47 @@ export const TRANSACTION_SECTIONS: TransactionNavSection[] = [
 interface TransactionsFloatingNavProps {
   dataTour?: string;
   className?: string;
+  hasSummaries?: boolean;
 }
 
 export default function TransactionsFloatingNav({
   dataTour = 'transactions-floating-nav',
   className = '',
+  hasSummaries = true,
 }: TransactionsFloatingNavProps = {}) {
   const { locale } = useTranslation();
   const [activeSection, setActiveSection] = useState<string>('section-transactions-overview');
 
-  const sections = useMemo<TransactionNavSection[]>(() => [
-    {
-      id: 'section-transactions-overview',
-      label: locale === 'ar' ? 'نظرة عامة على السيولة' : 'Cashflow Overview',
-      shortLabel: locale === 'ar' ? 'نظرة عامة' : 'Overview',
-    },
-    {
-      id: 'section-accounts-rail',
-      label: locale === 'ar' ? 'الحسابات والسيولة' : 'Accounts & Liquidity',
-      shortLabel: locale === 'ar' ? 'الحسابات' : 'Accounts',
-    },
-    {
-      id: 'section-closeout-archive',
-      label: locale === 'ar' ? 'المراجعات الشهرية' : 'Monthly Closeouts',
-      shortLabel: locale === 'ar' ? 'المراجعات' : 'Closeouts',
-    },
-    {
+  const sections = useMemo<TransactionNavSection[]>(() => {
+    const list: TransactionNavSection[] = [
+      {
+        id: 'section-transactions-overview',
+        label: locale === 'ar' ? 'نظرة عامة على السيولة' : 'Cashflow Overview',
+        shortLabel: locale === 'ar' ? 'نظرة عامة' : 'Overview',
+      },
+      {
+        id: 'section-accounts-rail',
+        label: locale === 'ar' ? 'الحسابات والسيولة' : 'Accounts & Liquidity',
+        shortLabel: locale === 'ar' ? 'الحسابات' : 'Accounts',
+      },
+    ];
+
+    if (hasSummaries) {
+      list.push({
+        id: 'section-closeout-archive',
+        label: locale === 'ar' ? 'المراجعات الشهرية' : 'Monthly Closeouts',
+        shortLabel: locale === 'ar' ? 'المراجعات' : 'Closeouts',
+      });
+    }
+
+    list.push({
       id: 'section-activity-ledger',
       label: locale === 'ar' ? 'سجل الحركات' : 'Activity Ledger',
       shortLabel: locale === 'ar' ? 'السجل' : 'Ledger',
-    },
-  ], [locale]);
+    });
+
+    return list;
+  }, [locale, hasSummaries]);
 
   const scrollToSection = useCallback((id: string) => {
     const element = document.getElementById(id);
@@ -76,8 +86,8 @@ export default function TransactionsFloatingNav({
 
   useEffect(() => {
     const handleScroll = () => {
-      for (let i = TRANSACTION_SECTIONS.length - 1; i >= 0; i--) {
-        const sectionId = TRANSACTION_SECTIONS[i].id;
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const sectionId = sections[i].id;
         const element = document.getElementById(sectionId);
         if (element) {
           const rect = element.getBoundingClientRect();
@@ -87,7 +97,9 @@ export default function TransactionsFloatingNav({
           }
         }
       }
-      setActiveSection(TRANSACTION_SECTIONS[0].id);
+      if (sections[0]) {
+        setActiveSection(sections[0].id);
+      }
     };
 
     const container = document.querySelector('.command-surface-page');
@@ -103,7 +115,7 @@ export default function TransactionsFloatingNav({
       }
       window.removeEventListener('scroll', handleScroll, { capture: true });
     };
-  }, []);
+  }, [sections]);
 
   return (
     <nav
@@ -118,31 +130,25 @@ export default function TransactionsFloatingNav({
           className="relative pointer-events-auto rounded-full border border-plt-border bg-plt-base/90 backdrop-blur-xl p-1 sm:p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.8)] flex items-center justify-center max-w-[calc(100vw-24px)] sm:max-w-full"
         >
           <div
-            id="sticky-navigation-tabs"
-            role="tablist"
-            aria-orientation="horizontal"
-            className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar max-w-full"
+            className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar scroll-smooth"
+            style={{ WebkitOverflowScrolling: 'touch' }}
           >
-            {sections.map((sec) => {
-              const isSelected = activeSection === sec.id;
-
+            {sections.map((section) => {
+              const isActive = activeSection === section.id;
               return (
                 <button
-                  key={sec.id}
-                  id={`header-${sec.id}`}
-                  role="tab"
-                  tabIndex={isSelected ? 0 : -1}
-                  aria-selected={isSelected}
+                  key={section.id}
                   type="button"
-                  onClick={() => scrollToSection(sec.id)}
-                  className={`relative inline-flex items-center justify-center px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-[13px] font-medium transition-all duration-150 cursor-pointer whitespace-nowrap outline-none ${
-                    isSelected
-                      ? 'bg-plt-active text-plt-text font-semibold shadow-xs'
-                      : 'bg-transparent text-plt-muted hover:text-plt-text hover:bg-plt-hover active:bg-plt-active'
+                  onClick={() => scrollToSection(section.id)}
+                  aria-current={isActive ? 'true' : undefined}
+                  className={`relative flex items-center justify-center rounded-full px-2.5 sm:px-4 py-1 sm:py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer whitespace-nowrap shrink-0 ${
+                    isActive
+                      ? 'bg-plt-active text-plt-text shadow-sm ring-1 ring-white/10'
+                      : 'text-plt-muted hover:text-plt-text hover:bg-plt-hover'
                   }`}
                 >
-                  <span className="leading-none sm:hidden">{sec.shortLabel}</span>
-                  <span className="leading-none hidden sm:inline">{sec.label}</span>
+                  <span className="hidden sm:inline">{section.label}</span>
+                  <span className="inline sm:hidden">{section.shortLabel}</span>
                 </button>
               );
             })}

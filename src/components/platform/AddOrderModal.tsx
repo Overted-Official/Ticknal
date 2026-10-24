@@ -791,7 +791,7 @@ export default function AddOrderModal({
                             value={searchQuery}
                             onChange={(e) => handleSearchChange(e.target.value)}
                             autoFocus
-                            className="input-token h-9 ps-9 pe-8 bg-plt-base text-plt-text border-plt-border focus:border-plt-border-active font-sans text-xs"
+                            className="input-token h-9 !pl-9 !pr-8 rtl:!pr-9 rtl:!pl-8 bg-plt-base text-plt-text border-plt-border focus:border-plt-border-active font-sans text-xs"
                           />
                           {searchQuery && (
                             <button
@@ -819,7 +819,8 @@ export default function AddOrderModal({
                         )}
                       </div>
 
-                      {/* Autocomplete Dropdown: Compacted with Logo, Full Name, and Symbol */}
+                      {/* Autocomplete Dropdown: Compacted with Logo, Full Name, and Symbol - only shows when query has at least 1 character */}
+                      {searchQuery.trim().length >= 1 && (
                       <div className="max-h-56 overflow-y-auto bg-plt-base border border-plt-border rounded-lg shadow-2xl p-1 divide-y divide-plt-border-soft custom-scrollbar">
                         {filteredTickers.length === 0 ? (
                           <div className="p-3 text-xs text-plt-faint text-center font-sans">{locale === 'ar' ? 'لم يتم العثور على أسهم مطابقة' : 'No matching tickers found'}</div>
@@ -893,6 +894,7 @@ export default function AddOrderModal({
                           })
                         )}
                       </div>
+                      )}
                     </div>
                   )}
 

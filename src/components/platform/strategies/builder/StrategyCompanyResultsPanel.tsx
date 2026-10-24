@@ -11,6 +11,8 @@ import { readSelectedUniverse, UNIVERSE_STORAGE_PREFIX } from './strategy-univer
 import type { StrategyUniverseCompany } from './strategy-universe-catalog';
 import type { ExecutableStrategyProgram } from '../../../../lib/strategies/strategy-program';
 import StrategyExecutionSummary from './StrategyExecutionSummary';
+import StrategyCompanyAdvancedResults from './StrategyCompanyAdvancedResults';
+import type { BacktestAssumptions } from '../../../../lib/strategies/run-simple-backtest';
 
 type CompanySort = 'return' | 'alpha' | 'winRate' | 'trades';
 
@@ -27,6 +29,7 @@ interface StrategyCompanyResultsPanelProps {
   readonly savedSelectedSymbols: readonly string[] | null;
   readonly onSaveSelection?: (symbols: readonly string[]) => Promise<boolean>;
   readonly backtestPeriod: { readonly startDate: string; readonly endDate: string };
+  readonly assumptions: BacktestAssumptions;
   readonly onTickerChange: (ticker: string) => void;
   readonly onFocusBlock: (blockId: string) => void;
 }
@@ -42,7 +45,7 @@ function CompanyLogo({ company }: { readonly company: BacktestTickerItem }) {
   </span>;
 }
 
-export default function StrategyCompanyResultsPanel({ strategyId, model, ticker, focusedBlockId, locale, liveBacktest, liveEligible, program, universe, savedSelectedSymbols, onSaveSelection, backtestPeriod, onTickerChange, onFocusBlock }: StrategyCompanyResultsPanelProps) {
+export default function StrategyCompanyResultsPanel({ strategyId, model, ticker, focusedBlockId, locale, liveBacktest, liveEligible, program, universe, savedSelectedSymbols, onSaveSelection, backtestPeriod, assumptions, onTickerChange, onFocusBlock }: StrategyCompanyResultsPanelProps) {
   const isAr = locale === 'ar';
   const hasSampleResults = strategyId === 'typhon' || strategyId === 'cerberus' || strategyId === 'psi' || strategyId === 'psi_v2' || strategyId === 'hydra';
   const { isPrivacy } = usePrivacyMode();
@@ -59,6 +62,8 @@ export default function StrategyCompanyResultsPanel({ strategyId, model, ticker,
   const [dirty, setDirty] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [detailMode, setDetailMode] = useState<'simple' | 'advanced'>('simple');
+  const [universeExpanded, setUniverseExpanded] = useState(false);
   const selectedSymbols = !dirty && savedSelectedSymbols ? savedSelectedSymbols : localSelectedSymbols;
 
   const visibleCompanies = useMemo(() => {
@@ -93,13 +98,16 @@ export default function StrategyCompanyResultsPanel({ strategyId, model, ticker,
   return <section className="min-w-0 bg-plt-base" aria-label={isAr ? 'نتائج الشركات' : 'Company results'}>
     <header className="border-b border-plt-border pb-4">
       <div className="flex flex-wrap items-start justify-between gap-2"><div><h2 className="text-sm font-semibold text-plt-text">{hasSampleResults || liveEligible ? (isAr ? 'نتائج الشركات' : 'Company results') : (isAr ? 'نطاق الشركات' : 'Company universe')}</h2><p className="mt-1 text-[11px] text-plt-muted">{isAr ? 'افحص شركة وحدد نطاق تطبيق الاستراتيجية بشكل مستقل' : 'Inspect a company and choose the strategy universe separately'}</p></div><span className={`badge ${hasSampleResults ? 'badge-warning' : liveBacktest.status === 'ready' ? 'badge-info' : 'badge-muted'}`}>{hasSampleResults ? (isAr ? 'معاينة توضيحية' : 'Illustrative preview') : liveBacktest.status === 'ready' ? (isAr ? 'اختبار محسوب' : 'Calculated backtest') : liveBacktest.status === 'loading' ? (isAr ? 'جارٍ الحساب' : 'Calculating') : (isAr ? 'بانتظار الاختبار' : 'Awaiting backtest')}</span></div>
-      <p className="mt-3 text-[11px] leading-4 text-plt-muted">{hasSampleResults ? (isAr ? 'المؤشرات نموذجية وليست اختباراً خلفياً. الرسم البياني والإشارات محاكاة توضيحية.' : 'Company metrics are sample metrics, not a backtest. The chart and signals are illustrative simulations.') : liveEligible ? (isAr ? 'يُحسب الاختبار للشركة المعروضة. احفظ أي عدد من الشركات للمقارنة في تبويب السوق؛ تُعالج على دفعات.' : 'The displayed company is backtested from your rules. Save any number of companies to compare in Market; they run in bounded batches.') : (isAr ? 'يمكنك تحديد الشركات الآن. لن تظهر نتائج لهذا المسار المخصص قبل ربطه بمحرك اختبار خلفي.' : 'Choose eligible companies now. This custom workflow has no calculated company results until a backtest engine is connected.')}</p>
+      <p className="mt-3 text-[11px] leading-4 text-plt-muted">{hasSampleResults ? (isAr ? 'المؤشرات نموذجية وليست اختباراً خلفياً. الرسم البياني والإشارات محاكاة توضيحية.' : 'Company metrics are sample metrics, not a backtest. The chart and signals are illustrative simulations.') : liveEligible ? (isAr ? 'يُختبر السوق بالكامل من قواعدك. حدد هنا فقط الشركات التي تريد تفعيل تنبيهات الاستراتيجية لها.' : 'Market tests the entire EGX universe from your rules. Select companies here only to enable strategy alerts for them.') : (isAr ? 'يمكنك تحديد الشركات الآن. لن تظهر نتائج لهذا المسار المخصص قبل ربطه بمحرك اختبار خلفي.' : 'Choose eligible companies now. This custom workflow has no calculated company results until a backtest engine is connected.')}</p>
     </header>
 
     <div className="mt-4 flex flex-wrap items-end justify-between gap-2">
       <div><h3 className="text-xs font-semibold text-plt-text">{isAr ? 'نطاق الشركات' : 'Company universe'}</h3><p className="mt-1 text-[10px] text-plt-muted tabular-nums">{isAr ? `${selectedSymbols.length} من ${knownSymbols.length} محددة` : `${selectedSymbols.length} of ${knownSymbols.length} selected`}</p></div>
-      <div className="flex gap-2 text-[11px]"><button type="button" className="text-tv-blue-400 hover:underline" onClick={() => setAll(true)}>{isAr ? 'تحديد الكل' : 'Select all'}</button><button type="button" className="text-plt-muted hover:text-plt-text" onClick={() => setAll(false)}>{isAr ? 'مسح' : 'Clear'}</button></div>
+      {hasSampleResults ? <div className="flex gap-2 text-[11px]"><button type="button" className="text-tv-blue-400 hover:underline" onClick={() => setAll(true)}>{isAr ? 'تحديد الكل' : 'Select all'}</button><button type="button" className="text-plt-muted hover:text-plt-text" onClick={() => setAll(false)}>{isAr ? 'مسح' : 'Clear'}</button></div>
+        : <button type="button" className="btn-token btn-compact btn-secondary" aria-expanded={universeExpanded} aria-controls="strategy-company-universe-controls" onClick={() => setUniverseExpanded((open) => !open)}>{universeExpanded ? (isAr ? 'إخفاء القائمة' : 'Hide list') : (isAr ? 'إدارة الشركات' : 'Manage companies')}</button>}
     </div>
+    {(hasSampleResults || universeExpanded) && <div id="strategy-company-universe-controls">
+    {!hasSampleResults && <div className="mt-3 flex justify-end gap-3 text-[11px]"><button type="button" className="text-tv-blue-400 hover:underline" onClick={() => setAll(true)}>{isAr ? 'تحديد الكل' : 'Select all'}</button><button type="button" className="text-plt-muted hover:text-plt-text" onClick={() => setAll(false)}>{isAr ? 'مسح' : 'Clear'}</button></div>}
     <div className="mt-3 flex gap-2">
       <label className="input-token flex min-w-0 flex-1 items-center gap-2"><Search size={14} className="shrink-0 text-plt-muted" /><input type="search" aria-label={isAr ? 'البحث عن الشركات' : 'Search companies'} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={isAr ? 'الاسم أو الرمز' : 'Name or symbol'} className="min-w-0 flex-1 bg-transparent text-xs text-plt-text outline-none placeholder:text-plt-faint" /></label>
       {hasSampleResults && <><label className="sr-only" htmlFor="strategy-company-sort">{isAr ? 'ترتيب الشركات' : 'Sort companies'}</label><select id="strategy-company-sort" className="select-token min-w-0 max-w-32 text-xs" value={sortBy} onChange={(event) => setSortBy(event.target.value as CompanySort)}><option value="return">{isAr ? 'العائد' : 'Return'}</option><option value="alpha">{isAr ? 'ألفا' : 'Alpha'}</option><option value="winRate">{isAr ? 'نسبة الفوز' : 'Win rate'}</option><option value="trades">{isAr ? 'الصفقات' : 'Trades'}</option></select></>}
@@ -117,6 +125,7 @@ export default function StrategyCompanyResultsPanel({ strategyId, model, ticker,
     <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-b border-plt-border pb-4"><p className="max-w-[230px] text-[10px] leading-4 text-plt-muted">{onSaveSelection ? (isAr ? 'يُحفظ النطاق مع الاستراتيجية في حسابك ولا ينفذ أوامر تداول.' : 'Saved with your strategy in your account; this does not execute trades.') : (isAr ? 'يُحفظ نطاق المعاينة في هذا المتصفح فقط.' : 'This preview selection is stored in this browser only.')}</p><button type="button" className="btn-token btn-compact btn-secondary" onClick={() => { void save(); }} disabled={!dirty || saving}>{saving ? (isAr ? 'جارٍ الحفظ' : 'Saving…') : (isAr ? 'حفظ الاختيار' : 'Save company selection')}</button></div>
     {saved && <p className="mt-2 text-[10px] text-plt-profit" role="status">{onSaveSelection ? (isAr ? 'تم الحفظ في حسابك' : 'Saved to your account') : (isAr ? 'تم الحفظ في هذا المتصفح' : 'Saved in this browser')}</p>}
     {saveError && <p className="mt-2 text-[10px] text-plt-risk" role="alert">{isAr ? 'تعذر حفظ اختيار الشركات.' : 'Could not save company selection.'}</p>}
+    </div>}
 
     <div className="mt-5"><div className="flex items-start justify-between gap-2"><div><h3 className="text-sm font-semibold text-plt-text">{activeCompany.symbol} <span className="font-normal text-plt-muted">{isAr ? activeCompany.nameAr : activeCompany.name}</span></h3><p className="mt-1 text-[10px] text-plt-muted">{isAr ? activeCompany.industryAr : activeCompany.industry}</p></div><span className="badge badge-muted">{selectedSymbols.includes(activeCompany.symbol) ? (isAr ? 'ضمن النطاق' : 'Included') : (isAr ? 'مستبعد' : 'Excluded')}</span></div>
       {hasSampleResults ? <><div className="strategy-analytics-kpis mt-3" aria-label={isAr ? 'مقاييس الشركة' : 'Company metrics'}>
@@ -128,14 +137,16 @@ export default function StrategyCompanyResultsPanel({ strategyId, model, ticker,
       <p className="mt-2 text-[10px] text-plt-muted">{isAr ? 'أقصى تراجع الشركة وقائمة الصفقات غير متاحين في العينة.' : 'Company drawdown and trade history are unavailable in this sample.'}</p>
       <div className="mt-5 border-t border-plt-border pt-4"><h4 className="text-xs font-semibold text-plt-text">{isAr ? 'رسم توضيحي للإشارات' : 'Illustrative signal chart'}</h4><p className="mb-3 mt-1 text-[10px] text-plt-muted">{isAr ? 'النافذة الزمنية أعلاه تتحكم في الرسم فقط، لا في المقاييس النموذجية.' : 'The chart window above changes this chart only, not the sample metrics.'}</p><StrategyVisualizationPanel model={model} ticker={ticker} focusedBlockId={focusedBlockId} locale={locale} onTickerChange={onTickerChange} onFocusBlock={onFocusBlock} showTickerSearch={false} /></div></> : liveEligible ? <div className="mt-4 border-t border-plt-border pt-4" aria-live="polite" data-testid="live-company-backtest">
         {liveBacktest.status === 'ready' ? <>
+          <div className="mb-3 flex items-center justify-between gap-2"><h4 className="text-xs font-semibold text-plt-text">{isAr ? 'نتيجة محسوبة' : 'Calculated result'}</h4><div className="seg-control seg-control-compact" role="tablist" aria-label={isAr ? 'تفاصيل التحليل' : 'Analytics detail'}><button type="button" role="tab" aria-selected={detailMode === 'simple'} onClick={() => setDetailMode('simple')} className={`seg-control-btn ${detailMode === 'simple' ? 'seg-control-btn-active active' : ''}`}>{isAr ? 'بسيط' : 'Simple'}</button><button type="button" role="tab" aria-selected={detailMode === 'advanced'} onClick={() => setDetailMode('advanced')} className={`seg-control-btn ${detailMode === 'advanced' ? 'seg-control-btn-active active' : ''}`}>{isAr ? 'متقدم' : 'Advanced'}</button></div></div>
           <div className="strategy-analytics-kpis" aria-label={isAr ? 'مقاييس الاختبار المحسوبة' : 'Calculated backtest metrics'}>
             <CompanyMetric label={isAr ? 'عائد الاستراتيجية' : 'Strategy return'} value={percent(liveBacktest.metrics.totalReturnPct)} tone={liveBacktest.metrics.totalReturnPct >= 0 ? 'positive' : 'negative'} />
             <CompanyMetric label={isAr ? 'أقصى تراجع' : 'Max drawdown'} value={percent(liveBacktest.metrics.maxDrawdownPct)} tone="negative" />
             <CompanyMetric label={isAr ? 'نسبة الفوز' : 'Win rate'} value={liveBacktest.metrics.winRatePct === null ? '—' : isPrivacy ? '••••' : `${liveBacktest.metrics.winRatePct.toFixed(1)}%`} />
             <CompanyMetric label={isAr ? 'صفقات مغلقة' : 'Closed trades'} value={count(liveBacktest.metrics.closedTrades)} />
           </div>
-          <p className="mt-3 text-[10px] leading-4 text-plt-muted tabular-nums">{backtestPeriod.startDate} → {backtestPeriod.endDate} · {isAr ? 'آخر بيانات' : 'Data as of'} {liveBacktest.asOf} · <StrategyExecutionSummary program={program} locale={locale} /> · {isAr ? 'رأس مال ١٠٠٬٠٠٠' : '100,000 initial capital'}</p>
-          <p className="mt-2 text-[10px] text-plt-muted">{isAr ? 'لا يتوفر رسم الصفقات الحقيقي في هذا العرض بعد.' : 'Trade-by-trade chart is not available in this view yet.'}</p>
+          <p className="mt-3 text-[10px] leading-4 text-plt-muted tabular-nums">{backtestPeriod.startDate} → {backtestPeriod.endDate} · {isAr ? 'آخر بيانات' : 'Data as of'} {liveBacktest.asOf} · <StrategyExecutionSummary program={program} locale={locale} feeBps={assumptions.feeBps} /> · {isAr ? `رأس مال ${assumptions.initialCapital.toLocaleString()}` : `${assumptions.initialCapital.toLocaleString()} initial capital`}</p>
+          <p className="mt-2 text-[10px] leading-4 text-plt-muted">{isAr ? 'طابق الفترة ورأس المال والعمولات وقواعد التنفيذ وحجم الأسهم قبل المقارنة مع التقرير. الصفقات المغلقة لا تشمل المركز المفتوح.' : 'Match period, capital, fees, fill rules and share sizing before comparing with Chart Report. Closed trades exclude the open position.'}</p>
+          {detailMode === 'advanced' && <StrategyCompanyAdvancedResults detail={liveBacktest.detail} locale={locale} privateValues={isPrivacy} />}
         </> : <p className="py-6 text-center text-xs text-plt-muted" role="status">{liveBacktest.status === 'loading' ? (isAr ? 'جارٍ حساب نتيجة الشركة…' : 'Calculating company result…') : liveBacktest.status === 'unauthorized' ? (isAr ? 'سجل الدخول لتشغيل الاختبار الخلفي.' : 'Sign in to run this backtest.') : liveBacktest.status === 'unavailable' ? (isAr ? 'بيانات هذه الشركة غير متاحة لهذه الفترة أو لهذه القواعد.' : 'This company has no usable data for the selected period or rules.') : (isAr ? 'تعذر تحميل نتيجة الاختبار. أغلق التحليلات وأعد فتحها للمحاولة مجدداً.' : 'The backtest could not load. Close and reopen Analytics to retry.')}</p>}
       </div> : <div className="mt-4 border-t border-plt-border py-8 text-center"><h4 className="text-xs font-semibold text-plt-text">{isAr ? 'لا توجد نتائج اختبار للشركة بعد' : 'No company backtest results yet'}</h4><p className="mx-auto mt-2 max-w-xs text-[11px] leading-4 text-plt-muted">{isAr ? 'اختيار الشركة محفوظ، لكن العائد والصفقات والرسم البياني للنتائج غير متاحة حتى يُشغّل الاختبار الخلفي.' : 'Your universe choice can be saved, but returns, trades, and a results chart require a real backtest.'}</p></div>}
     </div>

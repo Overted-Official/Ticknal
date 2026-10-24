@@ -10,6 +10,7 @@ import MarketsFloatingNav from './MarketsFloatingNav';
 import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
 import MarketOverviewSection, { type MarketTimeframe } from './sections/MarketOverviewSection';
 import FxDevaluationSection from './sections/FxDevaluationSection';
+import IncomeDistributionSection from './sections/IncomeDistributionSection';
 import SectorRotationSection from './sections/SectorRotationSection';
 import MarketHeatmapSection from './sections/MarketHeatmapSection';
 import GuestConversionBanner from '@/components/platform/auth/GuestConversionBanner';
@@ -222,6 +223,13 @@ export default function MarketsPageView() {
             onSelectSector={setSelectedSector}
             selectedTicker={selectedTicker}
             onSelectTicker={handleSelectTicker}
+            isLoading={isMacroLoading}
+          />
+        </div>
+
+        {/* Section 5: Household Income & Wealth Distribution (21-Tier Demographic Purchasing Power Model) */}
+        <div data-tour="markets-income">
+          <IncomeDistributionSection
             isLoading={isMacroLoading}
           />
         </div>

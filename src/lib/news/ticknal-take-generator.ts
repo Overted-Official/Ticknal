@@ -8,11 +8,15 @@ import {
   generateMarketBreadthChartSvg,
   generateGainersLosersChartSvg,
   generateUsdEgpUpdateChartSvg,
+  generateTrendBreakoutsChartSvg,
   generateLocalizedTakeBundle,
   type TradeSummaryHistoryPoint,
   type SectorBreadthItem,
   type BreadthHistoryPoint,
   type FxHistoryPoint,
+  type TrendBreakoutsChartData,
+  type TrendBreakoutHistoryPoint,
+  type TrendBreakoutTickerItem,
 } from './ticknal-take-charts';
 import { completeWithKeyPool } from '@/lib/ai/openrouter-client';
 import { handleFxFairValueGet, type FxFairValueResponse } from '@/lib/handlers/fx-fair-value-handler';
@@ -30,7 +34,7 @@ export interface GenerateDailyTakesOptions {
   targetDate?: string;
   customSummaries?: Partial<
     Record<
-      'hot_money' | 'trade_summary' | 'market_breadth' | 'gainers_losers' | 'usd_egp_update',
+      'hot_money' | 'trade_summary' | 'market_breadth' | 'gainers_losers' | 'usd_egp_update' | 'trend_breakouts',
       { en: string; ar: string }
     >
   >;
@@ -38,7 +42,7 @@ export interface GenerateDailyTakesOptions {
 }
 
 /**
- * Generates the 5 Canonical "Ticknal take" Intelligence Briefings with 100% verified
+ * Generates the 6 Canonical "Ticknal take" Intelligence Briefings with 100% verified
  * EGX equity metrics (strictly excluding the 169 mutual funds, macro pairs, and indices)
  * and dynamic-aspect-ratio multi-series SVG charts.
  */
@@ -103,9 +107,15 @@ export async function generateAllDailyTakes(
   const egx70 = getPriceMetrics(egx70Rows, 17265.7);
   const egx100 = getPriceMetrics(egx100Rows, 23193.6);
 
-  // 2. Compute 100% Verified EGX Listed Equity Breadth, Sector Breakdown, 10D Breadth History & Top Movers
+  // 2. Compute 100% Verified EGX Listed Equity Breadth, Sector Breakdown, 10D Breadth History & Trend Breakouts
   // Strictly excludes sector IN ('Funds', 'Indices', 'Macro') and scopes LAG(close) to the 25-day window before targetDate
-  const [sessionEquitiesRes, breadthHistoryRes, sectorBreadthRes] = await Promise.all([
+  const [
+    sessionEquitiesRes,
+    breadthHistoryRes,
+    sectorBreadthRes,
+    trendBarsRes,
+    trendHistoryRes,
+  ] = await Promise.all([
     db.execute(sql`
       WITH equity_bars AS (
         SELECT
@@ -141,7 +151,6 @@ export async function generateAllDailyTakes(
         volume
       FROM equity_bars
       WHERE session_date = ${targetDate}
-        AND volume > 0
     `),
     db.execute(sql`
       WITH equity_bars AS (
@@ -161,14 +170,14 @@ export async function generateAllDailyTakes(
       )
       SELECT
         session_date,
-        COUNT(*) FILTER (WHERE volume > 0) AS total,
-        COUNT(*) FILTER (WHERE volume > 0 AND prev_close IS NOT NULL AND close > prev_close) AS advancers,
-        COUNT(*) FILTER (WHERE volume > 0 AND prev_close IS NOT NULL AND close < prev_close) AS decliners,
-        COUNT(*) FILTER (WHERE volume > 0 AND (prev_close IS NULL OR close = prev_close)) AS flat,
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE prev_close IS NOT NULL AND close > prev_close) AS advancers,
+        COUNT(*) FILTER (WHERE prev_close IS NOT NULL AND close < prev_close) AS decliners,
+        COUNT(*) FILTER (WHERE prev_close IS NULL OR close = prev_close) AS flat,
         ROUND(SUM(close * volume) / 1e9, 2) AS turnover_b
       FROM equity_bars
       GROUP BY session_date
-      HAVING COUNT(*) FILTER (WHERE volume > 0) >= 50
+      HAVING COUNT(*) >= 50
       ORDER BY session_date DESC
       LIMIT 10
     `),
@@ -191,22 +200,103 @@ export async function generateAllDailyTakes(
       )
       SELECT
         COALESCE(sector, 'Other') AS sector,
-        COUNT(*) FILTER (WHERE volume > 0 AND prev_close IS NOT NULL AND close > prev_close) AS advancers,
-        COUNT(*) FILTER (WHERE volume > 0 AND prev_close IS NOT NULL AND close < prev_close) AS decliners,
-        COUNT(*) FILTER (WHERE volume > 0 AND (prev_close IS NULL OR close = prev_close)) AS flat,
-        COUNT(*) FILTER (WHERE volume > 0) AS total
+        COUNT(*) FILTER (WHERE prev_close IS NOT NULL AND close > prev_close) AS advancers,
+        COUNT(*) FILTER (WHERE prev_close IS NOT NULL AND close < prev_close) AS decliners,
+        COUNT(*) FILTER (WHERE prev_close IS NULL OR close = prev_close) AS flat,
+        COUNT(*) AS total
       FROM equity_bars
       WHERE session_date = ${targetDate}
       GROUP BY sector
-      HAVING COUNT(*) FILTER (WHERE volume > 0) > 0
-      ORDER BY COUNT(*) FILTER (WHERE volume > 0) DESC
+      HAVING COUNT(*) > 0
+      ORDER BY COUNT(*) DESC
       LIMIT 6
+    `),
+    db.execute(sql`
+      WITH equity_bars AS (
+        SELECT
+          dp.date::text AS session_date,
+          dp.ticker_symbol AS ticker,
+          t.company_name,
+          dp.high::numeric AS high,
+          dp.low::numeric AS low,
+          dp.close::numeric AS close,
+          LAG(dp.close::numeric) OVER (PARTITION BY dp.ticker_symbol ORDER BY dp.date) AS prev_close,
+          MAX(dp.high::numeric) OVER (PARTITION BY dp.ticker_symbol ORDER BY dp.date ROWS BETWEEN 20 PRECEDING AND 1 PRECEDING) AS prev_20d_high,
+          MIN(dp.low::numeric) OVER (PARTITION BY dp.ticker_symbol ORDER BY dp.date ROWS BETWEEN 20 PRECEDING AND 1 PRECEDING) AS prev_20d_low,
+          MAX(dp.high::numeric) OVER (PARTITION BY dp.ticker_symbol ORDER BY dp.date ROWS BETWEEN 60 PRECEDING AND 1 PRECEDING) AS prev_60d_high,
+          MIN(dp.low::numeric) OVER (PARTITION BY dp.ticker_symbol ORDER BY dp.date ROWS BETWEEN 60 PRECEDING AND 1 PRECEDING) AS prev_60d_low,
+          MAX(dp.high::numeric) OVER (PARTITION BY dp.ticker_symbol ORDER BY dp.date ROWS BETWEEN 252 PRECEDING AND 1 PRECEDING) AS prev_52w_high,
+          MIN(dp.low::numeric) OVER (PARTITION BY dp.ticker_symbol ORDER BY dp.date ROWS BETWEEN 252 PRECEDING AND 1 PRECEDING) AS prev_52w_low,
+          AVG(dp.close::numeric) OVER (PARTITION BY dp.ticker_symbol ORDER BY dp.date ROWS BETWEEN 19 PRECEDING AND CURRENT ROW) AS sma20,
+          AVG(dp.close::numeric) OVER (PARTITION BY dp.ticker_symbol ORDER BY dp.date ROWS BETWEEN 49 PRECEDING AND CURRENT ROW) AS sma50,
+          AVG(dp.close::numeric) OVER (PARTITION BY dp.ticker_symbol ORDER BY dp.date ROWS BETWEEN 199 PRECEDING AND CURRENT ROW) AS sma200,
+          AVG(dp.close::numeric) OVER (PARTITION BY dp.ticker_symbol ORDER BY dp.date ROWS BETWEEN 50 PRECEDING AND 1 PRECEDING) AS prev_sma50
+        FROM daily_prices dp
+        INNER JOIN tickers t ON t.symbol = dp.ticker_symbol
+        WHERE t.sector NOT IN ('Funds', 'Indices', 'Macro')
+          AND t.status = 'ACTIVE'
+          AND EXTRACT(DOW FROM dp.date::date) NOT IN (5, 6)
+          AND dp.date >= (${targetDate}::date - INTERVAL '380 days')
+          AND dp.date <= ${targetDate}::date
+      )
+      SELECT
+        ticker,
+        company_name,
+        close,
+        prev_close,
+        high,
+        low,
+        prev_20d_high,
+        prev_20d_low,
+        prev_60d_high,
+        prev_60d_low,
+        prev_52w_high,
+        prev_52w_low,
+        sma20,
+        sma50,
+        sma200,
+        prev_sma50
+      FROM equity_bars
+      WHERE session_date = ${targetDate}
+    `),
+    db.execute(sql`
+      WITH equity_bars AS (
+        SELECT
+          dp.date::text AS session_date,
+          dp.ticker_symbol AS ticker,
+          dp.close::numeric AS close,
+          dp.high::numeric AS high,
+          dp.low::numeric AS low,
+          MAX(dp.high::numeric) OVER (PARTITION BY dp.ticker_symbol ORDER BY dp.date ROWS BETWEEN 20 PRECEDING AND 1 PRECEDING) AS prev_20d_high,
+          MIN(dp.low::numeric) OVER (PARTITION BY dp.ticker_symbol ORDER BY dp.date ROWS BETWEEN 20 PRECEDING AND 1 PRECEDING) AS prev_20d_low,
+          AVG(dp.close::numeric) OVER (PARTITION BY dp.ticker_symbol ORDER BY dp.date ROWS BETWEEN 49 PRECEDING AND CURRENT ROW) AS sma50
+        FROM daily_prices dp
+        INNER JOIN tickers t ON t.symbol = dp.ticker_symbol
+        WHERE t.sector NOT IN ('Funds', 'Indices', 'Macro')
+          AND t.status = 'ACTIVE'
+          AND EXTRACT(DOW FROM dp.date::date) NOT IN (5, 6)
+          AND dp.date >= (${targetDate}::date - INTERVAL '380 days')
+          AND dp.date <= ${targetDate}::date
+      )
+      SELECT
+        session_date,
+        COUNT(*)::int AS total,
+        COUNT(*) FILTER (WHERE close > prev_20d_high)::int AS new_20d_highs,
+        COUNT(*) FILTER (WHERE close < prev_20d_low)::int AS new_20d_lows,
+        COUNT(*) FILTER (WHERE close > sma50)::int AS above_sma50
+      FROM equity_bars
+      GROUP BY session_date
+      HAVING COUNT(*) >= 50
+      ORDER BY session_date DESC
+      LIMIT 10
     `),
   ]);
 
   const rawEquities = (Array.isArray(sessionEquitiesRes) ? sessionEquitiesRes : (sessionEquitiesRes as any).rows || []) as any[];
   const rawBreadthHist = (Array.isArray(breadthHistoryRes) ? breadthHistoryRes : (breadthHistoryRes as any).rows || []) as any[];
   const rawSectorBreadth = (Array.isArray(sectorBreadthRes) ? sectorBreadthRes : (sectorBreadthRes as any).rows || []) as any[];
+  const rawTrendBars = (Array.isArray(trendBarsRes) ? trendBarsRes : (trendBarsRes as any).rows || []) as any[];
+  const rawTrendHist = (Array.isArray(trendHistoryRes) ? trendHistoryRes : (trendHistoryRes as any).rows || []) as any[];
 
   let advancers = 0;
   let decliners = 0;
@@ -308,15 +398,116 @@ export async function generateAllDailyTakes(
 
   const [topGainersWithNames, topLosersWithNames] = await Promise.all([enrich(topGainers), enrich(topLosers)]);
 
+  // Process 100% Verified Trend Breakouts & Moving Average Regimes
+  let new20dHighs = 0;
+  let new20dLows = 0;
+  let new60dHighs = 0;
+  let new60dLows = 0;
+  let new52wHighs = 0;
+  let new52wLows = 0;
+  let aboveSma20 = 0;
+  let aboveSma50 = 0;
+  let aboveSma200 = 0;
+  let crossedAboveSma50 = 0;
+  let crossedBelowSma50 = 0;
+
+  const breakoutCandidates: TrendBreakoutTickerItem[] = [];
+  const breakdownCandidates: TrendBreakoutTickerItem[] = [];
+
+  for (const r of rawTrendBars) {
+    const c = Number(r.close);
+    const pc = r.prev_close != null ? Number(r.prev_close) : c;
+    const chg = pc > 0 ? Number((((c - pc) / pc) * 100).toFixed(2)) : 0;
+    const h20 = r.prev_20d_high != null ? Number(r.prev_20d_high) : null;
+    const l20 = r.prev_20d_low != null ? Number(r.prev_20d_low) : null;
+    const h60 = r.prev_60d_high != null ? Number(r.prev_60d_high) : null;
+    const l60 = r.prev_60d_low != null ? Number(r.prev_60d_low) : null;
+    const h52 = r.prev_52w_high != null ? Number(r.prev_52w_high) : null;
+    const l52 = r.prev_52w_low != null ? Number(r.prev_52w_low) : null;
+    const s20 = r.sma20 != null ? Number(r.sma20) : null;
+    const s50 = r.sma50 != null ? Number(r.sma50) : null;
+    const s200 = r.sma200 != null ? Number(r.sma200) : null;
+    const ps50 = r.prev_sma50 != null ? Number(r.prev_sma50) : null;
+
+    if (h20 != null && c > h20) {
+      new20dHighs++;
+      breakoutCandidates.push({ ticker: String(r.ticker), close: c, changePct: chg, levelLabel: '20D High' });
+    }
+    if (l20 != null && c < l20) {
+      new20dLows++;
+      breakdownCandidates.push({ ticker: String(r.ticker), close: c, changePct: chg, levelLabel: '20D Low' });
+    }
+    if (h60 != null && c > h60) new60dHighs++;
+    if (l60 != null && c < l60) new60dLows++;
+    if (h52 != null && c > h52) new52wHighs++;
+    if (l52 != null && c < l52) new52wLows++;
+
+    if (s20 != null && c > s20) aboveSma20++;
+    if (s50 != null && c > s50) aboveSma50++;
+    if (s200 != null && c > s200) aboveSma200++;
+
+    if (s50 != null && ps50 != null) {
+      if (pc <= ps50 && c > s50) crossedAboveSma50++;
+      else if (pc >= ps50 && c < s50) crossedBelowSma50++;
+    }
+  }
+
+  const trendTotal = Math.max(1, rawTrendBars.length);
+  const new20dHighsPct = Number(((new20dHighs / trendTotal) * 100).toFixed(1));
+  const new20dLowsPct = Number(((new20dLows / trendTotal) * 100).toFixed(1));
+  const new60dHighsPct = Number(((new60dHighs / trendTotal) * 100).toFixed(1));
+  const new60dLowsPct = Number(((new60dLows / trendTotal) * 100).toFixed(1));
+  const new52wHighsPct = Number(((new52wHighs / trendTotal) * 100).toFixed(1));
+  const new52wLowsPct = Number(((new52wLows / trendTotal) * 100).toFixed(1));
+  const aboveSma20Pct = Number(((aboveSma20 / trendTotal) * 100).toFixed(1));
+  const aboveSma50Pct = Number(((aboveSma50 / trendTotal) * 100).toFixed(1));
+  const aboveSma200Pct = Number(((aboveSma200 / trendTotal) * 100).toFixed(1));
+
+  const topBreakouts = [...breakoutCandidates].sort((a, b) => b.changePct - a.changePct).slice(0, 4);
+  const topBreakdowns = [...breakdownCandidates].sort((a, b) => a.changePct - b.changePct).slice(0, 4);
+
+  const trendHistory10d: TrendBreakoutHistoryPoint[] = [...rawTrendHist].reverse().map((r) => {
+    const tot = Number(r.total || 1);
+    const nh = Number(r.new_20d_highs || 0);
+    const nl = Number(r.new_20d_lows || 0);
+    return {
+      date: String(r.session_date).slice(5, 10),
+      new20dHighs: nh,
+      new20dLows: nl,
+      net20d: nh - nl,
+      aboveSma50Pct: Number(((Number(r.above_sma50 || 0) / tot) * 100).toFixed(1)),
+      total: tot,
+    };
+  });
+
   // 3. 30-Day Rolling Investor Flows (Hot Money Barometer) up to targetDate
-  const flowRows = await db
-    .select()
-    .from(egxInvestorFlows)
-    .where(
-      sql`total_turnover::numeric >= 50000000 AND EXTRACT(DOW FROM date::date) NOT IN (5, 6) AND date <= ${targetDate} AND market_segment = 'TOTAL'`
-    )
-    .orderBy(desc(egxInvestorFlows.date))
-    .limit(30);
+  const [flowRows, stocksFlowRows] = await Promise.all([
+    db
+      .select()
+      .from(egxInvestorFlows)
+      .where(
+        sql`total_turnover::numeric >= 50000000
+          AND EXTRACT(DOW FROM date::date) NOT IN (5, 6)
+          AND date <= ${targetDate}
+          AND market_segment = 'TOTAL'
+          AND EXISTS (SELECT 1 FROM egx_investor_flows s WHERE s.date = ${egxInvestorFlows.date} AND s.market_segment = 'STOCKS')
+          AND EXISTS (SELECT 1 FROM egx_investor_flows bl WHERE bl.date = ${egxInvestorFlows.date} AND bl.market_segment = 'BILLS')
+          AND EXISTS (SELECT 1 FROM egx_investor_flows bo WHERE bo.date = ${egxInvestorFlows.date} AND bo.market_segment = 'BONDS')`
+      )
+      .orderBy(desc(egxInvestorFlows.date))
+      .limit(30),
+    db
+      .select()
+      .from(egxInvestorFlows)
+      .where(
+        sql`total_turnover::numeric >= 10000000
+          AND EXTRACT(DOW FROM date::date) NOT IN (5, 6)
+          AND date <= ${targetDate}
+          AND market_segment = 'STOCKS'`
+      )
+      .orderBy(desc(egxInvestorFlows.date))
+      .limit(25),
+  ]);
 
   const flows30d = [...flowRows].reverse();
   let cumulative = 0;
@@ -340,13 +531,25 @@ export async function generateAllDailyTakes(
     };
   });
 
+  const stocksTurnoverByDate = new Map<string, number>();
+  for (const sr of stocksFlowRows) {
+    const dStr = String(sr.date).slice(0, 10);
+    stocksTurnoverByDate.set(dStr, Number(sr.totalTurnover || 0) / 1_000_000_000);
+  }
+  const latestStocksFlow = stocksFlowRows[0];
+  const rawEquityTurnoverB =
+    latestStocksFlow && Number(latestStocksFlow.totalTurnover || 0) > 0
+      ? Number(latestStocksFlow.totalTurnover) / 1_000_000_000
+      : calcSessionTurnoverEgp > 0
+      ? calcSessionTurnoverEgp / 1_000_000_000
+      : 8.0;
+  const equityTurnoverB = Number(rawEquityTurnoverB.toFixed(2));
+
   const latestFlow = flowRows[0];
   const rawTurnoverB =
     latestFlow && Number(latestFlow.totalTurnover || 0) > 0
       ? Number(latestFlow.totalTurnover) / 1_000_000_000
-      : calcSessionTurnoverEgp > 0
-      ? calcSessionTurnoverEgp / 1_000_000_000
-      : 6.85;
+      : equityTurnoverB;
   const totalTurnoverB = Number(rawTurnoverB.toFixed(2));
   const todayForeignNetM = latestFlow ? Number((Number(latestFlow.foreignNet || 0) / 1_000_000).toFixed(1)) : -26071.3;
   const todayArabNetM = latestFlow ? Number((Number(latestFlow.arabNet || 0) / 1_000_000).toFixed(1)) : 12666.3;
@@ -369,7 +572,7 @@ export async function generateAllDailyTakes(
       egx30Close: c30,
       egx70Close: egx70Map.get(dStr) ?? egx70.close,
       egx100Close: egx100Map.get(dStr) ?? egx100.close,
-      turnoverBillion: Number((flowTurnoverByDate.get(dStr) ?? totalTurnoverB).toFixed(2)),
+      turnoverBillion: Number((stocksTurnoverByDate.get(dStr) ?? equityTurnoverB).toFixed(2)),
     };
   });
 
@@ -422,7 +625,7 @@ export async function generateAllDailyTakes(
   const targetFxPoint = historyUpToTarget[historyUpToTarget.length - 1];
 
   const latestUsdRow = usdRows[0];
-  const officialUsd = targetFxPoint?.officialUsd ?? liveFxData?.officialUsd ?? (latestUsdRow ? Number(latestUsdRow.close) : 54.50);
+  const officialUsd = targetFxPoint?.officialUsd ?? liveFxData?.officialUsd ?? (latestUsdRow ? Number(latestUsdRow.close) : 55.25);
 
   // Map historical gold EGP/g and COMI Cairo price by date to build 20-session FX Triangulation series
   const goldMap = new Map<string, number>();
@@ -538,7 +741,7 @@ export async function generateAllDailyTakes(
     egx100Open: egx100.open,
     egx100High: egx100.high,
     egx100Low: egx100.low,
-    turnoverBillion: totalTurnoverB,
+    turnoverBillion: equityTurnoverB,
     sentiment: egx30.changePct >= 0 ? 'Bullish Expansion' : 'Consolidation / Pullback',
     history20d: tradeHistory20d,
   });
@@ -551,7 +754,7 @@ export async function generateAllDailyTakes(
     totalStocks,
     advancersPct,
     declinersPct,
-    turnoverBillion: totalTurnoverB,
+    turnoverBillion: equityTurnoverB,
     sectorBreakdown,
     history10d: breadthHistory10d,
   });
@@ -574,6 +777,34 @@ export async function generateAllDailyTakes(
     devaluationRiskScore,
     devaluationRiskLabel,
     history20d: fxHistory20d,
+  });
+
+  const trendBreakoutsChart = generateLocalizedTakeBundle(generateTrendBreakoutsChartSvg, {
+    date: targetDate,
+    totalStocks: trendTotal,
+    new20dHighs,
+    new20dHighsPct,
+    new20dLows,
+    new20dLowsPct,
+    new60dHighs,
+    new60dHighsPct,
+    new60dLows,
+    new60dLowsPct,
+    new52wHighs,
+    new52wHighsPct,
+    new52wLows,
+    new52wLowsPct,
+    aboveSma20,
+    aboveSma20Pct,
+    aboveSma50,
+    aboveSma50Pct,
+    aboveSma200,
+    aboveSma200Pct,
+    crossedAboveSma50,
+    crossedBelowSma50,
+    topBreakouts,
+    topBreakdowns,
+    history10d: trendHistory10d,
   });
 
   const gainersListStr = topGainers.map((g) => `${g.ticker} (${fmtSignedPct(g.changePct)})`).join(', ');
@@ -607,22 +838,22 @@ export async function generateAllDailyTakes(
 
   const hotMoneyArSummary = `سجلت تعاملات الأموال الساخنة (غير المصريين: أجانب وعرب) ${todayHotMoneyNetM >= 0 ? 'دخولاً إيجابياً للسيولة' : 'تخارجاً صافياً'} بقيمة ${fmtMoneyBnOrM(todayHotMoneyNetM, true)} في جلسة اليوم؛ حيث ${foreignDirAr} ${arabDirAr} وسط تداولات إجمالية بلغت ${totalTurnoverB.toFixed(2)} مليار جنيه. ${monthlyTrendAr}`;
 
-  const tradeSummaryEnFallback = `EGX 30 settled at ${egx30.close.toFixed(1)} (${fmtSignedPct(egx30.changePct)}) in the ${targetDate} session while mid-cap EGX 70 EWI closed at ${egx70.close.toFixed(1)} (${fmtSignedPct(egx70.changePct)}) and broad-market EGX 100 EWI at ${egx100.close.toFixed(1)} (${fmtSignedPct(egx100.changePct)}). Total exchange turnover reached ${totalTurnoverB.toFixed(2)}B EGP as institutional and retail liquidity rotated across banking, real estate, and industrial leaders.`;
+  const tradeSummaryEnFallback = `EGX 30 settled at ${egx30.close.toFixed(1)} (${fmtSignedPct(egx30.changePct)}) in the ${targetDate} session while mid-cap EGX 70 EWI closed at ${egx70.close.toFixed(1)} (${fmtSignedPct(egx70.changePct)}) and broad-market EGX 100 EWI at ${egx100.close.toFixed(1)} (${fmtSignedPct(egx100.changePct)}). Total equity turnover reached ${equityTurnoverB.toFixed(2)}B EGP as institutional and retail liquidity rotated across banking, real estate, and industrial leaders.`;
 
   const tradeSummaryArSummary = egx30.changePct >= 0
     ? egx70.changePct < 0
-      ? `صعود مؤشر EGX 30 بنسبة ${egx30.changePct.toFixed(2)}% ليغلق عند ${egx30.close.toFixed(1)} نقطة لم يمنع حدوث عمليات تخفيف ملحوظة في الأسهم المتوسطة (EGX 70 بتراجع ${Math.abs(egx70.changePct).toFixed(2)}%)، مما يشير إلى أن السيولة الحالية البالغة ${totalTurnoverB.toFixed(2)} مليار جنيه تتحرك بشكل دفاعي داخل الكيانات الكبرى فقط. ما لم نشهد لحاقاً من باقي أسهم السوق وتناغماً بين المؤشرات، فإن استمرار هذا التماسك يظل مرهوناً ببقاء المشترين في الأسهم ذات الوزن الثقيل.`
-      : `عزز المؤشر الرئيسي EGX 30 مكاسبه ليغلق عند ${egx30.close.toFixed(1)} نقطة (+${egx30.changePct.toFixed(2)}%) بالتوازي مع صعود مؤشر الأسهم المتوسطة EGX 70 بنسبة +${egx70.changePct.toFixed(2)}% وسط سيولة قوية بلغت ${totalTurnoverB.toFixed(2)} مليار جنيه. ويؤكد هذا التناغم الإيجابي بين المؤشرات وجود زخم شرائي حقيقي مدعوم بتدفقات مؤسسية ومضاربية نشطة عبر مختلف القطاعات.`
+      ? `صعود مؤشر EGX 30 بنسبة ${egx30.changePct.toFixed(2)}% ليغلق عند ${egx30.close.toFixed(1)} نقطة لم يمنع حدوث عمليات تخفيف ملحوظة في الأسهم المتوسطة (EGX 70 بتراجع ${Math.abs(egx70.changePct).toFixed(2)}%)، مما يشير إلى أن سيولة الأسهم الحالية البالغة ${equityTurnoverB.toFixed(2)} مليار جنيه تتحرك بشكل دفاعي داخل الكيانات الكبرى فقط. ما لم نشهد لحاقاً من باقي أسهم السوق وتناغماً بين المؤشرات، فإن استمرار هذا التماسك يظل مرهوناً ببقاء المشترين في الأسهم ذات الوزن الثقيل.`
+      : `عزز المؤشر الرئيسي EGX 30 مكاسبه ليغلق عند ${egx30.close.toFixed(1)} نقطة (+${egx30.changePct.toFixed(2)}%) بالتوازي مع صعود مؤشر الأسهم المتوسطة EGX 70 بنسبة +${egx70.changePct.toFixed(2)}% وسط سيولة أسهم بلغت ${equityTurnoverB.toFixed(2)} مليار جنيه. ويؤكد هذا التناغم الإيجابي بين المؤشرات وجود زخم شرائي حقيقي مدعوم بتدفقات مؤسسية ومضاربية نشطة عبر مختلف القطاعات.`
     : egx70.changePct >= 0
-      ? `تراجع المؤشر الرئيسي EGX 30 بنسبة ${Math.abs(egx30.changePct).toFixed(2)}% ليغلق عند ${egx30.close.toFixed(1)} نقطة تحت ضغط جني أرباح مؤسسي في القياديات، بينما حافظ مؤشر الأفراد EGX 70 على تماسكه بارتفاع +${egx70.changePct.toFixed(2)}% من إجمالي تداولات ${totalTurnoverB.toFixed(2)} مليار جنيه. هذا الانفصال يعكس نشاطاً مضاربياً مستقلاً للأفراد، لكنه يظل عُرضة للتصحيح السريع ما لم يستقر المؤشر العام.`
-      : `أنهت مؤشرات البورصة تعاملاتها على تراجع جماعي؛ حيث هبط EGX 30 بنسبة ${Math.abs(egx30.changePct).toFixed(2)}% إلى ${egx30.close.toFixed(1)} نقطة وتراجع EGX 70 بنسبة ${Math.abs(egx70.changePct).toFixed(2)}% وسط تداولات بلغت ${totalTurnoverB.toFixed(2)} مليار جنيه. وتكشف شاشات التداول عن ضغوط بيعية امتدت من الأسهم القيادية إلى الأسهم الصغيرة، مما يفرض الانضباط وإدارة المخاطر لحين استقرار قوى الطلب.`;
+      ? `تراجع المؤشر الرئيسي EGX 30 بنسبة ${Math.abs(egx30.changePct).toFixed(2)}% ليغلق عند ${egx30.close.toFixed(1)} نقطة تحت ضغط جني أرباح مؤسسي في القياديات، بينما حافظ مؤشر الأفراد EGX 70 على تماسكه بارتفاع +${egx70.changePct.toFixed(2)}% من إجمالي تداولات الأسهم البالغة ${equityTurnoverB.toFixed(2)} مليار جنيه. هذا الانفصال يعكس نشاطاً مضاربياً مستقلاً للأفراد، لكنه يظل عُرضة للتصحيح السريع ما لم يستقر المؤشر العام.`
+      : `أنهت مؤشرات البورصة تعاملاتها على تراجع جماعي؛ حيث هبط EGX 30 بنسبة ${Math.abs(egx30.changePct).toFixed(2)}% إلى ${egx30.close.toFixed(1)} نقطة وتراجع EGX 70 بنسبة ${Math.abs(egx70.changePct).toFixed(2)}% وسط تداولات أسهم بلغت ${equityTurnoverB.toFixed(2)} مليار جنيه. وتكشف شاشات التداول عن ضغوط بيعية امتدت من الأسهم القيادية إلى الأسهم الصغيرة، مما يفرض الانضباط وإدارة المخاطر لحين استقرار قوى الطلب.`;
 
   const ratioDisplay = (advancers / Math.max(1, decliners)).toFixed(2);
-  const breadthEnFallback = `Market participation across ${totalStocks} actively traded EGX listed equities recorded ${advancers} advancers (${advancersPct}%) against ${decliners} decliners (${declinersPct}%) and ${flat} unchanged (${(100 - advancersPct - declinersPct).toFixed(1)}%), yielding a ${ratioDisplay}x advance-decline ratio on ${totalTurnoverB.toFixed(2)}B EGP turnover. The breadth profile confirms ${advancers >= decliners ? 'constructive broad-based accumulation across major sectors supporting benchmark stability' : 'widespread distribution across secondary and cyclical counters while defensive leaders absorbed institutional volume'}.`;
+  const breadthEnFallback = `Market participation across ${totalStocks} EGX listed equities recorded ${advancers} advancers (${advancersPct}%) against ${decliners} decliners (${declinersPct}%) and ${flat} unchanged (${(100 - advancersPct - declinersPct).toFixed(1)}%), yielding a ${ratioDisplay}x advance-decline ratio on ${equityTurnoverB.toFixed(2)}B EGP equity turnover. The breadth profile confirms ${advancers >= decliners ? 'constructive broad-based accumulation across major sectors supporting benchmark stability' : 'widespread distribution across secondary and cyclical counters while defensive leaders absorbed institutional volume'}.`;
 
   const breadthArSummary = advancers >= decliners
-    ? `من بين ${totalStocks} شركة جرى التداول عليها اليوم، مالت كفة السوق لصالح الصعود بارتفاع ${advancers} سهماً مقابل تراجع ${decliners} واستقرار ${flat}، بتداولات بلغت ${totalTurnoverB.toFixed(2)} مليار جنيه. وتُظهر حركة الجلسة نشاطاً شرائياً امتد لمعظم القطاعات، مما عزز تماسك المؤشرات وثقة المتعاملين.`
-    : `من بين ${totalStocks} شركة جرى التداول عليها اليوم، مالت كفة السوق لصالح التراجع بهبوط ${decliners} سهماً مقابل ارتفاع ${advancers} واستقرار ${flat}، بتداولات بلغت ${totalTurnoverB.toFixed(2)} مليار جنيه. وتكشف حركة الجلسة عن ضغوط بيعية واسعة شملت أغلب القطاعات، مما يدعو إلى التريث وعدم الاندفاع في الشراء حتى تتوازن القوى البيعية.`;
+    ? `من بين ${totalStocks} شركة مقيدة بالبورصة جرى رصد أدائها اليوم، مالت كفة السوق لصالح الصعود بارتفاع ${advancers} سهماً مقابل تراجع ${decliners} واستقرار ${flat}، بتداولات أسهم بلغت ${equityTurnoverB.toFixed(2)} مليار جنيه. وتُظهر حركة الجلسة نشاطاً شرائياً امتد لمعظم القطاعات، مما عزز تماسك المؤشرات وثقة المتعاملين.`
+    : `من بين ${totalStocks} شركة مقيدة بالبورصة جرى رصد أدائها اليوم، مالت كفة السوق لصالح التراجع بهبوط ${decliners} سهماً مقابل ارتفاع ${advancers} واستقرار ${flat}، بتداولات أسهم بلغت ${equityTurnoverB.toFixed(2)} مليار جنيه. وتكشف حركة الجلسة عن ضغوط بيعية واسعة شملت أغلب القطاعات، مما يدعو إلى التريث وعدم الاندفاع في الشراء حتى تتوازن القوى البيعية.`;
 
   const gainersLosersEnFallback = `Top session advancers on ${targetDate} were spearheaded by ${gainersListStr || 'leading momentum equities'}, whereas downside pressure concentrated in ${losersListStr || 'lagging cyclical counters'}. Active institutional turnover clustered in high-beta Financials, Real Estate, and Industrial names with wide intraday trading ranges.`;
 
@@ -634,6 +865,15 @@ export async function generateAllDailyTakes(
   const fxArSummary = devaluationRiskScore < 30
     ? `تُظهر مقارنة أسعار الصرف استقراراً حقيقياً للجنيه؛ حيث تدور القيمة العادلة المركبة للدولار حول ${compositeFair.toFixed(2)} جنيهاً بفارق ضئيل للغاية عن السعر الرسمي (${officialUsd.toFixed(2)})، بتسجيل تداولات تيذر P2P نحو ${usdtRate.toFixed(2)} جنيهاً ومراجحة لندن ${londonGdrUsd.toFixed(2)} جنيهاً ودولار الصاغة ${saghaGoldUsd.toFixed(2)} جنيهاً دون أي علاوة مضاربية مقلقة. هذا التوافق مع بقاء مؤشر مخاطر التعويم منخفضاً عند ${devaluationRiskScore} من ١٠٠ يؤكد قدرة البنك المركزي على تلبية الطلب واستقرار سوق الصرف.`
     : `سجل السعر الرسمي للدولار ${officialUsd.toFixed(2)} جنيهاً في حين ارتفعت القيمة العادلة المركبة إلى ${compositeFair.toFixed(2)} جنيهاً مع تداول تيذر P2P عند ${usdtRate.toFixed(2)} جنيهاً ودولار الذهب عند ${saghaGoldUsd.toFixed(2)} جنيهاً، مما يفتح فجوة تسعيرية تستدعي المراقبة. ويعكس ارتفاع مؤشر مخاطر التعويم إلى ${devaluationRiskScore}/100 وجود ضغوط تحوطية تتطلب متابعة السيولة الأجنبية في البنوك.`;
+
+  const net20 = new20dHighs - new20dLows;
+  const trendBreakoutsEnFallback = net20 >= 0
+    ? `EGX market structure registered net new expansion on ${targetDate} as ${new20dHighs} equities (${new20dHighsPct}%) broke out to 20-session highs against ${new20dLows} new lows (${new20dLowsPct}%), with ${new52wHighs} stocks hitting 52-week highs. Moving average participation shows ${aboveSma50Pct}% of listed stocks holding above their 50-day trendline and ${aboveSma200Pct}% above their 200-day line, confirming broad structural health beyond the index heavyweights.`
+    : `Breakdown pressure dominated market structure on ${targetDate} as ${new20dLows} equities (${new20dLowsPct}%) tumbled to new 20-session lows against only ${new20dHighs} new highs (${new20dHighsPct}%), with ${new60dLows} stocks breaching 3-month support. Trend regime breadth weakened with only ${aboveSma50Pct}% of listed equities remaining above their 50-day moving average, signaling caution as corrective pressure expands across secondary counters.`;
+
+  const trendBreakoutsArSummary = net20 >= 0
+    ? `أظهر المسار الفني للأسهم توسعاً إيجابياً في جلسة اليوم؛ حيث نجح ${new20dHighs} سهماً (${new20dHighsPct}%) في تسجيل قمم جديدة لعشرين جلسة مقابل ${new20dLows} سهماً فقط سجلت قيعاناً جديدة، مع تسجيل ${new52wHighs} سهماً قمة سنوية. ويحافظ نحو ${aboveSma50Pct}% من أسهم السوق على تداوله أعلى متوسط ٥٠ يوماً و${aboveSma200Pct}% أعلى متوسط ٢٠٠ يوم، مما يدعم استقرار الحركة العامة.`
+    : `هيمنت الضغوط السلبية على هيكل الأسهم في جلسة اليوم؛ حيث انزلقت ${new20dLows} شركة (${new20dLowsPct}%) إلى قيعان جديدة لعشرين جلسة في مقابل ${new20dHighs} سهماً فقط حقق قمة جديدة، مع كسر ${new60dLows} سهماً لدعوم الأشهر الثلاثة الماضية. وتراجعت نسبة الأسهم المتداولة أعلى متوسط ٥٠ يوماً إلى ${aboveSma50Pct}% فقط، مما يعكس ضعفاً هيكلياً يستوجب الحذر قبل بناء مراكز جديدة.`;
 
   const custom = options?.customSummaries;
 
@@ -657,14 +897,22 @@ export async function generateAllDailyTakes(
     return { en: rawText && !rawText.startsWith('{') ? rawText.trim() : fallbackEn, ar: fallbackAr };
   };
 
-  // 3. Execute all 5 AI completions in parallel if customSummaries are not provided
-  const [hotMoneyBilingual, tradeSummaryBilingual, breadthBilingual, gainersLosersBilingual, fxBilingual] = (custom || options?.fastDeterministic)
+  // 3. Execute all 6 AI completions in parallel if customSummaries are not provided
+  const [
+    hotMoneyBilingual,
+    tradeSummaryBilingual,
+    breadthBilingual,
+    gainersLosersBilingual,
+    fxBilingual,
+    trendBreakoutsBilingual,
+  ] = (custom || options?.fastDeterministic)
     ? [
         { en: custom?.hot_money?.en || hotMoneyEnFallback, ar: custom?.hot_money?.ar || hotMoneyArSummary },
         { en: custom?.trade_summary?.en || tradeSummaryEnFallback, ar: custom?.trade_summary?.ar || tradeSummaryArSummary },
         { en: custom?.market_breadth?.en || breadthEnFallback, ar: custom?.market_breadth?.ar || breadthArSummary },
         { en: custom?.gainers_losers?.en || gainersLosersEnFallback, ar: custom?.gainers_losers?.ar || gainersLosersArSummary },
         { en: custom?.usd_egp_update?.en || fxEnFallback, ar: custom?.usd_egp_update?.ar || fxArSummary },
+        { en: custom?.trend_breakouts?.en || trendBreakoutsEnFallback, ar: custom?.trend_breakouts?.ar || trendBreakoutsArSummary },
       ]
     : await (async () => {
         const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -676,7 +924,7 @@ CRITICAL ARABIC RULES:
 - Never attach minus signs to words like "بيع" (e.g. use "مبيعات بقيمة X مليون" instead of "-X مليون").
 - Tone must be critical, insightful, and accessible to active Egyptian investors without markdown asterisks.`;
 
-        const [resHotMoney, resTrade, resBreadth, resGainers, resFx] = await Promise.all([
+        const [resHotMoney, resTrade, resBreadth, resGainers, resFx, resTrend] = await Promise.all([
           completeWithKeyPool({
             systemPrompt: systemPromptCommon,
             userPrompt: `Analyze 30-Day Egyptian Hot Money & Institutional Liquidity (${targetDate}):
@@ -685,7 +933,7 @@ CRITICAL ARABIC RULES:
   - Arab Net: ${arabStr}
   - Egyptian Domestic Net: ${egyStr}
 - 30D Rolling Hot Money Net: ${rollingHmStr} (${inflowDays} inflow vs ${outflowDays} outflow sessions; today represents ${sharePctOf30d}% of 30D cumulative net)
-- Total Market Turnover: ${totalTurnoverB.toFixed(2)}B EGP
+- Total Market Turnover (Stocks + T-Bills + Bonds): ${totalTurnoverB.toFixed(2)}B EGP
 CRITICAL: Format any amounts >= 1,000M in Billions (e.g. ${todayHmStr} in English and ${fmtMoneyBnOrM(todayHotMoneyNetM, true)} in Arabic). Never use raw 5-digit numbers like 16,348M or 13,405M. Explicitly note that today's single session accounted for ${sharePctOf30d}% of the 30-session cumulative total.`,
             fallbackText: JSON.stringify({ en: hotMoneyEnFallback, ar: hotMoneyArSummary }),
             maxTokens: 400,
@@ -701,7 +949,7 @@ CRITICAL: Format any amounts >= 1,000M in Billions (e.g. ${todayHmStr} in Englis
 - EGX 30: closed at ${egx30.close.toFixed(1)} (${dirVerb(egx30.changePct)})
 - EGX 70 EWI: closed at ${egx70.close.toFixed(1)} (${dirVerb(egx70.changePct)})
 - EGX 100 EWI: closed at ${egx100.close.toFixed(1)} (${dirVerb(egx100.changePct)})
-- Total Turnover: ${totalTurnoverB.toFixed(2)}B EGP
+- Total Equity Turnover: ${equityTurnoverB.toFixed(2)}B EGP
 Critique the move: If EGX 30 rose while EGX 70 fell, expose it as a defensive/cosmetic rally propped up by heavyweights while retail took profits. Never contradict percentage signs.`,
               fallbackText: JSON.stringify({ en: tradeSummaryEnFallback, ar: tradeSummaryArSummary }),
               maxTokens: 400,
@@ -714,7 +962,7 @@ Critique the move: If EGX 30 rose while EGX 70 fell, expose it as a defensive/co
             completeWithKeyPool({
               systemPrompt: systemPromptCommon,
               userPrompt: `Assess session advance/decline participation (${targetDate}):
-- Advancers: ${advancers} (${advancersPct}%) | Decliners: ${decliners} (${declinersPct}%) | Unchanged: ${flat} | Total Traded Equities: ${totalStocks} | Turnover: ${totalTurnoverB.toFixed(2)}B EGP
+- Advancers: ${advancers} (${advancersPct}%) | Decliners: ${decliners} (${declinersPct}%) | Unchanged: ${flat} | Total Listed Equities: ${totalStocks} | Equity Turnover: ${equityTurnoverB.toFixed(2)}B EGP
 Focus on the balance of the session: who won between buyers and sellers across sectors. Avoid "اتساع السوق".`,
               fallbackText: JSON.stringify({ en: breadthEnFallback, ar: breadthArSummary }),
               maxTokens: 400,
@@ -729,7 +977,7 @@ Focus on the balance of the session: who won between buyers and sellers across s
               userPrompt: `Critique EGX Gainers vs Losers (${targetDate}):
 Top Gainers: ${gainersListStr}
 Top Losers: ${losersListStr}
-Turnover: ${totalTurnoverB.toFixed(2)}B EGP
+Equity Turnover: ${equityTurnoverB.toFixed(2)}B EGP
 Critique liquidity quality: Did real money support the gainers or was it isolated speculation while institutional billions stayed in defensive leaders?`,
               fallbackText: JSON.stringify({ en: gainersLosersEnFallback, ar: gainersLosersArSummary }),
               maxTokens: 400,
@@ -754,6 +1002,22 @@ Assess the tight corridor between the official rate and proxy clearing markets (
               temperature: 0.2,
             })
           ),
+          delay(1250).then(() =>
+            completeWithKeyPool({
+              systemPrompt: systemPromptCommon,
+              userPrompt: `Critique EGX Trend Breakouts & Moving Average Regimes (${targetDate}):
+- 20-Day New Highs: ${new20dHighs} (${new20dHighsPct}%) vs New Lows: ${new20dLows} (${new20dLowsPct}%) [Net 20D: ${net20}]
+- 60-Day New Highs: ${new60dHighs} vs New Lows: ${new60dLows} | 52-Week New Highs: ${new52wHighs} vs New Lows: ${new52wLows}
+- Stocks Above Moving Averages: Above 20D SMA: ${aboveSma20Pct}% | Above 50D SMA: ${aboveSma50Pct}% | Above 200D SMA: ${aboveSma200Pct}%
+- Key Movers: Breakouts: ${topBreakouts.map((b) => `${b.ticker} (+${b.changePct}%)`).join(', ') || 'None'} | Breakdowns: ${topBreakdowns.map((b) => `${b.ticker} (${b.changePct}%)`).join(', ') || 'None'}
+Critique the structural breadth: Are stocks breaking out or breaking support? How strong is the medium-term trend based on the % above the 50D SMA?`,
+              fallbackText: JSON.stringify({ en: trendBreakoutsEnFallback, ar: trendBreakoutsArSummary }),
+              maxTokens: 400,
+              timeoutMs: 8000,
+              maxAttempts: 3,
+              temperature: 0.2,
+            })
+          ),
         ]);
 
         return [
@@ -762,6 +1026,7 @@ Assess the tight corridor between the official rate and proxy clearing markets (
           parseBilingualAi(resBreadth.text, breadthEnFallback, breadthArSummary),
           parseBilingualAi(resGainers.text, gainersLosersEnFallback, gainersLosersArSummary),
           parseBilingualAi(resFx.text, fxEnFallback, fxArSummary),
+          parseBilingualAi(resTrend.text, trendBreakoutsEnFallback, trendBreakoutsArSummary),
         ];
       })();
 
@@ -833,6 +1098,18 @@ Assess the tight corridor between the official rate and proxy clearing markets (
       imageUrl: usdEgpChart,
       publishedAt: new Date(safeBaseMs + 5000),
     },
+    {
+      key: 'trend_breakouts',
+      id: `take-${targetDate}-trend-breakouts`,
+      title: 'Trend & Breakouts: New Highs / Lows & Structure Health',
+      content: 'حركة المسار والاختراقات: القمم والقيعان الجديدة ومستويات الدعم',
+      summary: combineBilingual(trendBreakoutsBilingual.en, custom?.trend_breakouts?.ar || trendBreakoutsBilingual.ar),
+      tickers: ['EGX30', 'EGX70', ...topBreakouts.map((b) => b.ticker)],
+      sentiment: (net20 >= 0 && aboveSma50Pct >= 40 ? 'bullish' : net20 < -10 || aboveSma50Pct < 25 ? 'bearish' : 'neutral') as 'bullish' | 'bearish' | 'neutral',
+      importance: 'normal' as const,
+      imageUrl: trendBreakoutsChart,
+      publishedAt: new Date(safeBaseMs + 6000),
+    },
   ];
 
   for (const take of takesToUpsert) {
@@ -863,7 +1140,8 @@ Assess the tight corridor between the official rate and proxy clearing markets (
           updatedAt: new Date(),
         });
 
-        if (urgencyScore >= 10) {
+        // Only the flagship Daily Market Snapshot triggers the 10/10 push, preventing multi-take push spam
+        if (urgencyScore >= 10 && (take.key === 'market_snapshot' || take.id.includes('market-snapshot'))) {
           dispatchNewsPushNotification({
             id: take.id,
             title: take.title,
@@ -890,7 +1168,7 @@ Assess the tight corridor between the official rate and proxy clearing markets (
     await db.insert(systemLogs).values({
       level: 'INFO',
       source: 'ticknal-take',
-      message: `Ticknal take briefings created: 5 posts. Date=${targetDate}. Takes=[${createdTakes.join(', ')}]`,
+      message: `Ticknal take briefings created: ${createdTakes.length} posts. Date=${targetDate}. Takes=[${createdTakes.join(', ')}]`,
       metadata: {
         date: targetDate,
         takes: createdTakes,

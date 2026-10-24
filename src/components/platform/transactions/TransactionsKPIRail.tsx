@@ -303,16 +303,16 @@ export default function TransactionsKPIRail({
               ? 'مراجعة شهرية'
               : 'Monthly check-in'
             : isAr
-            ? 'ابدأ الآن'
-            : 'Start Check-In',
+            ? 'تحديث الأرصدة'
+            : 'Update Balances',
           changeColorClass: latestSummary ? 'text-loss-num' : 'text-brand-blue',
           metaText: latestSummary
             ? isAr
               ? 'صافي الحرق'
               : 'net burn'
             : isAr
-            ? '90 ثانية لحساب المصروف'
-            : '90s to derive spend',
+            ? 'حدّث الأرصدة لحساب المصروف'
+            : 'Update balances to derive spend',
           sparklinePoints: metrics.outflowSpark,
           sparklineTrend: 'down',
         },

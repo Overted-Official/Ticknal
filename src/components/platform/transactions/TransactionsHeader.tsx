@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { TourTriggerButton } from '@/components/ui/tour';
-import { Calendar, Plus, Sparkles } from '@/components/ui/icon-library';
+import { Plus } from '@/components/ui/icon-library';
 
 interface TransactionsHeaderProps {
   onStartTour?: () => void;
@@ -37,20 +37,20 @@ export default function TransactionsHeader({
           </span>
         </div>
         <h1 className="text-lg sm:text-xl font-bold text-text-primary tracking-tight">
-          {isAr ? 'الأرصدة، السيولة والمراجعة الشهرية' : 'Cash, Balances & Monthly Check-In'}
+          {isAr ? 'الأرصدة، السيولة وتحديثات الحسابات' : 'Cash, Balances & Monthly Updates'}
         </h1>
       </div>
 
-      {/* Right: Actions */}
+      {/* Right: Actions aligned with platform design system */}
       <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
         {onOpenCheckIn && (
           <button
             type="button"
             onClick={onOpenCheckIn}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-white text-black hover:bg-white/90 transition-colors cursor-pointer"
+            className="btn-primary-cta"
+            title={isAr ? 'تحديث أرصدة الحسابات الشهرية' : 'Update monthly account balances'}
           >
-            <Sparkles className="w-3.5 h-3.5 text-brand-blue" />
-            <span>{isAr ? 'المراجعة الشهرية (90 ثانية)' : 'Monthly Check-In'}</span>
+            <span>{isAr ? 'تحديث الأرصدة' : 'Balance Update'}</span>
           </button>
         )}
 
@@ -58,10 +58,10 @@ export default function TransactionsHeader({
           <button
             type="button"
             onClick={onOpenAddAccount}
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold border border-white/15 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 text-text-primary transition-colors cursor-pointer"
+            className="filter-control-btn"
           >
-            <Plus className="w-3.5 h-3.5" />
             <span>{isAr ? 'إضافة حساب' : 'Add Account'}</span>
+            <Plus className="w-3.5 h-3.5 shrink-0" />
           </button>
         )}
 

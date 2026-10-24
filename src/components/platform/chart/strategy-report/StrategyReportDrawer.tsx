@@ -20,6 +20,7 @@ import StrategyReportHeader from './StrategyReportHeader';
 import StrategyReportTabBar from './StrategyReportTabBar';
 import PerformanceOverviewTab from './tabs/PerformanceOverviewTab';
 import ListOfTradesTab from './tabs/ListOfTradesTab';
+import { reportYearToDateStart } from './report-period';
 
 export default function StrategyReportDrawer({
   isOpen,
@@ -78,7 +79,7 @@ export default function StrategyReportDrawer({
 
   // Strategy Report / Backtest State
   const [initialCapital] = useState<number>(1000);
-  const [activePreset, setActivePreset] = useState<BacktestPreset>('ytd');
+  const [activePreset, setActivePreset] = useState<BacktestPreset>('custom');
   const [reportLoading, setReportLoading] = useState(false);
 
   // Signals State
@@ -413,7 +414,7 @@ export default function StrategyReportDrawer({
       d.setMonth(d.getMonth() - 6);
       setStrategyStartDate?.(d.toISOString().split('T')[0]);
     } else if (preset === 'ytd' || (preset as string) === '2025') {
-      setStrategyStartDate?.('2025-01-01');
+      setStrategyStartDate?.(reportYearToDateStart(lastDate));
     } else if (preset === '1y') {
       const d = new Date();
       d.setFullYear(d.getFullYear() - 1);
@@ -515,6 +516,8 @@ export default function StrategyReportDrawer({
                   masterIndex={masterIndex}
                   mdm={mdm}
                   initialCapital={initialCapital}
+                  symbol={symbol}
+                  chartData={chartData}
                 />
               )}
 

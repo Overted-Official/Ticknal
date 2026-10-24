@@ -11,12 +11,15 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    // _technical_support contains task-specific probes and retired UI test harnesses.
-    // Production unit tests live beside the code they verify.
+    globals: true,
+    // Most production tests live beside the code; keep the strategy release
+    // regression suite in the default gate despite the support-folder rule.
     include: [
       'src/**/*.test.{ts,tsx}',
       'packages/**/*.test.{ts,tsx}',
       'apps/**/*.test.{ts,tsx}',
+      '_technical_support/strategy-ship/**/*.test.{ts,tsx}',
+      '_technical_support/strategy-ai/**/*.test.{ts,tsx}',
     ],
   },
 });

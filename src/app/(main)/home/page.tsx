@@ -142,10 +142,10 @@ export default async function HomePage() {
 
   const openSymbols = orderStats.openOrders.map((o) => o.tickerSymbol);
   let exitSignals: Opportunity[] = [];
-  if (proprietaryAccess.canView && openSymbols.length > 0) {
+  if (openSymbols.length > 0) {
     try {
       const exitSignalsPromise = getExitSignalsForHoldings(openSymbols, 5).catch(() => []);
-      const timeoutPromise = new Promise<Opportunity[]>((resolve) => setTimeout(() => resolve([]), 350));
+      const timeoutPromise = new Promise<Opportunity[]>((resolve) => setTimeout(() => resolve([]), 3000));
       exitSignals = (await Promise.race([exitSignalsPromise, timeoutPromise])) as Opportunity[];
     } catch (err) {
       console.error('Error fetching exit signals for holdings in HomePage:', err);
