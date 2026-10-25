@@ -193,7 +193,8 @@ function createDbInstance() {
   }
 
   // 2. Production / Cloud Supabase Mode
-  const connectionString = process.env.DATABASE_URL!;
+  const rawUrl = process.env.DATABASE_URL || '';
+  const connectionString = rawUrl.replace(/^["']|["']$/g, '').trim();
   const client =
     globalForDb.postgresClient ??
     postgres(connectionString, {
