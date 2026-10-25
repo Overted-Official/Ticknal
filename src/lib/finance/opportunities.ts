@@ -500,6 +500,29 @@ interface ExitSignalTickerEntry {
 const exitSignalTickerCache = new Map<string, ExitSignalTickerEntry>();
 const EXIT_TICKER_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
+/**
+ * Synchronous non-blocking exit signal retrieval from memory cache.
+ * Returns null if any symbol is not yet analyzed/cached or expired, so SSR
+ * never stalls for 3+ seconds calculating heavy champion models.
+ */
+export function getCachedExitSignalsSync(symbols: string[], limitBars = 5): OpportunitySignal[] | null {
+  const cleanSymbols = Array.from(new Set(symbols.map(normalizeTickerSymbol).filter(Boolean)));
+  if (cleanSymbols.length === 0) return [];
+  const results: OpportunitySignal[] = [];
+  const now = Date.now();
+  for (const symbol of cleanSymbols) {
+    const cacheKey = `${symbol}:${limitBars}`;
+    const cached = exitSignalTickerCache.get(cacheKey);
+    if (!cached || now - cached.timestamp >= EXIT_TICKER_CACHE_TTL_MS) {
+      return null;
+    }
+    if (cached.signal) {
+      results.push(cached.signal);
+    }
+  }
+  return results.sort((a, b) => Date.parse(b.signal.date) - Date.parse(a.signal.date));
+}
+
 /** Shared sell scan for dashboard surfaces. It uses the exact same analyzer as the chart and command center. */
 export async function getExitSignalsForHoldings(symbols: string[], limitBars = 5): Promise<OpportunitySignal[]> {
   const cleanSymbols = Array.from(new Set(symbols.map(normalizeTickerSymbol).filter(Boolean)));

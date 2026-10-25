@@ -5,7 +5,7 @@ import { db } from '@/db';
 import { profiles } from '@/db/schema';
 import { createClient } from '@/lib/supabase/server';
 import { getServerLocale } from '@/lib/i18n/server';
-import { getCachedOpportunitiesSync, getExitSignalsForHoldings } from '@/lib/opportunities';
+import { getCachedOpportunitiesSync, getCachedExitSignalsSync } from '@/lib/opportunities';
 import { type Opportunity } from '@/components/platform/OpportunityTable';
 import {
   getOrderStats,
@@ -49,13 +49,6 @@ export default async function HomePage() {
       </div>
     );
   }
-  let proprietaryAccess = resolveProprietaryAccess(user.email ?? null, null, null);
-  try {
-    const [accessProfile] = await db.select({ role: profiles.role }).from(profiles).where(eq(profiles.id, user.id)).limit(1);
-    proprietaryAccess = await getProprietaryAccessForUser(user.id, user.email ?? null, accessProfile?.role ?? null);
-  } catch (err) {
-    console.warn('[HomePage] Failed to resolve proprietary strategy access:', err);
-  }
 
   let orderStats: Awaited<ReturnType<typeof getOrderStats>> = emptyOrderStats;
   let activeAlertCount = 0;
@@ -67,7 +60,7 @@ export default async function HomePage() {
   let netWorthHistory: NetWorthHistoryPoint[] = [];
   let inflationSeries: Array<{ yearMonth: string; cbeHeadlineInflation: string; usCpiInflation?: string }> = [];
 
-  let profileRow: { fullName: string | null; avatarUrl: string | null } | undefined;
+  let profileRow: { role: string | null; fullName: string | null; avatarUrl: string | null } | undefined;
 
   try {
     const [statsResult, alertResult, accountsResult, txResult, fxRatesResult, inflationResult, seriesResult, profileResult] = await Promise.allSettled([
@@ -79,6 +72,7 @@ export default async function HomePage() {
       getLatestInflationRate(),
       getHistoricalInflationSeries(),
       db.select({
+        role: profiles.role,
         fullName: profiles.fullName,
         avatarUrl: profiles.avatarUrl,
       }).from(profiles).where(eq(profiles.id, user.id)).limit(1),
@@ -134,6 +128,13 @@ export default async function HomePage() {
     console.error('Unexpected error in HomePage data loading:', err);
   }
 
+  let proprietaryAccess = resolveProprietaryAccess(user.email ?? null, profileRow?.role ?? null, null);
+  try {
+    proprietaryAccess = await getProprietaryAccessForUser(user.id, user.email ?? null, profileRow?.role ?? null);
+  } catch (err) {
+    console.warn('[HomePage] Failed to resolve proprietary strategy access:', err);
+  }
+
   try {
     netWorthHistory = await getNetWorthHistory(user.id, initialAccounts, initialTransactions, fxRates);
   } catch (err) {
@@ -141,16 +142,11 @@ export default async function HomePage() {
   }
 
   const openSymbols = orderStats.openOrders.map((o) => o.tickerSymbol);
-  let exitSignals: Opportunity[] = [];
-  if (openSymbols.length > 0) {
-    try {
-      const exitSignalsPromise = getExitSignalsForHoldings(openSymbols, 5).catch(() => []);
-      const timeoutPromise = new Promise<Opportunity[]>((resolve) => setTimeout(() => resolve([]), 3000));
-      exitSignals = (await Promise.race([exitSignalsPromise, timeoutPromise])) as Opportunity[];
-    } catch (err) {
-      console.error('Error fetching exit signals for holdings in HomePage:', err);
-    }
-  }
+  // Non-blocking exit signals: retrieve immediately from memory if available.
+  // MyPositionsSection has a client-side useEffect that asynchronously fetches
+  // /api/positions/signals in the background if empty, so SSR never stalls for 3 seconds.
+  const cachedExitSignals = openSymbols.length > 0 ? getCachedExitSignalsSync(openSymbols, 5) : [];
+  const exitSignals: Opportunity[] = (cachedExitSignals || []) as Opportunity[];
 
   const cachedOpps = proprietaryAccess.canView
     ? getCachedOpportunitiesSync(10, 'champion') || getCachedOpportunitiesSync(5, 'champion')

@@ -5,13 +5,30 @@ import { getCurrentUserAndProfile } from '@/lib/server/admin-guard';
 import { resolveProprietaryAccess } from '@/lib/strategies/proprietary-access-policy';
 import { isProprietaryOwner } from '@/lib/strategies/proprietary-access-policy';
 
+const userProprietaryAccessCache = new Map<string, { value: ReturnType<typeof resolveProprietaryAccess>; timestamp: number }>();
+const PROPRIETARY_ACCESS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+export function invalidateProprietaryAccessCache(userId?: string): void {
+  if (userId) {
+    userProprietaryAccessCache.delete(userId);
+  } else {
+    userProprietaryAccessCache.clear();
+  }
+}
+
 export async function getProprietaryAccessForUser(userId: string, email: string | null, role: string | null) {
+  const cached = userProprietaryAccessCache.get(userId);
+  if (cached && Date.now() - cached.timestamp < PROPRIETARY_ACCESS_CACHE_TTL_MS) {
+    return cached.value;
+  }
   try {
     const [grant] = await db.select({
       enabled: proprietaryStrategyAccess.enabled,
       notificationsEnabled: proprietaryStrategyAccess.notificationsEnabled,
     }).from(proprietaryStrategyAccess).where(eq(proprietaryStrategyAccess.userId, userId)).limit(1);
-    return resolveProprietaryAccess(email, role, grant ?? null);
+    const resolved = resolveProprietaryAccess(email, role, grant ?? null);
+    userProprietaryAccessCache.set(userId, { value: resolved, timestamp: Date.now() });
+    return resolved;
   } catch (error) {
     console.warn(`[proprietary-strategy-access] Failed to load grant for user ${userId}:`, error);
     return resolveProprietaryAccess(email, role, null);

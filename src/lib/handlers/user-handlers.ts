@@ -7,6 +7,7 @@ import { normalizeTickerSymbol } from '@/strategies/Typhon/typhonStrategy';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ensureUserVirtualAccount, isVirtualAccount } from '@/lib/banks/virtual-account';
+import { invalidateUserPortfolioCache } from '@/lib/server/portfolio-queries';
 
 type PositionRow = typeof positions.$inferSelect;
 

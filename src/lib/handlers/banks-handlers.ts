@@ -6,6 +6,7 @@ import { banks, userBankAccounts, bankMonthlySnapshots, bankTransactions, monthl
 import { createClient } from '@/lib/supabase/server';
 import { maskAccountNumber } from '@/lib/masking';
 import { ensureUserVirtualAccount, isVirtualAccount } from '@/lib/banks/virtual-account';
+import { invalidateUserPortfolioCache } from '@/lib/server/portfolio-queries';
 
 // Helper function: Process daily interest accruals for savings accounts
 async function processAccountInterestAccruals(userId: string, accounts: any[]) {
@@ -205,6 +206,7 @@ export async function handleAccountsPost(req: Request) {
       })
       .returning();
 
+    invalidateUserPortfolioCache(user.id);
     return NextResponse.json({ account: newAccount }, { status: 201 });
   } catch (error) {
     console.error('Error creating bank account:', error);
@@ -254,6 +256,7 @@ export async function handleAccountsPut(req: Request) {
       .where(and(eq(userBankAccounts.id, Number(id)), eq(userBankAccounts.userId, user.id)))
       .returning();
 
+    invalidateUserPortfolioCache(user.id);
     return NextResponse.json({ account: updatedAccount });
   } catch (error) {
     console.error('Error updating bank account:', error);
@@ -452,6 +455,7 @@ export async function handleSnapshotsPost(req: Request) {
         .where(and(eq(userBankAccounts.id, parsedAccountId), eq(userBankAccounts.userId, user.id)));
     }
 
+    invalidateUserPortfolioCache(user.id);
     return NextResponse.json({ success: true, count: normalizedSnapshots.length });
   } catch (error) {
     console.error('Error updating bank snapshots:', error);
@@ -589,6 +593,7 @@ export async function handleTransactionsPost(req: Request) {
         .where(eq(userBankAccounts.id, Number(toAccountId)));
     }
 
+    invalidateUserPortfolioCache(user.id);
     return NextResponse.json({ transaction: tx }, { status: 201 });
   } catch (error) {
     console.error('Error creating bank transaction:', error);
@@ -705,6 +710,7 @@ export async function handleTransactionsPut(req: Request) {
         .where(eq(userBankAccounts.id, targetToAccountId));
     }
 
+    invalidateUserPortfolioCache(user.id);
     return NextResponse.json({ transaction: updatedTx });
   } catch (error) {
     console.error('Error updating bank transaction:', error);
@@ -934,6 +940,7 @@ export async function handleMonthlyCloseoutPost(req: Request) {
       })
       .returning();
 
+    invalidateUserPortfolioCache(user.id);
     return NextResponse.json({ success: true, summary });
   } catch (error) {
     console.error('Error in handleMonthlyCloseoutPost:', error);

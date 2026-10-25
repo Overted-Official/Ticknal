@@ -2,6 +2,7 @@ import { db } from '@/db';
 import { dailyPrices, egxInvestorFlows, systemLogs, tickers } from '@/db/schema';
 import { sql, eq, and, notInArray, desc, ne } from 'drizzle-orm';
 import { revalidateTag, revalidatePath } from 'next/cache';
+import { invalidateInvestorFlowsCache } from '@/lib/handlers/investor-flow-handler';
 import {
   fetchOfficialInvestorFlowForDate,
   buildInvestorFlowRow,
@@ -87,6 +88,7 @@ export async function syncDailyInvestorFlows(options?: {
       });
 
     try {
+      invalidateInvestorFlowsCache();
       revalidateTag('investor-flows', { expire: 0 });
       revalidatePath('/markets');
     } catch {}
@@ -294,7 +296,8 @@ export async function syncDailyInvestorFlows(options?: {
         }
 
         try {
-          revalidateTag('investor-flows', { expire: 0 });
+          invalidateInvestorFlowsCache();
+      revalidateTag('investor-flows', { expire: 0 });
           revalidatePath('/markets');
         } catch {}
 
@@ -424,7 +427,8 @@ export async function syncDailyInvestorFlows(options?: {
     });
 
   try {
-    revalidateTag('investor-flows', { expire: 0 });
+    invalidateInvestorFlowsCache();
+      revalidateTag('investor-flows', { expire: 0 });
     revalidatePath('/markets');
   } catch {}
 

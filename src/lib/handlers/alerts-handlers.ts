@@ -4,6 +4,7 @@ import { db } from '@/db';
 import { tickerAlerts, userStrategySettings, tickers } from '@/db/schema';
 import { normalizeTickerSymbol } from '@/strategies/Typhon/typhonStrategy';
 import { createClient } from '@/lib/supabase/server';
+import { invalidateUserPortfolioCache } from '@/lib/server/portfolio-queries';
 
 export async function handleAlertsGet() {
   const supabase = await createClient();
@@ -61,6 +62,7 @@ export async function handleAlertsPost(request: Request) {
       })
       .returning();
 
+    invalidateUserPortfolioCache(user.id);
     return NextResponse.json({
       alert: {
         symbol: alert.tickerSymbol,
@@ -92,6 +94,7 @@ export async function handleAlertsDelete(request: Request) {
     await db
       .delete(tickerAlerts)
       .where(and(eq(tickerAlerts.userId, user.id), eq(tickerAlerts.tickerSymbol, symbol)));
+    invalidateUserPortfolioCache(user.id);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Error deleting alert:', error);

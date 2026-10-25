@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getCachedDailyPrices } from '@/lib/data-cache';
 import { evaluateHoldingConsensus, type HoldingConsensus } from '@/lib/multi-strategy-consensus';
 import { ensureUserVirtualAccount, isVirtualAccount } from '@/lib/banks/virtual-account';
+import { invalidateUserPortfolioCache } from '@/lib/server/portfolio-queries';
 
 class TradeValidationError extends Error {
   status: number;
@@ -258,6 +259,7 @@ export async function handlePortfolioTradesPost(request: Request) {
       return { action, transaction, account: creditedAccount, ticker, quantity, price };
     });
 
+    invalidateUserPortfolioCache(user.id);
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
     if (error instanceof TradeValidationError) return NextResponse.json({ error: error.message }, { status: error.status });

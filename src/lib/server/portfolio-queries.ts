@@ -10,7 +10,6 @@ import {
   dailyPrices,
 } from '@/db/schema';
 import { getCachedTickers, getCachedRecentPrices } from '@/lib/data-cache';
-import { getCachedIndustryRotationMap } from '@/lib/industry-rotation';
 import { ensureUserVirtualAccount } from '@/lib/banks/virtual-account';
 import {
   buildCashTrend,
@@ -57,7 +56,31 @@ export const emptyOrderStats: OrderStats = {
 };
 
 const userOrderStatsCache = new Map<string, { value: OrderStats; timestamp: number }>();
-const ORDER_STATS_CACHE_TTL_MS = 30 * 1000; // 30 seconds
+const userBankAccountsCache = new Map<string, { value: BankAccount[]; timestamp: number }>();
+const userBankTransactionsCache = new Map<string, { value: BankTransaction[]; timestamp: number }>();
+const userActiveAlertCountCache = new Map<string, { value: number; timestamp: number }>();
+const ORDER_STATS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const PORTFOLIO_USER_DATA_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+export function invalidateUserPortfolioCache(userId?: string): void {
+  if (userId) {
+    userOrderStatsCache.delete(userId);
+    userBankAccountsCache.delete(userId);
+    userBankTransactionsCache.delete(userId);
+    userActiveAlertCountCache.delete(userId);
+    for (const key of netWorthHistoryCache.keys()) {
+      if (key.startsWith(`${userId}:`)) {
+        netWorthHistoryCache.delete(key);
+      }
+    }
+  } else {
+    userOrderStatsCache.clear();
+    userBankAccountsCache.clear();
+    userBankTransactionsCache.clear();
+    userActiveAlertCountCache.clear();
+    netWorthHistoryCache.clear();
+  }
+}
 
 export async function getOrderStats(userId: string): Promise<OrderStats> {
   const cached = userOrderStatsCache.get(userId);
@@ -90,12 +113,11 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
     const positionSymbols = Array.from(
       new Set([...openRows, ...closedRows].map((row) => row.tickerSymbol.trim().toUpperCase()))
     );
-    const [latestPrices, tickerMap, rotationMeta, fxRates] = await Promise.all([
+    const [latestPrices, tickerMap, fxRates] = await Promise.all([
       getLatestPriceMap(positionSymbols).catch(() => ({} as Record<string, number>)),
       getTickerMap().catch(
         () => ({} as Record<string, { companyName: string; sector: string; industryGroup: string; logoUrl: string | null; currency: string }>)
       ),
-      getCachedIndustryRotationMap().catch(() => ({ tickerMap: new Map(), industryMap: new Map() })),
       getFxRates(),
     ]);
 
@@ -104,7 +126,6 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
     const openOrdersMap = new Map<string, DashboardOrder>();
     for (const order of openRows) {
       const symbol = order.tickerSymbol.trim().toUpperCase();
-      const cleanSym = symbol.replace('.CA', '');
       const entryPrice = Number(order.entryPrice);
       const quantity = Number(order.quantity);
       const currentPrice = latestPrices[symbol] ?? entryPrice;
@@ -116,7 +137,6 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
       const profitLossEgp = toEgp(profitLoss, currency, fxRates);
       const industryGroup =
         tickerMap[symbol]?.industryGroup ||
-        rotationMeta.tickerMap.get(cleanSym)?.industryGroup ||
         tickerMap[symbol]?.sector ||
         'Unclassified';
 
@@ -173,17 +193,14 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
     }
 
     const industryGroupData: IndustryGroupStake[] = Array.from(industryGroupMap.entries())
-      .map(([industryGroup, info]) => {
-        const regime = rotationMeta.industryMap.get(industryGroup) || 'Improving';
-        return {
-          industryGroup,
-          value: info.value,
-          percentage: totalMarketValue > 0 ? (info.value / totalMarketValue) * 100 : 0,
-          positionsCount: info.count,
-          tickers: Array.from(info.tickers),
-          rotationRegime: regime as any,
-        };
-      })
+      .map(([industryGroup, info]) => ({
+        industryGroup,
+        value: info.value,
+        percentage: totalMarketValue > 0 ? (info.value / totalMarketValue) * 100 : 0,
+        positionsCount: info.count,
+        tickers: Array.from(info.tickers),
+        rotationRegime: 'Improving' as const,
+      }))
       .sort((a, b) => b.value - a.value);
 
     // SectorData mapped from 25 GICS Industry Groups
@@ -194,9 +211,6 @@ export async function getOrderStats(userId: string): Promise<OrderStats> {
     }));
 
     const rotationMapRecord: Record<string, string> = {};
-    for (const [ig, reg] of rotationMeta.industryMap.entries()) {
-      rotationMapRecord[ig] = reg;
-    }
 
     // --- Monthly Investment Performance ---
     type MonthlyBucket = {
@@ -595,7 +609,7 @@ async function getMonthlyCloseMap(symbols: string[], startDate: string): Promise
 }
 
 const netWorthHistoryCache = new Map<string, { value: NetWorthHistoryPoint[]; timestamp: number }>();
-const NET_WORTH_CACHE_TTL_MS = 60 * 1000; // 60 seconds
+const NET_WORTH_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 export async function getNetWorthHistory(
   userId: string,
@@ -703,12 +717,18 @@ export async function getNetWorthHistory(
 }
 
 export async function getActiveAlertCount(userId: string): Promise<number> {
+  const cached = userActiveAlertCountCache.get(userId);
+  if (cached && Date.now() - cached.timestamp < PORTFOLIO_USER_DATA_CACHE_TTL_MS) {
+    return cached.value;
+  }
   try {
     const rows = await db
       .select({ id: tickerAlerts.id })
       .from(tickerAlerts)
       .where(and(eq(tickerAlerts.enabled, true), eq(tickerAlerts.userId, userId)));
-    return rows.length;
+    const count = rows.length;
+    userActiveAlertCountCache.set(userId, { value: count, timestamp: Date.now() });
+    return count;
   } catch (err) {
     console.error('Error in getActiveAlertCount:', err);
     return 0;
@@ -795,6 +815,10 @@ async function getTickerMap(): Promise<
 }
 
 export async function getUserBankAccounts(userId: string): Promise<BankAccount[]> {
+  const cached = userBankAccountsCache.get(userId);
+  if (cached && Date.now() - cached.timestamp < PORTFOLIO_USER_DATA_CACHE_TTL_MS) {
+    return cached.value;
+  }
   try {
     await ensureUserVirtualAccount(userId).catch(() => null);
 
@@ -822,6 +846,7 @@ export async function getUserBankAccounts(userId: string): Promise<BankAccount[]
       .leftJoin(banks, eq(userBankAccounts.bankId, banks.id))
       .where(and(eq(userBankAccounts.userId, userId), eq(userBankAccounts.isArchived, false)))
       .orderBy(desc(userBankAccounts.balance));
+    userBankAccountsCache.set(userId, { value: rows, timestamp: Date.now() });
     return rows;
   } catch (err) {
     console.error('Error fetching userBankAccounts:', err);
@@ -830,6 +855,10 @@ export async function getUserBankAccounts(userId: string): Promise<BankAccount[]
 }
 
 export async function getUserBankTransactions(userId: string): Promise<BankTransaction[]> {
+  const cached = userBankTransactionsCache.get(userId);
+  if (cached && Date.now() - cached.timestamp < PORTFOLIO_USER_DATA_CACHE_TTL_MS) {
+    return cached.value;
+  }
   try {
     const rows = await db
       .select({
@@ -853,6 +882,7 @@ export async function getUserBankTransactions(userId: string): Promise<BankTrans
       .leftJoin(banks, eq(userBankAccounts.bankId, banks.id))
       .where(eq(bankTransactions.userId, userId))
       .orderBy(desc(bankTransactions.transactionDate), desc(bankTransactions.createdAt));
+    userBankTransactionsCache.set(userId, { value: rows, timestamp: Date.now() });
     return rows;
   } catch (err) {
     console.error('Error fetching bankTransactions:', err);

@@ -1,11 +1,49 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { egxInvestorFlows, dailyPrices, tickers } from '@/db/schema';
-import { desc, asc, gte, notInArray, sql, and, eq } from 'drizzle-orm';
+import { egxInvestorFlows, dailyPrices } from '@/db/schema';
+import { desc, asc, gte, sql, and, eq } from 'drizzle-orm';
 import { syncDailyInvestorFlows } from '@/lib/investor-flows/sync-investor-flows';
 
 let lastSelfHealAttemptMs = 0;
-const SELF_HEAL_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
+const SELF_HEAL_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
+
+// In-memory response cache: investor flows data updates once per day after market close.
+// 5-minute TTL eliminates 100% of redundant database round-trips when switching tabs or horizons.
+const investorFlowsCache = new Map<string, { data: InvestorFlowsResponse; timestamp: number }>();
+const INVESTOR_FLOWS_CACHE_TTL_MS = 5 * 60 * 1000;
+
+export function invalidateInvestorFlowsCache(): void {
+  investorFlowsCache.clear();
+}
+
+// In-memory cache for historical USDEGP daily exchange rate progression (1 hour TTL)
+let cachedUsdEgpHistory: { map: Map<string, number>; sorted: { date: string; rate: number }[]; timestamp: number } | null = null;
+const USD_EGP_CACHE_TTL_MS = 60 * 60 * 1000;
+
+async function getUsdEgpHistory(): Promise<{ map: Map<string, number>; sorted: { date: string; rate: number }[] }> {
+  const now = Date.now();
+  if (cachedUsdEgpHistory && now - cachedUsdEgpHistory.timestamp < USD_EGP_CACHE_TTL_MS) {
+    return cachedUsdEgpHistory;
+  }
+  const fxRows = await db
+    .select({ date: dailyPrices.date, close: dailyPrices.close })
+    .from(dailyPrices)
+    .where(and(eq(dailyPrices.tickerSymbol, 'USDEGP'), gte(dailyPrices.date, '2024-01-01')))
+    .orderBy(asc(dailyPrices.date));
+
+  const map = new Map<string, number>();
+  const sorted: { date: string; rate: number }[] = [];
+  for (const f of fxRows) {
+    const dStr = typeof f.date === 'string' ? f.date : new Date(f.date).toISOString().split('T')[0];
+    const rate = Number(f.close || 0);
+    if (rate > 0) {
+      map.set(dStr, rate);
+      sorted.push({ date: dStr, rate });
+    }
+  }
+  cachedUsdEgpHistory = { map, sorted, timestamp: now };
+  return cachedUsdEgpHistory;
+}
 
 export interface InvestorFlowDailyItem {
   date: string;
@@ -83,6 +121,18 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
       | 'INSTITUTIONS'
       | 'RETAIL';
 
+    // 1. Instant Cache Hit Check (< 1ms response)
+    const cacheKey = `${horizon}:${segment}:${category}`;
+    const cached = investorFlowsCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < INVESTOR_FLOWS_CACHE_TTL_MS) {
+      return NextResponse.json(cached.data, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+          'X-Cache': 'HIT',
+        },
+      });
+    }
+
     let limit = 25;
     if (horizon === '1D') limit = 1;
     else if (horizon === '3M') limit = 70;
@@ -120,74 +170,50 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
     const validFlowFilter = and(
       sql`total_turnover::numeric >= ${turnoverThreshold} AND EXTRACT(DOW FROM date::date) NOT IN (5, 6)`,
       eq(egxInvestorFlows.marketSegment, segment),
-      segment === 'TOTAL'
-        ? sql`EXISTS (SELECT 1 FROM egx_investor_flows s WHERE s.date = ${egxInvestorFlows.date} AND s.market_segment = 'STOCKS')
-          AND EXISTS (SELECT 1 FROM egx_investor_flows bl WHERE bl.date = ${egxInvestorFlows.date} AND bl.market_segment = 'BILLS')
-          AND EXISTS (SELECT 1 FROM egx_investor_flows bo WHERE bo.date = ${egxInvestorFlows.date} AND bo.market_segment = 'BONDS')`
-        : sql`1=1`,
       horizon === '1D' ? sql`1=1` : gte(egxInvestorFlows.date, cutoffDateStr)
     );
 
-    let rows = await db
-      .select()
-      .from(egxInvestorFlows)
-      .where(validFlowFilter)
-      .orderBy(desc(egxInvestorFlows.date))
-      .limit(limit);
+    const [rows, fxData] = await Promise.all([
+      db
+        .select()
+        .from(egxInvestorFlows)
+        .where(validFlowFilter)
+        .orderBy(desc(egxInvestorFlows.date))
+        .limit(limit),
+      getUsdEgpHistory(),
+    ]);
 
-    // Self-healing: Check if daily_prices has a newer trading session than egxInvestorFlows
-    try {
-      const latestDailyPrice = await db
-        .select({ date: dailyPrices.date })
-        .from(dailyPrices)
-        .innerJoin(tickers, eq(dailyPrices.tickerSymbol, tickers.symbol))
-        .where(
-          and(
-            notInArray(tickers.sector, ['Funds', 'Macro', 'Indices']),
-            sql`${dailyPrices.volume}::numeric > 0`
-          )
-        )
-        .orderBy(desc(dailyPrices.date))
-        .limit(1);
+    // Non-blocking background self-healing trigger: check in background without blocking user response
+    if (Date.now() - lastSelfHealAttemptMs > SELF_HEAL_COOLDOWN_MS) {
+      lastSelfHealAttemptMs = Date.now();
+      void (async () => {
+        try {
+          const latestPriceRows = await db
+            .select({ date: dailyPrices.date })
+            .from(dailyPrices)
+            .where(sql`ticker_symbol = 'EGX30' AND volume::numeric > 0`)
+            .orderBy(desc(dailyPrices.date))
+            .limit(1);
 
-      const latestPriceDate = latestDailyPrice[0]?.date ? String(latestDailyPrice[0].date) : null;
-      const latestFlowDate = rows[0]?.date ? String(rows[0].date) : null;
-      const isMissingMultiSegmentBreakdown =
-        rows[0] &&
-        String(rows[0].date) === latestPriceDate &&
-        rows[0].egyptianInstBuy === null;
+          const latestPriceDate = latestPriceRows[0]?.date ? String(latestPriceRows[0].date) : null;
+          const latestFlowDate = rows[0]?.date ? String(rows[0].date) : null;
 
-      if (
-        latestPriceDate &&
-        Date.now() - lastSelfHealAttemptMs > SELF_HEAL_COOLDOWN_MS &&
-        (!latestFlowDate || latestPriceDate > latestFlowDate || isMissingMultiSegmentBreakdown)
-      ) {
-        lastSelfHealAttemptMs = Date.now();
-        // Trigger background sync without blocking the UI response when historical rows are present
-        if (rows.length > 0) {
-          void syncDailyInvestorFlows({ targetDate: latestPriceDate }).catch((err) =>
-            console.warn('Background investor flows self-healing sync warning:', err)
-          );
-        } else {
-          const syncRes = await syncDailyInvestorFlows({ targetDate: latestPriceDate });
-          if (syncRes.success) {
-            rows = await db
-              .select()
-              .from(egxInvestorFlows)
-              .where(validFlowFilter)
-              .orderBy(desc(egxInvestorFlows.date))
-              .limit(limit);
+          if (latestPriceDate && (!latestFlowDate || latestPriceDate > latestFlowDate)) {
+            const syncRes = await syncDailyInvestorFlows({ targetDate: latestPriceDate });
+            if (syncRes?.success) {
+              investorFlowsCache.clear();
+            }
           }
+        } catch (selfHealErr) {
+          console.warn('Background investor flows self-healing sync warning:', selfHealErr);
         }
-      }
-    } catch (selfHealErr) {
-      console.warn('On-demand investor flows self-healing sync warning:', selfHealErr);
+      })();
     }
 
     if (rows.length === 0) {
-      return NextResponse.json({
+      const emptyPayload: InvestorFlowsResponse = {
         summary: {
-          latestDate: new Date().toISOString().split('T')[0],
+          latestDate: anchorDateStr,
           marketSegment: segment,
           activeCategory: category,
           foreignNetToday: 0,
@@ -206,42 +232,21 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
           foreignTrend: 'NEUTRAL',
         },
         history: [],
-      });
+      };
+      investorFlowsCache.set(cacheKey, { data: emptyPayload, timestamp: Date.now() });
+      return NextResponse.json(emptyPayload);
     }
 
     // Sort ascending for time series progression
     rows.sort((a, b) => (a.date < b.date ? -1 : 1));
 
-    // Fetch historical USDEGP exchange rates so each day can be converted at that day's exact rate
-    const minRowDate = String(rows[0].date);
-    const fxBufferDate = new Date(`${minRowDate}T00:00:00Z`);
-    fxBufferDate.setUTCDate(fxBufferDate.getUTCDate() - 14);
-    const fxBufferDateStr = fxBufferDate.toISOString().split('T')[0];
-
-    const fxRows = await db
-      .select({ date: dailyPrices.date, close: dailyPrices.close })
-      .from(dailyPrices)
-      .where(and(eq(dailyPrices.tickerSymbol, 'USDEGP'), gte(dailyPrices.date, fxBufferDateStr)))
-      .orderBy(asc(dailyPrices.date));
-
-    const fxExactMap = new Map<string, number>();
-    const fxSorted: { date: string; rate: number }[] = [];
-    for (const f of fxRows) {
-      const dStr = typeof f.date === 'string' ? f.date : new Date(f.date).toISOString().split('T')[0];
-      const rate = Number(f.close || 0);
-      if (rate > 0) {
-        fxExactMap.set(dStr, rate);
-        fxSorted.push({ date: dStr, rate });
-      }
-    }
-
     const getUsdEgpForDate = (dateStr: string): number => {
-      const exact = fxExactMap.get(dateStr);
+      const exact = fxData.map.get(dateStr);
       if (exact) return exact;
-      for (let i = fxSorted.length - 1; i >= 0; i--) {
-        if (fxSorted[i].date <= dateStr) return fxSorted[i].rate;
+      for (let i = fxData.sorted.length - 1; i >= 0; i--) {
+        if (fxData.sorted[i].date <= dateStr) return fxData.sorted[i].rate;
       }
-      return fxSorted[0]?.rate || 55.25;
+      return fxData.sorted[0]?.rate || 55.25;
     };
 
     let runningForeignNet = 0;
@@ -399,8 +404,13 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
       history,
     };
 
+    investorFlowsCache.set(cacheKey, { data: payload, timestamp: Date.now() });
+
     return NextResponse.json(payload, {
-      headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' },
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        'X-Cache': 'MISS',
+      },
     });
   } catch (error: any) {
     console.error('Error in handleInvestorFlowsGet:', error);

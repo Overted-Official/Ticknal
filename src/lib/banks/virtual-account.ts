@@ -19,6 +19,18 @@ export {
   isVirtualAccount,
 };
 
+const verifiedVirtualAccountUsers = new Set<string>();
+
+export function clearVerifiedVirtualAccountCache(userId?: string): void {
+  if (userId) {
+    for (const key of verifiedVirtualAccountUsers) {
+      if (key.startsWith(`${userId}:`)) verifiedVirtualAccountUsers.delete(key);
+    }
+  } else {
+    verifiedVirtualAccountUsers.clear();
+  }
+}
+
 /**
  * Ensures that a standard Virtual Account exists for the given user.
  * If one does not exist, it is created with standard paper trading capital.
@@ -28,6 +40,21 @@ export async function ensureUserVirtualAccount(
   currency = 'EGP'
 ): Promise<VirtualAccountRecord> {
   const normCurrency = (currency || 'EGP').toUpperCase();
+  const cacheKey = `${userId}:${normCurrency}`;
+
+  if (verifiedVirtualAccountUsers.has(cacheKey)) {
+    return {
+      id: 0,
+      userId,
+      accountName: VIRTUAL_ACCOUNT_NAME,
+      customBankName: VIRTUAL_BROKER_NAME,
+      accountNumber: 'VIRTUAL-001',
+      accountType: 'BROKERAGE',
+      currency: normCurrency,
+      balance: VIRTUAL_INITIAL_BALANCE,
+      isArchived: false,
+    } as unknown as VirtualAccountRecord;
+  }
 
   // 1. Look for an existing active Virtual Account for this user
   const existingRows = await db
@@ -44,6 +71,7 @@ export async function ensureUserVirtualAccount(
     .limit(1);
 
   if (existingRows.length > 0 && existingRows[0]) {
+    verifiedVirtualAccountUsers.add(cacheKey);
     return existingRows[0] as unknown as VirtualAccountRecord;
   }
 
@@ -66,5 +94,6 @@ export async function ensureUserVirtualAccount(
     })
     .returning();
 
+  verifiedVirtualAccountUsers.add(cacheKey);
   return created as unknown as VirtualAccountRecord;
 }
