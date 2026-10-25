@@ -222,35 +222,37 @@ export async function syncDailyInvestorFlows(options?: {
 
   const existingTotalRow = existingSegments.find((r) => r.marketSegment === 'TOTAL');
   const existingBillsRow = existingSegments.find((r) => r.marketSegment === 'BILLS');
+  const existingStocksRow = existingSegments.find((r) => r.marketSegment === 'STOCKS');
+
+  const primaryRow = (existingTotalRow && existingBillsRow) ? existingTotalRow : existingStocksRow;
 
   if (
     !options?.forceRefresh &&
-    existingTotalRow &&
-    existingBillsRow &&
-    Number(existingTotalRow.totalTurnover) >= 100_000_000
+    primaryRow &&
+    Number(primaryRow.totalTurnover) >= 100_000_000
   ) {
-    const foreignNet = Number(existingTotalRow.foreignNet);
-    const egyptianNet = Number(existingTotalRow.egyptianNet);
-    const arabNet = Number(existingTotalRow.arabNet);
-    const fVol = Number(existingTotalRow.foreignBuy) + Number(existingTotalRow.foreignSell);
+    const foreignNet = Number(primaryRow.foreignNet);
+    const egyptianNet = Number(primaryRow.egyptianNet);
+    const arabNet = Number(primaryRow.arabNet);
+    const fVol = Number(primaryRow.foreignBuy) + Number(primaryRow.foreignSell);
     const totVol =
       fVol +
-      Number(existingTotalRow.egyptianBuy) +
-      Number(existingTotalRow.egyptianSell) +
-      Number(existingTotalRow.arabBuy) +
-      Number(existingTotalRow.arabSell);
+      Number(primaryRow.egyptianBuy) +
+      Number(primaryRow.egyptianSell) +
+      Number(primaryRow.arabBuy) +
+      Number(primaryRow.arabSell);
     const foreignSharePct = totVol > 0 ? Math.round((fVol / totVol) * 1000) / 10 : 8.0;
 
     return {
       success: true,
       date: dateStr,
-      totalTurnover: Number(existingTotalRow.totalTurnover),
+      totalTurnover: Number(primaryRow.totalTurnover),
       foreignNet,
       egyptianNet,
       arabNet,
       foreignSharePct,
-      source: 'OFFICIAL_EGX_DIRECT',
-      message: `Multi-segment official investor flows already recorded for session ${dateStr}.`,
+      source: existingBillsRow ? 'OFFICIAL_EGX_DIRECT' : 'OFFICIAL_FEED',
+      message: `Official investor flows (${primaryRow.marketSegment}) already recorded for session ${dateStr}.`,
     };
   }
 
@@ -341,6 +343,25 @@ export async function syncDailyInvestorFlows(options?: {
   // 6. Secondary Fallback Source: Verified Official Closing Bulletin via Al Borsa (STOCKS segment)
   const verifiedSession = await fetchOfficialInvestorFlowForDate(dateStr);
   if (!verifiedSession) {
+    if (existingStocksRow && Number(existingStocksRow.totalTurnover) >= 100_000_000) {
+      const fNet = Number(existingStocksRow.foreignNet);
+      const eNet = Number(existingStocksRow.egyptianNet);
+      const aNet = Number(existingStocksRow.arabNet);
+      const fVol = Number(existingStocksRow.foreignBuy) + Number(existingStocksRow.foreignSell);
+      const totVol = fVol + Number(existingStocksRow.egyptianBuy) + Number(existingStocksRow.egyptianSell) + Number(existingStocksRow.arabBuy) + Number(existingStocksRow.arabSell);
+      const foreignSharePct = totVol > 0 ? Math.round((fVol / totVol) * 1000) / 10 : 8.0;
+      return {
+        success: true,
+        date: dateStr,
+        totalTurnover: Number(existingStocksRow.totalTurnover),
+        foreignNet: fNet,
+        egyptianNet: eNet,
+        arabNet: aNet,
+        foreignSharePct,
+        source: 'OFFICIAL_FEED',
+        message: `Equity investor flows already recorded for session ${dateStr}.`,
+      };
+    }
     await db.insert(systemLogs).values({
       source: 'cron-investor-flows',
       level: 'WARN',

@@ -12,23 +12,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Trigger Investor Flows Ingestion
-        run: |
-          echo "Triggering /api/cron/update-investor-flows..."
-          FLOW_RESP=$(curl -s -w "\n%{http_code}" -X POST "https://ticknal.com/api/cron/update-investor-flows" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "Content-Type: application/json")
-          HTTP_STATUS=$(echo "$FLOW_RESP" | tail -n1)
-          BODY=$(echo "$FLOW_RESP" | head -n -1)
-          echo "Status: $HTTP_STATUS"
-          echo "Body: $BODY"
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-          # Now trigger ticknal-take generation
-          echo "Triggering /api/cron/ticknal-take..."
-          TAKE_RESP=$(curl -s -w "\n%{http_code}" -X POST "https://ticknal.com/api/cron/ticknal-take" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "Content-Type: application/json")
-          TAKE_STATUS=$(echo "$TAKE_RESP" | tail -n1)
-          TAKE_BODY=$(echo "$TAKE_RESP" | head -n -1)
-          echo "Take Status: $TAKE_STATUS"
-          echo "Take Body: $TAKE_BODY"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Sync EGX Investor Flows (Multi-Source News & Exchange Data)
+        run: npx tsx scripts/cron/sync-investor-flows.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

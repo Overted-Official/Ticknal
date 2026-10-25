@@ -13,6 +13,8 @@ import {
 
 const ALBORSA_POSTS_ENDPOINT = 'https://www.alborsaanews.com/wp-json/wp/v2/posts';
 const ALBORSA_MARKETS_CATEGORY_ID = 10;
+const AMWAL_POSTS_ENDPOINT = 'https://amwalalghad.com/wp-json/wp/v2/posts';
+const AMWAL_MARKETS_CATEGORY_ID = 82015;
 const REQUEST_HEADERS = {
   'User-Agent':
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
@@ -137,27 +139,44 @@ export function buildInvestorFlowRow(session: VerifiedSessionFlow, turnover: num
  * Fetches and parses all official closing reports published on `dateStr` (Cairo date, YYYY-MM-DD).
  */
 export async function fetchOfficialFlowCandidatesForDate(dateStr: string): Promise<OfficialFlowCandidate[]> {
-  const url =
-    `${ALBORSA_POSTS_ENDPOINT}?categories=${ALBORSA_MARKETS_CATEGORY_ID}` +
-    `&after=${dateStr}T00:00:00&before=${dateStr}T23:59:59&per_page=100` +
-    `&_fields=id,date,title,link,content`;
+  const endpoints = [
+    {
+      source: 'ALBORSA',
+      url: `${ALBORSA_POSTS_ENDPOINT}?categories=${ALBORSA_MARKETS_CATEGORY_ID}&after=${dateStr}T00:00:00&before=${dateStr}T23:59:59&per_page=100&_fields=id,date,title,link,content`,
+    },
+    {
+      source: 'AMWAL_ALGHAD',
+      url: `${AMWAL_POSTS_ENDPOINT}?categories=${AMWAL_MARKETS_CATEGORY_ID}&after=${dateStr}T00:00:00&before=${dateStr}T23:59:59&per_page=50&_fields=id,date,title,link,content`,
+    },
+  ];
 
-  let posts: Array<{ date: string; link: string; title?: { rendered?: string }; content?: { rendered?: string } }> = [];
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const res = await fetch(url, { headers: REQUEST_HEADERS, cache: 'no-store', signal: AbortSignal.timeout(12000) });
-      if (res.ok) {
-        posts = await res.json();
-        break;
+  const fetchEndpoint = async (ep: { source: string; url: string }) => {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const res = await fetch(ep.url, { headers: REQUEST_HEADERS, cache: 'no-store', signal: AbortSignal.timeout(12000) });
+        if (res.ok) {
+          const posts = await res.json();
+          return Array.isArray(posts) ? posts : [];
+        }
+      } catch (err) {
+        if (attempt === 2) return [];
+        await new Promise((r) => setTimeout(r, 1000));
       }
-    } catch (err) {
-      if (attempt === 3) throw err;
-      await new Promise((r) => setTimeout(r, 1500));
+    }
+    return [];
+  };
+
+  const results = await Promise.allSettled(endpoints.map(fetchEndpoint));
+  const allPosts: Array<{ date: string; link: string; title?: { rendered?: string }; content?: { rendered?: string } }> = [];
+
+  for (const r of results) {
+    if (r.status === 'fulfilled' && Array.isArray(r.value)) {
+      allPosts.push(...r.value);
     }
   }
 
   const out: OfficialFlowCandidate[] = [];
-  for (const post of posts) {
+  for (const post of allPosts) {
     if (!post.date?.startsWith(dateStr)) continue;
     const hour = Number(post.date.slice(11, 13));
     const title = post.title?.rendered ?? '';
