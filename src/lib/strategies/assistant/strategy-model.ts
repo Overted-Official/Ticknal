@@ -4,7 +4,7 @@ import { createAdvancedNodeFromTemplate } from '../../../components/platform/str
 import { getAssistantEditableParameterKeys } from './strategy-actions';
 
 const ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
-const SYSTEM = `You are Ticknal's Strategy Studio editing assistant. Return one JSON object with keys "message" (a concise explanation) and "actions" (an ordered array). Edit only the supplied user-owned draft. Never invent metrics, ticker prices, backtest results, proprietary strategy details, or unsupported cards. You cannot save, enable alerts, select companies, or change access. If the request is ambiguous or unsupported, explain what is missing and return an empty actions array.
+const SYSTEM = `You are Ticknal's Strategy Studio editing assistant. Return one JSON object with keys "message" (a concise explanation) and "actions" (an ordered array). Edit only the supplied user-owned draft. The supplied snapshot is the sole source of current strategy state; previous chat messages may describe previews that the user did not apply. Never invent metrics, ticker prices, backtest results, proprietary strategy details, or unsupported cards. You cannot save, enable alerts, select companies, or change access. If the request is ambiguous or unsupported, explain what is missing and return an empty actions array.
 Allowed action shapes:
 {"type":"rename_strategy","name":"..."};
 {"type":"add_simple_rule","side":"buy|sell","indicatorId":"catalog id","changes":{"period":14,"operator":"crossesAbove","value":30,"connector":"and"}}. Use changes to set a complete rule in one action;
@@ -37,27 +37,33 @@ export async function generateStrategyProposal(input: AssistantTurnInput, option
     defaults: createAdvancedNodeFromTemplate(item, 'example').parameters,
     editableParameters: getAssistantEditableParameterKeys(item.id),
   }));
-  const response = await fetch(ENDPOINT, {
-    method: 'POST',
-    signal: AbortSignal.timeout(45_000),
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model,
-      temperature: 0.2,
-      max_tokens: 12_000,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: SYSTEM },
-        { role: 'user', content: JSON.stringify({ request: input.message, snapshot: input.snapshot, catalog: publicCatalog, templates: publicTemplates }) },
-      ],
-    }),
+  const requestBody = JSON.stringify({
+    model,
+    temperature: 0.2,
+    max_tokens: 12_000,
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: SYSTEM },
+      { role: 'user', content: JSON.stringify({ request: input.message, recentConversation: input.history?.slice(-12).map((entry) => ({ role: entry.role, text: entry.text.slice(0, 800) })) ?? [], snapshot: input.snapshot, catalog: publicCatalog, templates: publicTemplates }) },
+    ],
   });
-  if (!response.ok) throw new Error(`Strategy assistant provider returned HTTP ${response.status}.`);
-  const result: unknown = await response.json();
-  if (typeof result !== 'object' || !result || !('choices' in result) || !Array.isArray(result.choices)) {
-    throw new Error('Strategy assistant returned an invalid response.');
+  const signal = AbortSignal.timeout(45_000);
+  const attempts = model === 'openrouter/free' ? 2 : 1;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const response = await fetch(ENDPOINT, {
+      method: 'POST', signal,
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: requestBody,
+    });
+    if (!response.ok) throw new Error(`Strategy assistant provider returned HTTP ${response.status}.`);
+    const result: unknown = await response.json();
+    const content = typeof result === 'object' && result && 'choices' in result && Array.isArray(result.choices)
+      ? result.choices[0]?.message?.content as unknown : null;
+    if (typeof content === 'string' && content.length <= 150_000) {
+      try { return JSON.parse(content) as unknown; }
+      catch { /* Another free model may return valid structured output. */ }
+    }
+    if (attempt + 1 < attempts) console.warn('[strategies/assistant] Free model returned malformed structured output; retrying once.');
   }
-  const content: unknown = result.choices[0]?.message?.content;
-  if (typeof content !== 'string' || content.length > 150_000) throw new Error('Strategy assistant returned an invalid response.');
-  return JSON.parse(content) as unknown;
+  throw new Error('Strategy assistant returned an invalid response.');
 }

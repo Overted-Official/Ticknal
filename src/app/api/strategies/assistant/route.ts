@@ -5,6 +5,8 @@ import { canEditStrategySnapshot, type StrategyWorkspaceSnapshot } from '../../.
 import { runStrategyAssistantTurn } from '../../../../lib/strategies/assistant/assistant-turn';
 import { generateStrategyProposal } from '../../../../lib/strategies/assistant/strategy-model';
 import { isValidOpenRouterApiKey } from '../../../../lib/strategies/assistant/assistant-provider-key';
+import { parseChatId } from '../../../../lib/strategies/assistant/chat-history';
+import { getAssistantChat } from '../../../../lib/strategies/server/assistant-chat-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -50,6 +52,12 @@ export async function POST(request: Request): Promise<Response> {
     if (input.providerKey !== undefined && !isValidOpenRouterApiKey(input.providerKey)) {
       return Response.json({ status: 'invalid', error: 'Provide a valid OpenRouter API key.' }, { status: 400, headers: HEADERS });
     }
+    const chatId = input.chatId === undefined ? null : parseChatId(input.chatId);
+    if (input.chatId !== undefined && !chatId) return Response.json({ status: 'invalid', error: 'Invalid chat.' }, { status: 400, headers: HEADERS });
+    const chat = chatId ? await getAssistantChat(user.id, chatId) : null;
+    if (chatId && (!chat || chat.strategyId !== (input.snapshot as StrategyWorkspaceSnapshot).draft.id)) {
+      return Response.json({ status: 'invalid', error: 'Reopen your saved chat before continuing.' }, { status: 409, headers: HEADERS });
+    }
     const budget = await supabase.rpc('consume_strategy_assistant_quota');
     if (budget.error) {
       console.error('[strategies/assistant] Quota check failed.', budget.error);
@@ -59,7 +67,8 @@ export async function POST(request: Request): Promise<Response> {
     const catalog = localizeIndicatorCatalog(getStrategyIndicatorCatalog(), 'en');
     const providerKey = input.providerKey as string | undefined;
     const result = await runStrategyAssistantTurn(
-      { snapshot: input.snapshot as StrategyWorkspaceSnapshot, message: input.message, catalog },
+      { snapshot: input.snapshot as StrategyWorkspaceSnapshot, message: input.message, catalog,
+        history: chat?.messages.slice(-13).filter((entry, index, rows) => index !== rows.length - 1 || entry.role !== 'user' || entry.text !== input.message).slice(-12) },
       (turnInput) => generateStrategyProposal(turnInput, providerKey ? { apiKey: providerKey } : undefined),
     );
     return Response.json(result, { status: result.status === 'ok' ? 200 : result.status === 'invalid' ? 422 : 503, headers: HEADERS });

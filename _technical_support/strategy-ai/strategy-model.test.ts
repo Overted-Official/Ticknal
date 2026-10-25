@@ -24,6 +24,17 @@ const input: AssistantTurnInput = {
 };
 
 describe('assistant model adapter', () => {
+  it('includes a bounded saved conversation when continuing a chat', async () => {
+    process.env.STRATEGY_ASSISTANT_API_KEY = 'test-secret';
+    let body = '';
+    globalThis.fetch = vi.fn(async (_url, request) => {
+      body = String(request?.body);
+      return Response.json({ choices: [{ message: { content: '{"message":"Done","actions":[]}' } }] });
+    }) as typeof fetch;
+    await generateStrategyProposal({ ...input, history: [{ role: 'user', text: 'Use RSI below 30', time: '09:41' }, { role: 'assistant', text: 'I added the rule', time: '09:42' }] });
+    expect(body).toContain('recentConversation');
+    expect(body).toContain('Use RSI below 30');
+  });
   it('sends only draft and public catalog context to a dedicated structured-output model', async () => {
     process.env.STRATEGY_ASSISTANT_API_KEY = 'test-secret';
     let body: Record<string, unknown> | undefined;
@@ -79,5 +90,19 @@ describe('assistant model adapter', () => {
     await generateStrategyProposal(input, { apiKey: personalKey });
     expect(authorization).toBe(`Bearer ${personalKey}`);
     expect(body).not.toContain(personalKey);
+  });
+
+  it('retries one malformed structured response from the free model router', async () => {
+    delete process.env.STRATEGY_ASSISTANT_API_KEY;
+    process.env.OPENROUTER_API_KEY = 'pilot-secret';
+    process.env.STRATEGY_ASSISTANT_MODEL = 'openrouter/free';
+    globalThis.fetch = vi.fn()
+      .mockResolvedValueOnce(Response.json({ choices: [{ finish_reason: 'stop', message: { content: 'not JSON' } }] }))
+      .mockResolvedValueOnce(Response.json({ choices: [{ finish_reason: 'stop', message: { content: '{"message":"Added RSI","actions":[{"type":"add_simple_rule","side":"buy","indicatorId":"rsi"}]}' } }] })) as typeof fetch;
+
+    const proposal = await generateStrategyProposal(input);
+
+    expect(proposal).toMatchObject({ message: 'Added RSI', actions: [{ type: 'add_simple_rule', side: 'buy', indicatorId: 'rsi' }] });
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
   });
 });

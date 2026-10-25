@@ -222,6 +222,20 @@ export const userStrategies = pgTable('user_strategies', {
   notificationScanIdx: index('user_strategies_notification_scan_idx').on(table.notificationsEnabled, table.notificationLastScannedAt),
 }));
 
+export const strategyAssistantChats = pgTable('strategy_assistant_chats', {
+  id: uuid('id').primaryKey(),
+  userId: uuid('user_id').notNull(),
+  title: varchar('title', { length: 80 }).notNull(),
+  strategyId: varchar('strategy_id', { length: 100 }).notNull(),
+  revision: integer('revision').default(1).notNull(),
+  snapshot: jsonb('snapshot').notNull(),
+  messages: jsonb('messages').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  userUpdatedIdx: index('strategy_assistant_chats_user_updated_idx').on(table.userId, table.updatedAt),
+}));
+
 export const proprietaryStrategyAccess = pgTable('proprietary_strategy_access', {
   userId: uuid('user_id').primaryKey().references(() => profiles.id, { onDelete: 'cascade' }),
   enabled: boolean('enabled').default(false).notNull(),

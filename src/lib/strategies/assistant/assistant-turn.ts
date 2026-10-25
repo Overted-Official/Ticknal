@@ -2,11 +2,13 @@ import type { StrategyBuilderIndicatorOption } from '../../../components/platfor
 import { applyStrategyActions, canEditStrategySnapshot, parseStrategyActions, type StrategyAction, type StrategyWorkspaceSnapshot } from './strategy-actions';
 import { compileAdvancedStrategy, type CompileAdvancedResult } from '../../../components/platform/strategies/builder/compile-advanced-strategy';
 import { compileSimpleStrategy, type CompileSimpleStrategyResult } from '../../../components/platform/strategies/builder/compile-simple-strategy';
+import type { TickyMessage } from './chat-history';
 
 export interface AssistantTurnInput {
   readonly snapshot: StrategyWorkspaceSnapshot;
   readonly message: string;
   readonly catalog: readonly StrategyBuilderIndicatorOption[];
+  readonly history?: readonly TickyMessage[];
 }
 
 export interface AssistantProposal {

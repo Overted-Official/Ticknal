@@ -75,6 +75,8 @@ _technical_support/strategy-ai/*
 !_technical_support/strategy-ai/strategy-model.test.ts
 !_technical_support/strategy-ai/assistant-route.test.ts
 !_technical_support/strategy-ai/assistant-panel.test.tsx
+!_technical_support/strategy-ai/chat-history.test.ts
+!_technical_support/strategy-ai/chat-route.test.ts
 .agents/
 
 # Local builds & assets

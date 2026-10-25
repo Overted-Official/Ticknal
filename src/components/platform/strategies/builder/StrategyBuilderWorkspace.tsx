@@ -247,6 +247,20 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
     return true;
   };
 
+  const restoreAssistantChat = (snapshot: StrategyWorkspaceSnapshot) => {
+    if (!snapshot.draft.id.startsWith('custom-')) return;
+    const saved = savedStrategies.find((strategy) => strategy.id === snapshot.draft.id);
+    setSelectedStrategyId(snapshot.draft.id);
+    selectedStrategyIdRef.current = snapshot.draft.id;
+    setSelectedSymbols(saved?.selectedSymbols ?? null);
+    setNotificationsEnabled(saved?.notificationsEnabled === true);
+    setAssistantUndo(null);
+    setAssistantPreview(null);
+    setFocusedBlockId(null);
+    setRenaming(false);
+    restoreAssistantSnapshot(snapshot);
+  };
+
   const selectStrategy = (id: string) => {
     setAssistantOpen(false);
     setAssistantUndo(null);
@@ -412,7 +426,7 @@ export default function StrategyBuilderWorkspace({ indicatorCatalog, universe, c
           </div>
           </div>
         </div>
-        {ASSISTANT_PILOT && <StrategyStudioAssistant key={selectedStrategyId} locale={builderLocale} snapshot={assistantSnapshot} currentToken={assistantToken} canUndo={Boolean(assistantUndo && assistantUndo.appliedRevision === draftRevision)} beforeProgram={liveProgram} symbol={ticker} period={{ startDate, endDate }} assumptions={assumptions} readOnly={isProtected} onApply={applyAssistantSnapshot} onPreview={setAssistantPreview} onUndo={undoAssistantEdit} onCreateDraft={() => { createNew(); setAnalyticsOpen(false); setAssistantOpen(true); }} onOpen={() => { setAnalyticsOpen(false); setMobileActionsOpen(false); setAssistantOpen(true); }} onClose={() => { setAssistantPreview(null); setAssistantOpen(false); }} open={assistantOpen} />}
+        {ASSISTANT_PILOT && <StrategyStudioAssistant locale={builderLocale} snapshot={assistantSnapshot} currentToken={assistantToken} canUndo={Boolean(assistantUndo && assistantUndo.appliedRevision === draftRevision)} beforeProgram={liveProgram} symbol={ticker} period={{ startDate, endDate }} assumptions={assumptions} readOnly={isProtected} onApply={applyAssistantSnapshot} onRestoreChat={restoreAssistantChat} onPreview={setAssistantPreview} onUndo={undoAssistantEdit} onCreateDraft={() => { createNew(); setRenaming(false); setAnalyticsOpen(false); setAssistantOpen(true); }} onOpen={() => { setAnalyticsOpen(false); setMobileActionsOpen(false); setAssistantOpen(true); }} onClose={() => { setAssistantPreview(null); setAssistantOpen(false); }} open={assistantOpen} />}
         {analyticsOpen && <><div className="strategy-studio-resize-handle" role="separator" aria-label={isAr ? 'تغيير حجم التحليلات' : 'Resize analytics'} aria-orientation="vertical" tabIndex={0} onPointerDown={beginResize} onKeyDown={(event) => { if (event.key === 'ArrowLeft') setAnalyticsWidth((value) => Math.min(value + 24, window.innerWidth * 0.7)); if (event.key === 'ArrowRight') setAnalyticsWidth((value) => Math.max(value - 24, 360)); }} /><aside id="strategy-analytics-panel" className="flex min-h-0 shrink-0 flex-col overflow-y-auto border-l border-white/10 bg-black custom-scrollbar" style={{ width: analyticsWidth, maxWidth: 'calc(100vw - 56px)' }} aria-label={isAr ? 'تحليلات الاستراتيجية' : 'Strategy analytics'}><div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-white/10 bg-black px-4 py-2"><span className="text-xs font-semibold">{isAr ? 'التحليلات' : 'Analytics'}</span><button type="button" className="strategy-studio-toolbar-button" onClick={() => setAnalyticsOpen(false)} aria-label={isAr ? 'إغلاق التحليلات' : 'Close analytics'}><X size={13} /></button></div><div className="flex flex-wrap items-center gap-2 border-b border-white/10 p-3"><div className="seg-control" role="tablist" aria-label={isAr ? 'عرض النتائج' : 'Results view'}><button type="button" role="tab" aria-selected={resultsMode === 'market'} onClick={() => setResultsMode('market')} className={`seg-control-btn ${resultsMode === 'market' ? 'seg-control-btn-active active' : ''}`}>{isAr ? 'السوق' : 'Market'}</button><button type="button" role="tab" aria-selected={resultsMode === 'companies'} onClick={() => setResultsMode('companies')} className={`seg-control-btn ${resultsMode === 'companies' ? 'seg-control-btn-active active' : ''}`}>{isAr ? 'الشركات' : 'Companies'}</button></div>{(resultsMode === 'companies' || liveProgram !== null) && <StrategyTimeRangeSelector startDate={startDate} endDate={endDate} locale={builderLocale} purpose={liveProgram ? 'backtest' : 'chart'} onChange={(start, end) => { setStartDate(start); setEndDate(end); }} />}</div>{liveProgram && <StrategyBacktestSettings key={`${selectedStrategyId}-${liveProgram.schemaVersion === 2 ? liveProgram.execution?.feeBps ?? 'editable' : 'editable'}`} assumptions={assumptions} program={liveProgram} locale={builderLocale} onChange={setAssumptions} />}<div className="min-w-0 flex-1 p-3"><StrategyResultsDeck strategyId={selectedStrategyId} strategyName={strategyName} hasRules={complete} draftRevision={draftRevision} locale={builderLocale} visualizationModel={visualization} ticker={ticker} focusedBlockId={focusedBlockId} resultsMode={resultsMode} startDate={startDate} endDate={endDate} assumptions={assumptions} simpleProgram={liveProgram} selectedSymbols={selectedSymbols} onSaveSelection={isProtected ? undefined : (symbols) => saveStrategy(symbols)} universe={universe} onResultsModeChange={setResultsMode} onTickerChange={setTicker} onFocusBlock={setFocusedBlockId} /></div></aside></>}
       </div>
     </div>

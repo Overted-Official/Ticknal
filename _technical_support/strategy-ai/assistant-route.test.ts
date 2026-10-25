@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getUser, quota, generateStrategyProposal } = vi.hoisted(() => ({ getUser: vi.fn(), quota: vi.fn(), generateStrategyProposal: vi.fn() }));
+const { getUser, quota, generateStrategyProposal, getAssistantChat } = vi.hoisted(() => ({ getUser: vi.fn(), quota: vi.fn(), generateStrategyProposal: vi.fn(), getAssistantChat: vi.fn() }));
 vi.mock('../../src/lib/supabase/server', () => ({ createClient: async () => ({ auth: { getUser }, rpc: quota }) }));
 vi.mock('../../src/lib/strategies/assistant/strategy-model', () => ({ generateStrategyProposal }));
+vi.mock('../../src/lib/strategies/server/assistant-chat-store', () => ({ getAssistantChat }));
 
 import { POST } from '../../src/app/api/strategies/assistant/route';
 
@@ -17,6 +18,7 @@ beforeEach(() => {
   getUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
   quota.mockResolvedValue({ data: true, error: null });
   generateStrategyProposal.mockResolvedValue({ message: 'I can help with that.', actions: [] });
+  getAssistantChat.mockResolvedValue(null);
 });
 afterEach(() => { delete process.env.STRATEGY_ASSISTANT_ENABLED; vi.clearAllMocks(); });
 
@@ -72,5 +74,23 @@ describe('strategy assistant route', () => {
     expect(response.status).toBe(400);
     expect(quota).not.toHaveBeenCalled();
     expect(generateStrategyProposal).not.toHaveBeenCalled();
+  });
+
+  it('uses only the current user’s saved conversation for context', async () => {
+    const chatId = 'd9a120d2-36cf-4cc0-9703-791393a62cb3';
+    getAssistantChat.mockResolvedValue({ id: chatId, strategyId: 'custom-draft', messages: [
+      { role: 'user', text: 'Use RSI below 30', time: '09:41' },
+      { role: 'assistant', text: 'I added that rule.', time: '09:42' },
+      { role: 'user', text: 'Now add ATR exits', time: '09:43' },
+    ] });
+    const response = await POST(request({ snapshot, message: 'Now add ATR exits', chatId }));
+    expect(response.status).toBe(200);
+    expect(getAssistantChat).toHaveBeenCalledWith('user-1', chatId);
+    expect(generateStrategyProposal.mock.calls[0][0].history).toEqual([
+      { role: 'user', text: 'Use RSI below 30', time: '09:41' },
+      { role: 'assistant', text: 'I added that rule.', time: '09:42' },
+    ]);
+    getAssistantChat.mockResolvedValue(null);
+    expect((await POST(request({ snapshot, message: 'Now add ATR exits', chatId }))).status).toBe(409);
   });
 });

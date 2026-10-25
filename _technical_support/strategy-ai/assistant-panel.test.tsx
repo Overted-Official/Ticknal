@@ -14,7 +14,7 @@ describe('Strategy Studio assistant panel', () => {
     expect(outgoing).not.toContain('<svg');
   });
 
-  it('shows a session-only draft assistant with explicit canvas apply and no save or alert control', () => {
+  it('shows a saved-chat assistant with explicit canvas apply and no strategy save or alert control', () => {
     const html = renderToStaticMarkup(<StrategyStudioAssistant
       locale="en"
       snapshot={{ revision: 0, mode: 'simple', draft: { id: 'custom-1', name: 'Draft', buyRules: [], sellRules: [] }, nodes: [], optionalStages: [] }}
@@ -32,12 +32,14 @@ describe('Strategy Studio assistant panel', () => {
       open={true}
     />);
     expect(html).toContain('ticky');
-    expect(html).toContain('OpenRouter pilot');
+    expect(html).toContain('Your message and current draft are sent to OpenRouter');
     expect(html).toContain('Describe the rules');
-    expect(html).toContain('Nothing is saved or enabled automatically');
+    expect(html).toContain('Chat will be saved after your first message');
     expect(html).toContain('strategy-ticky-composer');
     expect(html).toContain('Hi, I’m ticky');
     expect(html).toContain('aria-label="AI settings"');
+    expect(html).toContain('aria-label="Toggle chat history"');
+    expect(html).toContain('aria-label="New chat"');
     expect(html).not.toContain('Enable alerts');
   });
 
