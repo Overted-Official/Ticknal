@@ -173,7 +173,7 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
       horizon === '1D' ? sql`1=1` : gte(egxInvestorFlows.date, cutoffDateStr)
     );
 
-    const [rows, fxData] = await Promise.all([
+    const [rawRows, fxData] = await Promise.all([
       db
         .select()
         .from(egxInvestorFlows)
@@ -182,6 +182,32 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
         .limit(limit),
       getUsdEgpHistory(),
     ]);
+
+    const rows = [...rawRows];
+    // Seamless bridge: if TOTAL segment is queried but the latest session was only ingested as STOCKS,
+    // seamlessly bridge the latest equities session so the default overview chart never lags behind.
+    if (segment === 'TOTAL') {
+      const topDate = rows[0]?.date ? String(rows[0].date) : '2020-01-01';
+      const newerStocksRows = await db
+        .select()
+        .from(egxInvestorFlows)
+        .where(
+          and(
+            eq(egxInvestorFlows.marketSegment, 'STOCKS'),
+            sql`total_turnover::numeric >= ${turnoverThreshold} AND EXTRACT(DOW FROM date::date) NOT IN (5, 6)`,
+            sql`date::date > ${topDate}::date`
+          )
+        )
+        .orderBy(desc(egxInvestorFlows.date))
+        .limit(1);
+
+      if (newerStocksRows.length > 0) {
+        rows.unshift({
+          ...newerStocksRows[0],
+          marketSegment: 'TOTAL',
+        });
+      }
+    }
 
     // Non-blocking background self-healing trigger: check in background without blocking user response
     if (Date.now() - lastSelfHealAttemptMs > SELF_HEAL_COOLDOWN_MS) {

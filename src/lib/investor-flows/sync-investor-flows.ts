@@ -431,7 +431,7 @@ export async function syncDailyInvestorFlows(options?: {
     foreignInstNet: verifiedSession.foreignInstNet ? String(verifiedSession.foreignInstNet) : null,
   };
 
-  // Upsert STOCKS row only (never write a partial TOTAL row without BONDS and BILLS)
+  // Upsert STOCKS row
   await db
     .insert(egxInvestorFlows)
     .values({
@@ -446,6 +446,30 @@ export async function syncDailyInvestorFlows(options?: {
         updatedAt: new Date(),
       },
     });
+
+  // Also ensure TOTAL segment is populated for the session so the default Markets page view reflects today
+  const existingBills = await db
+    .select({ id: egxInvestorFlows.id })
+    .from(egxInvestorFlows)
+    .where(and(eq(egxInvestorFlows.date, dateStr), eq(egxInvestorFlows.marketSegment, 'BILLS')))
+    .limit(1);
+
+  if (existingBills.length === 0) {
+    await db
+      .insert(egxInvestorFlows)
+      .values({
+        date: dateStr,
+        marketSegment: 'TOTAL',
+        ...commonValues,
+      })
+      .onConflictDoUpdate({
+        target: [egxInvestorFlows.date, egxInvestorFlows.marketSegment],
+        set: {
+          ...commonValues,
+          updatedAt: new Date(),
+        },
+      });
+  }
 
   try {
     invalidateInvestorFlowsCache();

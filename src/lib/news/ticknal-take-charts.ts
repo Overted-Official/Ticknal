@@ -2059,7 +2059,7 @@ export function generateUsdEgpUpdateChartSvg(
           ar
             ? `<text x="470" y="38" fill="#ffffff" font-size="15.5" font-weight="700" text-anchor="end">مؤشر ضغوط وتراجع الجنيه</text>
                <text x="26" y="38" fill="${scoreColor}" font-size="20" font-weight="700" text-anchor="start">${score} / 100</text>`
-            : `<text x="26" y="38" fill="#ffffff" font-size="15.5" font-weight="700">EGP Pressure & Depreciation Index</text>
+            : `<text x="26" y="38" fill="#ffffff" font-size="15.5" font-weight="700">${esc('EGP Pressure & Depreciation Index')}</text>
                <text x="470" y="38" fill="${scoreColor}" font-size="20" font-weight="700" text-anchor="end">${score} / 100</text>`
         }
         <rect x="26" y="60" width="444" height="16" rx="8" fill="url(#fxRiskSpectrum)" fill-opacity="0.3" />
@@ -2225,7 +2225,7 @@ export function generateUsdEgpUpdateChartSvg(
         ar
           ? `<text x="520" y="30" fill="#ffffff" font-size="14" font-weight="700" text-anchor="end">مؤشر ضغوط وتراجع الجنيه</text>
              <text x="24" y="30" fill="${scoreColor}" font-size="17" font-weight="700" text-anchor="start">${score} / 100</text>`
-          : `<text x="24" y="30" fill="#ffffff" font-size="14" font-weight="700">EGP Pressure & Depreciation Index</text>
+          : `<text x="24" y="30" fill="#ffffff" font-size="14" font-weight="700">${esc('EGP Pressure & Depreciation Index')}</text>
              <text x="520" y="30" fill="${scoreColor}" font-size="17" font-weight="700" text-anchor="end">${score} / 100</text>`
       }
       <rect x="24" y="46" width="496" height="14" rx="7" fill="url(#fxRiskSpectrum)" fill-opacity="0.3" />

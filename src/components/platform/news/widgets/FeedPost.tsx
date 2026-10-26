@@ -120,7 +120,8 @@ export default function FeedPost({
 }: FeedPostProps) {
   const { locale } = useTranslation();
   const [avatarError, setAvatarError] = useState(false);
-  const [postImageError, setPostImageError] = useState(false);
+  const [wideImageError, setWideImageError] = useState(false);
+  const [squareImageError, setSquareImageError] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -173,6 +174,12 @@ export default function FeedPost({
   const { wideUrl, squareUrl } = useMemo(() => {
     return resolveLocalizedChartSvgVariants(item.imageUrl, isArabic ? 'ar' : 'en');
   }, [item.imageUrl, isArabic]);
+
+  // Reset image load errors whenever item or resolved URLs change
+  useEffect(() => {
+    setWideImageError(false);
+    setSquareImageError(false);
+  }, [item.id, wideUrl, squareUrl]);
 
   const [activeLightboxUrl, setActiveLightboxUrl] = useState<string | undefined>(undefined);
 
@@ -334,10 +341,10 @@ export default function FeedPost({
           {/* Responsive Dual-Variant Media Card:
               - Phone (<640px): 1:1 square container + 1:1 square SVG chart (1080×1080)
               - Desktop (>=640px): 16:9 wide container + 16:9 wide SVG chart (1200×675) */}
-          {(wideUrl || squareUrl) && !postImageError && (
+          {((squareUrl && !squareImageError) || (wideUrl && !wideImageError)) && (
             <>
               {/* Phone 1:1 Square Container + 1:1 Square Image */}
-              {squareUrl && (
+              {squareUrl && !squareImageError && (
                 <div
                   role="button"
                   tabIndex={0}
@@ -363,7 +370,7 @@ export default function FeedPost({
                     loading="lazy"
                     onError={(err) => {
                       console.warn('[FeedPost] Failed to load mobile square chart image for:', item.id, err);
-                      setPostImageError(true);
+                      setSquareImageError(true);
                     }}
                   />
                   <div className="absolute bottom-2.5 right-2.5 px-2 py-1 rounded-md bg-plt-base/80 backdrop-blur-sm border border-plt-border text-plt-subtle text-[11px] font-sans flex items-center gap-1.5 opacity-80 shadow-md pointer-events-none">
@@ -373,7 +380,7 @@ export default function FeedPost({
               )}
 
               {/* Desktop 16:9 Wide Container + 16:9 Wide Image */}
-              {wideUrl && (
+              {wideUrl && !wideImageError && (
                 <div
                   role="button"
                   tabIndex={0}
@@ -399,7 +406,7 @@ export default function FeedPost({
                     loading="lazy"
                     onError={(err) => {
                       console.warn('[FeedPost] Failed to load desktop wide chart image for:', item.id, err);
-                      setPostImageError(true);
+                      setWideImageError(true);
                     }}
                   />
                   <div className="absolute bottom-2.5 right-2.5 px-2 py-1 rounded-md bg-plt-base/80 backdrop-blur-sm border border-plt-border text-plt-subtle group-hover/img:text-plt-text group-hover/img:bg-plt-base/90 group-hover/img:border-plt-border text-[11px] font-sans flex items-center gap-1.5 transition-all opacity-80 group-hover/img:opacity-100 shadow-md pointer-events-none">
@@ -412,10 +419,10 @@ export default function FeedPost({
           )}
 
           {/* Fullscreen Interactive Lightbox Modal */}
-          {(activeLightboxUrl || wideUrl || squareUrl) && (
+          {(activeLightboxUrl || (wideUrl && !wideImageError) || (squareUrl && !squareImageError)) && (
             <NewsImageLightbox
               isOpen={isLightboxOpen}
-              imageUrl={activeLightboxUrl || wideUrl || squareUrl || ''}
+              imageUrl={activeLightboxUrl || (!wideImageError ? wideUrl : null) || (!squareImageError ? squareUrl : null) || ''}
               title={displayTitle || item.title}
               sourceName={meta.isTicknalTake ? (locale === 'ar' ? 'نبض تكنال' : 'Ticknal take') : meta.name}
               onClose={() => setIsLightboxOpen(false)}
