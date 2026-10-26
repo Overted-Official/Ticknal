@@ -6,6 +6,7 @@ import TradingView from '@mathieuc/tradingview';
 import { fetchLiveSaghaGold } from '@/lib/server/isagha-scraper';
 import { fetchLiveUsdtEgp } from '@/lib/server/p2p-usdt-scraper';
 import { runKronosPrediction } from '@/tools/kronos/run-kronos-prediction';
+import { calculateFxPressureIndex } from '@/lib/finance/fx-pressure-index';
 
 export interface CapitalFlowsSummary {
   latestDate: string;
@@ -89,6 +90,13 @@ export interface FxFairValueResponse {
     level: 'LOW' | 'MODERATE' | 'ELEVATED' | 'HIGH';
     label: string;
     description: string;
+    labelAr?: string;
+    descriptionAr?: string;
+    badgeColor?: 'GREEN' | 'YELLOW' | 'ORANGE' | 'RED';
+    delta30dEgp?: number;
+    pct30d?: number;
+    dailyPaceEgp?: number;
+    accelerationRatio?: number;
     factors: {
       usdtSpread: { value: number; weight: number; status: string };
       gdrSpread: { value: number; weight: number; status: string };
@@ -96,6 +104,8 @@ export interface FxFairValueResponse {
       atrCompression: { value: number; weight: number; status: string };
       netForeignAssets: { value: string; weight: number; status: string };
       capitalFlows?: { value: number; weight: number; status: string };
+      velocity?: { value: number; weight: number; status: string };
+      acceleration?: { value: number; weight: number; status: string };
     };
   };
   netForeignAssets: {
@@ -354,29 +364,33 @@ export async function handleFxFairValueGet(request?: Request): Promise<Response>
     }
 
     // Component D: Macro Net Foreign Assets buffer (15% weight)
-    const liquidityScore = 12; // baseline cushioned
-
-    // Multi-factor composite risk score
-    const rawScore = spreadScore * 0.35 + atrScore * 0.30 + flowScore * 0.20 + liquidityScore * 0.15;
-    const clampedScore = Math.round(Math.min(95, Math.max(8, rawScore)));
-
-    let level: 'LOW' | 'MODERATE' | 'ELEVATED' | 'HIGH' = 'LOW';
-    let label = 'Low Risk (Organic Float)';
-    let description = 'Official exchange rate moves in tandem with proxy clearing rates. Central bank foreign asset buffer is solid.';
-
-    if (clampedScore >= 65) {
-      level = 'HIGH';
-      label = 'High Risk (Severe Dislocation)';
-      description = 'P2P USDT, offshore GDR, and local bullion spreads have decoupled from the official rate, signaling acute rationing pressure.';
-    } else if (clampedScore >= 45) {
-      level = 'ELEVATED';
-      label = 'Elevated Risk (Volatility Compression)';
-      description = 'Official exchange rate volatility is artificially suppressed while shadow proxies indicate growing depreciation pressure.';
-    } else if (clampedScore >= 25) {
-      level = 'MODERATE';
-      label = 'Moderate Risk (Controlled Crawl)';
-      description = 'Orderly managed crawl by CBE. Local Sagha, P2P USDT, and offshore GDR spreads remain within narrow operational bands.';
+    // 6. Dynamic Algorithmic EGP Pressure & Depreciation Index (0-100)
+    const chronologicalForModel = sortedUsd.map((r) => ({
+      date: String(r.date).slice(0, 10),
+      close: Number(r.close),
+      high: Number(r.high || r.close),
+      low: Number(r.low || r.close),
+    }));
+    if (chronologicalForModel.length > 0 && officialUsd !== chronologicalForModel[chronologicalForModel.length - 1].close) {
+      chronologicalForModel.push({
+        date: 'today',
+        close: officialUsd,
+        high: officialUsd,
+        low: officialUsd - 0.15,
+      });
     }
+
+    const pressureIndex = calculateFxPressureIndex(
+      chronologicalForModel,
+      { usdtRate, goldImpliedRate, gdrImpliedRate },
+      capitalFlows?.rolling10DayHotMoneyNetMillion ?? 0
+    );
+
+    const clampedScore = pressureIndex.score;
+    const level = pressureIndex.level;
+    const label = pressureIndex.label;
+    const description = pressureIndex.description;
+
 
     // 7. Generate Historical Series and Sparkline Arrays (Chronological old -> new)
     // STRICT RULE: ZERO synthetic Math.sin/Math.cos data. Everything is derived from actual historical records.
@@ -461,10 +475,17 @@ export async function handleFxFairValueGet(request?: Request): Promise<Response>
     const gdrSparkline = recent14History.map((h) => h.gdrRate);
 
     const riskSparkline = recent14History.map((h) => {
-      const daySpread = (Math.max(0, h.usdtSpread) + Math.max(0, h.gdrSpread) + Math.max(0, h.goldSpread)) / 3;
-      return Math.round(
-        Math.min(95, Math.max(8, (daySpread <= 1.0 ? 10 : 10 + (daySpread - 1.0) * 7.5) * 0.35 + atrScore * 0.30 + flowScore * 0.20 + liquidityScore * 0.15))
+      const idxInHistory = history.indexOf(h);
+      const subHistory = history.slice(0, idxInHistory + 1).map((x) => ({
+        date: x.date,
+        close: x.officialUsd,
+      }));
+      const ptRes = calculateFxPressureIndex(
+        subHistory,
+        { usdtRate: h.usdtRate, goldImpliedRate: h.goldRate, gdrImpliedRate: h.gdrRate },
+        capitalFlows?.rolling10DayHotMoneyNetMillion ?? 0
       );
+      return ptRes.score;
     });
 
     // 8. Kronos 10-Session Forward Trajectory on Composite Fair Value
@@ -589,42 +610,59 @@ export async function handleFxFairValueGet(request?: Request): Promise<Response>
         score: clampedScore,
         level,
         label,
+        labelAr: pressureIndex.labelAr,
         description,
+        descriptionAr: pressureIndex.descriptionAr,
+        badgeColor: pressureIndex.badgeColor,
+        delta30dEgp: pressureIndex.delta30dEgp,
+        pct30d: pressureIndex.pct30d,
+        dailyPaceEgp: pressureIndex.dailyPaceEgp,
+        accelerationRatio: pressureIndex.accelerationRatio,
         factors: {
           usdtSpread: {
             value: usdtSpreadPct,
-            weight: 35,
+            weight: 20,
             status: `${usdtSpreadPct >= 0 ? '+' : ''}${usdtSpreadPct.toFixed(1)}% P2P Premium`,
           },
           gdrSpread: {
             value: gdrSpreadPct,
-            weight: 30,
+            weight: 15,
             status: `${gdrSpreadPct >= 0 ? '+' : ''}${gdrSpreadPct.toFixed(1)}% London Spread`,
           },
           goldPremium: {
             value: goldSpreadPct,
-            weight: 25,
+            weight: 15,
             status: `${goldSpreadPct >= 0 ? '+' : ''}${goldSpreadPct.toFixed(1)}% Sagha Premium`,
           },
           atrCompression: {
             value: atr14,
-            weight: 30,
-            status: `${atr14.toFixed(2)} EGP ATR (${volatilityLabel})`,
+            weight: 15,
+            status: `${atr14.toFixed(2)} EGP ATR (${pressureIndex.dailyPaceEgp} EGP/day pace)`,
           },
           netForeignAssets: {
             value: '+$28.4B Surplus',
-            weight: 15,
+            weight: 10,
             status: 'Robust Reserve Buffer',
           },
           ...(capitalFlows
             ? {
                 capitalFlows: {
                   value: capitalFlows.rolling10DayHotMoneyNetMillion,
-                  weight: 20,
+                  weight: 10,
                   status: capitalFlows.regimeLabel,
                 },
               }
             : {}),
+          velocity: {
+            value: pressureIndex.velocityScore,
+            weight: 40,
+            status: `30D: ${pressureIndex.delta30dEgp >= 0 ? '+' : ''}${pressureIndex.delta30dEgp} EGP (${pressureIndex.pct30d >= 0 ? '+' : ''}${pressureIndex.pct30d}%)`,
+          },
+          acceleration: {
+            value: pressureIndex.accelerationScore,
+            weight: 15,
+            status: `${pressureIndex.accelerationRatio}x acceleration vs 30D pace`,
+          },
         },
       },
       netForeignAssets: {

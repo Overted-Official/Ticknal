@@ -1,3 +1,4 @@
+import { calculateFxPressureIndex } from '@/lib/finance/fx-pressure-index';
 import { db } from '@/db';
 import { dailyPrices, egxInvestorFlows, marketNews, systemLogs, tickers } from '@/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
@@ -689,8 +690,27 @@ export async function generateAllDailyTakes(
   const londonGdrUsd = targetFxPoint?.gdrRate ?? liveFxData?.gdrImpliedRate ?? (lastFxPt ? lastFxPt.londonGdrUsd : 54.74);
   const usdtRate = targetFxPoint?.usdtRate ?? liveFxData?.usdtRate ?? 55.05;
   const compositeFair = targetFxPoint?.compositeFair ?? liveFxData?.compositeFairValue ?? (lastFxPt ? lastFxPt.compositeFair : 54.71);
-  const devaluationRiskScore = liveFxData?.devaluationRisk?.score ?? 15;
-  const devaluationRiskLabel = liveFxData?.devaluationRisk?.label ?? 'Low Risk (Organic Float)';
+  const chronologicalForTarget = sortedUsd.map((r) => ({
+    date: String(r.date).slice(0, 10),
+    close: Number(r.close),
+    high: Number(r.high || r.close),
+    low: Number(r.low || r.close),
+  }));
+
+  const targetPressure = calculateFxPressureIndex(
+    chronologicalForTarget,
+    { usdtRate, goldImpliedRate: saghaGoldUsd, gdrImpliedRate: londonGdrUsd },
+    todayHotMoneyNetM
+  );
+
+  const devaluationRiskScore = targetPressure.score;
+  const devaluationRiskLabel = targetPressure.label;
+  const delta30dEgp = targetPressure.delta30dEgp;
+  const pct30d = targetPressure.pct30d;
+  const delta7dEgp = targetPressure.delta7dEgp;
+  const pct7d = targetPressure.pct7d;
+  const dailyPaceEgp = targetPressure.dailyPaceEgp;
+  const accelerationRatio = targetPressure.accelerationRatio;
 
   // ==========================================
   // GENERATE THE 5 DEDICATED TICKNAL TAKES
@@ -777,6 +797,12 @@ export async function generateAllDailyTakes(
     devaluationRiskScore,
     devaluationRiskLabel,
     history20d: fxHistory20d,
+    delta30dEgp,
+    pct30d,
+    delta7dEgp,
+    pct7d,
+    dailyPaceEgp,
+    accelerationRatio,
   });
 
   const trendBreakoutsChart = generateLocalizedTakeBundle(generateTrendBreakoutsChartSvg, {
@@ -860,11 +886,10 @@ export async function generateAllDailyTakes(
   const topGainersStr = topGainers.slice(0, 2).map((g) => g.ticker).join(' و');
   const gainersLosersArSummary = `تصدرت أسهم ${topGainersStr || 'الأسهم القيادية'} قائمة الارتفاعات اليوم، غير أن نظرة فاحصة على أحجام التداول توضح أن الجزء الأكبر من سيولة الجلسة لم يتبع هذه الارتفاعات، بل فضل البقاء داخل القطاعات القيادية. ويعكس ذلك حذراً مؤسسياً؛ حيث تركزت المكاسب الكبيرة في أسهم محددة، بينما فضلت المحافظ الكبرى حماية مراكزها النقدية والتداول الانتقائي.`;
 
-  const fxEnFallback = `Official CBE USD/EGP traded at ${officialUsd.toFixed(2)} EGP on ${targetDate} against a triangulated composite fair value of ${compositeFair.toFixed(2)} EGP, with P2P USDT at ${usdtRate.toFixed(2)} EGP, London CIB GDRs implying ${londonGdrUsd.toFixed(2)} EGP, and Sagha 24K Gold implying ${saghaGoldUsd.toFixed(2)} EGP. The algorithmic devaluation pressure index stands at ${devaluationRiskScore}/100 (${devaluationRiskLabel}) alongside an ${((atrCompressionRatio) * 100).toFixed(1)}% 14D/90D ATR ratio, confirming an orderly two-way float.`;
+  const avgShadow = Number(((usdtRate + saghaGoldUsd + londonGdrUsd) / 3).toFixed(2));
+  const fxEnFallback = `The EGP Pressure & Depreciation Index climbed to ${devaluationRiskScore}/100 (${devaluationRiskLabel}) as official CBE USD/EGP traded at ${officialUsd.toFixed(2)} EGP on ${targetDate}. The Egyptian Pound has lost ${Math.abs(pct30d).toFixed(1)}% of its value over the past 30 days (+${delta30dEgp.toFixed(2)} EGP), with +${delta7dEgp.toFixed(2)} EGP of that slide concentrated in the last week alone. FX momentum is moving at ~+${dailyPaceEgp.toFixed(2)} EGP per trading session in a persistent one-way upward climb. Clearing proxies (Sagha Gold at ${saghaGoldUsd.toFixed(2)} EGP, P2P USDT at ${usdtRate.toFixed(2)} EGP, London GDR at ${londonGdrUsd.toFixed(2)} EGP) continue to trade higher at an average of ${avgShadow.toFixed(2)} EGP, pulling the commercial banking rate higher to clear dollar demand.`;
 
-  const fxArSummary = devaluationRiskScore < 30
-    ? `تُظهر مقارنة أسعار الصرف استقراراً حقيقياً للجنيه؛ حيث تدور القيمة العادلة المركبة للدولار حول ${compositeFair.toFixed(2)} جنيهاً بفارق ضئيل للغاية عن السعر الرسمي (${officialUsd.toFixed(2)})، بتسجيل تداولات تيذر P2P نحو ${usdtRate.toFixed(2)} جنيهاً ومراجحة لندن ${londonGdrUsd.toFixed(2)} جنيهاً ودولار الصاغة ${saghaGoldUsd.toFixed(2)} جنيهاً دون أي علاوة مضاربية مقلقة. هذا التوافق مع بقاء مؤشر مخاطر التعويم منخفضاً عند ${devaluationRiskScore} من ١٠٠ يؤكد قدرة البنك المركزي على تلبية الطلب واستقرار سوق الصرف.`
-    : `سجل السعر الرسمي للدولار ${officialUsd.toFixed(2)} جنيهاً في حين ارتفعت القيمة العادلة المركبة إلى ${compositeFair.toFixed(2)} جنيهاً مع تداول تيذر P2P عند ${usdtRate.toFixed(2)} جنيهاً ودولار الذهب عند ${saghaGoldUsd.toFixed(2)} جنيهاً، مما يفتح فجوة تسعيرية تستدعي المراقبة. ويعكس ارتفاع مؤشر مخاطر التعويم إلى ${devaluationRiskScore}/100 وجود ضغوط تحوطية تتطلب متابعة السيولة الأجنبية في البنوك.`;
+  const fxArSummary = `سجل مؤشر ضغوط وتراجع الجنيه ${devaluationRiskScore} من 100 (${targetPressure.labelAr})؛ حيث واصل سعر صرف الدولار صعوده ليصل إلى ${officialUsd.toFixed(2)} جنيهاً، ليفقد الجنيه نحو ${Math.abs(pct30d).toFixed(1)}% من قيمته خلال الـ 30 يوماً الماضية (+${delta30dEgp.toFixed(2)} ج.م)، منها +${delta7dEgp.toFixed(2)} جنيهاً في الأسبوع الأخير وحده. وتكشف حركة التداول عن وتيرة هبوط متواصلة بمعدل يبلغ قرابة ${dailyPaceEgp.toFixed(2)} جنيهاً يومياً في مسار صعودي مستمر دون أي حركة تصحيحية تذكر. ويأتي هذا الصعود مدفوعاً بأسعار موازية في سوق الذهب وتيذر تسجل مستويات أعلى (${avgShadow.toFixed(2)} ج.م)، مما يسحب السعر الرسمي للأعلى لتلبية الطلب المتزايد على العملة الأجنبية داخل القطاع المصرفي.`;
 
   const net20 = new20dHighs - new20dLows;
   const trendBreakoutsEnFallback = net20 >= 0
@@ -989,12 +1014,12 @@ Critique liquidity quality: Did real money support the gainers or was it isolate
           delay(1000).then(() =>
             completeWithKeyPool({
               systemPrompt: systemPromptCommon,
-              userPrompt: `Evaluate Egypt FX Risk & Fair Value (${targetDate}):
-- Official CBE USD/EGP: ${officialUsd.toFixed(2)} | Triangulated Composite Fair Value: ${compositeFair.toFixed(2)}
-- USDT/EGP P2P: ${usdtRate.toFixed(2)} | London CIB GDR Implied: ${londonGdrUsd.toFixed(2)} | Sagha Gold Implied: ${saghaGoldUsd.toFixed(2)}
-- Devaluation Risk Score: ${devaluationRiskScore}/100 (${devaluationRiskLabel})
-- Volatility: ATR 14D is ${atr14.toFixed(2)} EGP vs 90D ${atr90.toFixed(2)} EGP (${(atrCompressionRatio * 100).toFixed(1)}% compression ratio)
-Assess the tight corridor between the official rate and proxy clearing markets (USDT P2P, London GDR, Sagha gold) and interpret the devaluation risk score.`,
+              userPrompt: `Evaluate Egypt FX Risk & Depreciation Trends (${targetDate}):
+- Official CBE USD/EGP: ${officialUsd.toFixed(2)} EGP (30-Day Change: +${delta30dEgp.toFixed(2)} EGP / +${Math.abs(pct30d).toFixed(1)}%, 7-Day Change: +${delta7dEgp.toFixed(2)} EGP / +${Math.abs(pct7d).toFixed(1)}%)
+- Daily Upward Pace: ~+${dailyPaceEgp.toFixed(2)} EGP per session (${accelerationRatio >= 1.3 ? 'Accelerating speed' : 'Steady drift'})
+- Parallel / Clearing Proxies: USDT P2P at ${usdtRate.toFixed(2)} EGP | London CIB GDR at ${londonGdrUsd.toFixed(2)} EGP | Sagha Gold at ${saghaGoldUsd.toFixed(2)} EGP (Composite Fair: ${compositeFair.toFixed(2)} EGP)
+- EGP Pressure & Depreciation Index: ${devaluationRiskScore}/100 (${devaluationRiskLabel})
+Write for everyday investors (no statistical jargon like Z-score). Critique the accelerating depreciation of the pound, how much purchasing power was lost in the last 30 days, and explain that shadow proxies (USDT, Gold, GDR) are trading above official rate and pulling the bank rate higher.`,
               fallbackText: JSON.stringify({ en: fxEnFallback, ar: fxArSummary }),
               maxTokens: 400,
               timeoutMs: 8000,
@@ -1089,12 +1114,12 @@ Critique the structural breadth: Are stocks breaking out or breaking support? Ho
     {
       key: 'usd_egp_update',
       id: `take-${targetDate}-usd-egp`,
-      title: 'USD/EGP Update: Shadow Proxies & Devaluation Pressure',
+      title: 'USD/EGP Update: Depreciation Pressure & Clearing Proxies',
       content: 'حقيقة سعر الدولار: تقييم الضغوط على الجنيه ومؤشر مخاطر التعويم',
       summary: combineBilingual(fxBilingual.en, custom?.usd_egp_update?.ar || fxBilingual.ar),
       tickers: ['USD/EGP', 'COMI', 'GOLD21K', 'USDT'],
-      sentiment: (devaluationRiskScore > 40 ? 'bearish' : 'neutral') as 'bullish' | 'bearish' | 'neutral',
-      importance: (devaluationRiskScore > 40 ? 'critical' : 'high') as 'critical' | 'high' | 'normal',
+      sentiment: (devaluationRiskScore >= 45 ? 'bearish' : 'neutral') as 'bullish' | 'bearish' | 'neutral',
+      importance: (devaluationRiskScore >= 45 ? 'critical' : 'high') as 'critical' | 'high' | 'normal',
       imageUrl: usdEgpChart,
       publishedAt: new Date(safeBaseMs + 5000),
     },

@@ -177,6 +177,12 @@ export interface UsdEgpUpdateChartData {
   devaluationRiskScore: number;
   devaluationRiskLabel: string;
   history20d?: FxHistoryPoint[];
+  delta30dEgp?: number;
+  pct30d?: number;
+  delta7dEgp?: number;
+  pct7d?: number;
+  dailyPaceEgp?: number;
+  accelerationRatio?: number;
 }
 
 export interface TrendBreakoutHistoryPoint {
@@ -1873,20 +1879,24 @@ export function generateUsdEgpUpdateChartSvg(
   const goldGap = pct(data.saghaGoldUsd);
   const gdrGap = pct(data.londonGdrUsd);
   const score = Math.min(100, Math.max(0, data.devaluationRiskScore || 0));
-  const scoreColor = score > 60 ? RED : score > 35 ? AMBER : GREEN;
+  const scoreColor = score >= 70 ? RED : score >= 48 ? '#f97316' : score >= 25 ? AMBER : GREEN;
   const shortRiskBadge =
-    score > 60
-      ? ar ? `مخاطر العملة: ${score}/100 · مرتفعة` : `FX RISK: ${score}/100 · HIGH RISK`
-      : score > 35
-      ? ar ? `مخاطر العملة: ${score}/100 · متوسطة` : `FX RISK: ${score}/100 · MODERATE`
-      : ar ? `مخاطر العملة: ${score}/100 · منخفضة` : `FX RISK: ${score}/100 · LOW RISK`;
+    score >= 70
+      ? ar ? `مخاطر العملة: ${score}/100 · ضغوط حادة` : `FX PRESSURE: ${score}/100 · HIGH`
+      : score >= 48
+      ? ar ? `مخاطر العملة: ${score}/100 · تراجع متسارع` : `FX PRESSURE: ${score}/100 · ACCELERATED`
+      : score >= 25
+      ? ar ? `مخاطر العملة: ${score}/100 · هبوط مدار` : `FX PRESSURE: ${score}/100 · MANAGED DRIFT`
+      : ar ? `مخاطر العملة: ${score}/100 · استقرار نسبي` : `FX PRESSURE: ${score}/100 · ANCHORED`;
 
   const localizedRiskLabel = ar
-    ? score > 60
-      ? 'ضغوط سعرية مرتفعة وفجوة ملحوظة بين الأسواق الموازية والرسمي'
-      : score > 35
-      ? 'نطاق تذبذب مدار مع تقارب تدريجي بين السعر الرسمي والموازي'
-      : 'استقرار سعري وتقارب قوي بين السعر الرسمي بالبنك المركزي والقيمة العادلة'
+    ? score >= 70
+      ? 'ضغوط تراجع حادة ومتسارعة وفجوة تسعيرية مع الأسواق الموازية'
+      : score >= 48
+      ? 'ضغوط تراجع متسارعة للجنيه وزخم صعودي يومي متواصل'
+      : score >= 25
+      ? 'هبوط تدريجي مدار من البنك المركزي دون تسارع حاد'
+      : 'استقرار نسبي وتحرك محدود لسعر الصرف الرسمي والموازي'
     : data.devaluationRiskLabel;
 
   const hist =
@@ -1935,8 +1945,13 @@ export function generateUsdEgpUpdateChartSvg(
           <text x="464" y="78" fill="#ffffff" font-size="30" font-weight="700" text-anchor="end">${fmt2(val)} <tspan fill="${MUTED}" font-size="13.5" font-weight="600">EGP</tspan></text>
           ${
             isBase
-              ? `<rect x="24" y="42" width="128" height="34" rx="8" fill="#18181b" stroke="#333338" />
-                 <text x="88" y="64" fill="${SOFT}" font-size="12" font-weight="700" text-anchor="middle">سعر الأساس</text>`
+              ? `${
+                    data.delta30dEgp !== undefined && data.pct30d !== undefined
+                      ? `<rect x="24" y="42" width="170" height="34" rx="8" fill="#18181b" stroke="#3f3f46" />
+                         <text x="109" y="64" fill="${scoreColor}" font-size="12" font-weight="700" text-anchor="middle">30D: +${data.delta30dEgp.toFixed(2)} (+${Math.abs(data.pct30d).toFixed(1)}%)</text>`
+                      : `<rect x="24" y="42" width="128" height="34" rx="8" fill="#18181b" stroke="#333338" />
+                         <text x="88" y="64" fill="${SOFT}" font-size="12" font-weight="700" text-anchor="middle">سعر الأساس</text>`
+                  }`
               : `<rect x="24" y="64" width="168" height="10" rx="5" fill="#18181b" />
                  <rect x="24" y="64" width="${barW.toFixed(1)}" height="10" rx="5" fill="${color}" />
                  <text x="24" y="50" fill="${color}" font-size="14.5" font-weight="700" text-anchor="start">${sign(gapPct)}${gapPct.toFixed(2)}% فجوة</text>`
@@ -1951,8 +1966,13 @@ export function generateUsdEgpUpdateChartSvg(
         <text x="24" y="78" fill="#ffffff" font-size="30" font-weight="700">${fmt2(val)} <tspan fill="${MUTED}" font-size="13.5" font-weight="500">EGP</tspan></text>
         ${
           isBase
-            ? `<rect x="336" y="42" width="128" height="34" rx="8" fill="#18181b" stroke="#333338" />
-               <text x="400" y="64" fill="${SOFT}" font-size="12" font-weight="700" text-anchor="middle">CBE BENCHMARK</text>`
+            ? `${
+                    data.delta30dEgp !== undefined && data.pct30d !== undefined
+                      ? `<rect x="294" y="42" width="170" height="34" rx="8" fill="#18181b" stroke="#3f3f46" />
+                         <text x="379" y="64" fill="${scoreColor}" font-size="12" font-weight="700" text-anchor="middle">30D: +${data.delta30dEgp.toFixed(2)} (+${Math.abs(data.pct30d).toFixed(1)}%)</text>`
+                      : `<rect x="336" y="42" width="128" height="34" rx="8" fill="#18181b" stroke="#333338" />
+                         <text x="400" y="64" fill="${SOFT}" font-size="12" font-weight="700" text-anchor="middle">CBE BENCHMARK</text>`
+                  }`
             : `<rect x="296" y="64" width="168" height="10" rx="5" fill="#18181b" />
                <rect x="296" y="64" width="${barW.toFixed(1)}" height="10" rx="5" fill="${color}" />
                <text x="464" y="50" fill="${color}" font-size="14.5" font-weight="700" text-anchor="end">${sign(gapPct)}${gapPct.toFixed(2)}% spread</text>`
@@ -2037,17 +2057,17 @@ export function generateUsdEgpUpdateChartSvg(
         <rect width="996" height="186" rx="14" fill="#000000" stroke="${LINE}" stroke-width="1.5" />
         ${
           ar
-            ? `<text x="470" y="38" fill="#ffffff" font-size="15.5" font-weight="700" text-anchor="end">مؤشر ضغوط العملة ومخاطر خفض الجنيه</text>
+            ? `<text x="470" y="38" fill="#ffffff" font-size="15.5" font-weight="700" text-anchor="end">مؤشر ضغوط وتراجع الجنيه</text>
                <text x="26" y="38" fill="${scoreColor}" font-size="20" font-weight="700" text-anchor="start">${score} / 100</text>`
-            : `<text x="26" y="38" fill="#ffffff" font-size="15.5" font-weight="700">Algorithmic Devaluation Pressure Thermometer</text>
+            : `<text x="26" y="38" fill="#ffffff" font-size="15.5" font-weight="700">EGP Pressure & Depreciation Index</text>
                <text x="470" y="38" fill="${scoreColor}" font-size="20" font-weight="700" text-anchor="end">${score} / 100</text>`
         }
         <rect x="26" y="60" width="444" height="16" rx="8" fill="url(#fxRiskSpectrum)" fill-opacity="0.3" />
         <rect x="26" y="60" width="${Math.max(16, (score / 100) * 444).toFixed(1)}" height="16" rx="8" fill="${scoreColor}" />
         <circle cx="${(26 + (score / 100) * 444).toFixed(1)}" cy="68" r="9" fill="#ffffff" stroke="${scoreColor}" stroke-width="3" />
-        <text x="26" y="106" fill="${GREEN}" font-size="12" font-weight="600">${esc(ar ? 'منخفض' : '0 · Low Risk')}</text>
-        <text x="248" y="106" fill="${AMBER}" font-size="12" font-weight="600" text-anchor="middle">${esc(ar ? 'متوسط' : '50 · Managed')}</text>
-        <text x="470" y="106" fill="${RED}" font-size="12" font-weight="600" text-anchor="end">${esc(ar ? 'مرتفع' : '100 · High Risk')}</text>
+        <text x="26" y="106" fill="${GREEN}" font-size="12" font-weight="600">${esc(ar ? 'منخفض (استقرار نسبي)' : '0 · Low Pressure')}</text>
+        <text x="248" y="106" fill="#f97316" font-size="12" font-weight="600" text-anchor="middle">${esc(ar ? 'متوسط (هبوط متسارع)' : '50 · Accelerated Drift')}</text>
+        <text x="470" y="106" fill="${RED}" font-size="12" font-weight="600" text-anchor="end">${esc(ar ? 'مرتفع (ضغوط حادة)' : '100 · High Pressure')}</text>
         <text x="${ar ? 470 : 26}" y="146" fill="${MUTED}" font-size="12.5" font-weight="600" text-anchor="${ar ? 'end' : 'start'}">${esc(localizedRiskLabel)}</text>
 
         <line x1="504" y1="24" x2="504" y2="162" stroke="${LINE}" stroke-width="1" />
@@ -2118,8 +2138,13 @@ export function generateUsdEgpUpdateChartSvg(
         <text x="384" y="54" fill="#ffffff" font-size="21" font-weight="700" text-anchor="end">${fmt2(val)} <tspan fill="${MUTED}" font-size="11" font-weight="600">EGP</tspan></text>
         ${
           isBase
-            ? `<rect x="18" y="20" width="112" height="28" rx="6" fill="#18181b" stroke="#333338" />
-               <text x="74" y="38" fill="${SOFT}" font-size="11" font-weight="700" text-anchor="middle">سعر الأساس</text>`
+            ? `${
+                  data.delta30dEgp !== undefined && data.pct30d !== undefined
+                    ? `<rect x="18" y="20" width="145" height="28" rx="6" fill="#18181b" stroke="#3f3f46" />
+                       <text x="90" y="38" fill="${scoreColor}" font-size="10.5" font-weight="700" text-anchor="middle">30D: +${data.delta30dEgp.toFixed(2)} (+${Math.abs(data.pct30d).toFixed(1)}%)</text>`
+                    : `<rect x="18" y="20" width="112" height="28" rx="6" fill="#18181b" stroke="#333338" />
+                       <text x="74" y="38" fill="${SOFT}" font-size="11" font-weight="700" text-anchor="middle">سعر الأساس</text>`
+                }`
             : `<rect x="18" y="42" width="144" height="7" rx="3.5" fill="#18181b" />
                <rect x="18" y="42" width="${barW.toFixed(1)}" height="7" rx="3.5" fill="${color}" />
                <text x="18" y="32" fill="${color}" font-size="12" font-weight="700" text-anchor="start">${sign(gapPct)}${gapPct.toFixed(2)}% فجوة</text>`
@@ -2134,8 +2159,13 @@ export function generateUsdEgpUpdateChartSvg(
       <text x="20" y="54" fill="#ffffff" font-size="21" font-weight="700">${fmt2(val)} <tspan fill="${MUTED}" font-size="11" font-weight="500">EGP</tspan></text>
       ${
         isBase
-          ? `<rect x="274" y="20" width="112" height="28" rx="6" fill="#18181b" stroke="#333338" />
-             <text x="330" y="38" fill="${SOFT}" font-size="10.5" font-weight="700" text-anchor="middle">CBE BENCHMARK</text>`
+          ? `${
+                  data.delta30dEgp !== undefined && data.pct30d !== undefined
+                    ? `<rect x="240" y="20" width="145" height="28" rx="6" fill="#18181b" stroke="#3f3f46" />
+                       <text x="312" y="38" fill="${scoreColor}" font-size="10.5" font-weight="700" text-anchor="middle">30D: +${data.delta30dEgp.toFixed(2)} (+${Math.abs(data.pct30d).toFixed(1)}%)</text>`
+                    : `<rect x="274" y="20" width="112" height="28" rx="6" fill="#18181b" stroke="#333338" />
+                       <text x="330" y="38" fill="${SOFT}" font-size="10.5" font-weight="700" text-anchor="middle">CBE BENCHMARK</text>`
+                }`
           : `<rect x="242" y="42" width="144" height="7" rx="3.5" fill="#18181b" />
              <rect x="242" y="42" width="${barW.toFixed(1)}" height="7" rx="3.5" fill="${color}" />
              <text x="386" y="32" fill="${color}" font-size="12" font-weight="700" text-anchor="end">${sign(gapPct)}${gapPct.toFixed(2)}% spread</text>`
@@ -2193,17 +2223,17 @@ export function generateUsdEgpUpdateChartSvg(
 
       ${
         ar
-          ? `<text x="520" y="30" fill="#ffffff" font-size="14" font-weight="700" text-anchor="end">مؤشر ضغوط العملة ومخاطر خفض الجنيه</text>
+          ? `<text x="520" y="30" fill="#ffffff" font-size="14" font-weight="700" text-anchor="end">مؤشر ضغوط وتراجع الجنيه</text>
              <text x="24" y="30" fill="${scoreColor}" font-size="17" font-weight="700" text-anchor="start">${score} / 100</text>`
-          : `<text x="24" y="30" fill="#ffffff" font-size="14" font-weight="700">Algorithmic Devaluation Pressure Thermometer</text>
+          : `<text x="24" y="30" fill="#ffffff" font-size="14" font-weight="700">EGP Pressure & Depreciation Index</text>
              <text x="520" y="30" fill="${scoreColor}" font-size="17" font-weight="700" text-anchor="end">${score} / 100</text>`
       }
       <rect x="24" y="46" width="496" height="14" rx="7" fill="url(#fxRiskSpectrum)" fill-opacity="0.3" />
       <rect x="24" y="46" width="${Math.max(14, (score / 100) * 496).toFixed(1)}" height="14" rx="7" fill="${scoreColor}" />
       <circle cx="${(24 + (score / 100) * 496).toFixed(1)}" cy="53" r="7.5" fill="#ffffff" stroke="${scoreColor}" stroke-width="3" />
-      <text x="24" y="82" fill="${GREEN}" font-size="10.5" font-weight="600">${esc(ar ? 'منخفض (تعويم مرن)' : '0 · Low Risk (Organic Float)')}</text>
-      <text x="272" y="82" fill="${AMBER}" font-size="10.5" font-weight="600" text-anchor="middle">${esc(ar ? 'متوسط' : '50 · Managed Crawl')}</text>
-      <text x="520" y="82" fill="${RED}" font-size="10.5" font-weight="600" text-anchor="end">${esc(ar ? 'مرتفع (فجوة سعرية)' : '100 · Dislocation Risk')}</text>
+      <text x="24" y="82" fill="${GREEN}" font-size="10.5" font-weight="600">${esc(ar ? 'منخفض (استقرار نسبي)' : '0 · Low Pressure')}</text>
+      <text x="272" y="82" fill="#f97316" font-size="10.5" font-weight="600" text-anchor="middle">${esc(ar ? 'متوسط (هبوط متسارع)' : '50 · Accelerated Drift')}</text>
+      <text x="520" y="82" fill="${RED}" font-size="10.5" font-weight="600" text-anchor="end">${esc(ar ? 'مرتفع (ضغوط حادة)' : '100 · High Pressure')}</text>
       <text x="${ar ? 520 : 24}" y="108" fill="${MUTED}" font-size="11.5" font-weight="600" text-anchor="${ar ? 'end' : 'start'}">${esc(localizedRiskLabel)}</text>
 
       <line x1="556" y1="18" x2="556" y2="114" stroke="${LINE}" stroke-width="1" />
