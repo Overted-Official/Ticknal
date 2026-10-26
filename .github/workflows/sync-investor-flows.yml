@@ -22,7 +22,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit
+        run: npm ci --prefer-offline --no-audit --fetch-retries=5 --fetch-retry-mintimeout=20000
 
       - name: Sync EGX Investor Flows (Multi-Source News & Exchange Data)
         run: npx tsx scripts/cron/sync-investor-flows.ts
