@@ -138,7 +138,9 @@ function NotificationsNavItem({
         >
           <Bell ref={iconRef} size={20} strokeWidth={1.5} />
           {count > 0 && (
-            <span className="absolute top-1 end-1 w-2 h-2 rounded-full bg-plt-profit ring-2 ring-plt-base" />
+            <span className="absolute -top-1 -end-1 min-w-[17px] h-[17px] px-1 rounded-full bg-gradient-to-r from-[#00BCE6] via-[#2962FF] to-[#D500F9] text-white text-[9px] font-sans font-bold tabular-nums flex items-center justify-center ring-2 ring-plt-base shadow-[0_0_8px_rgba(41,98,255,0.45)] leading-none select-none pointer-events-none">
+              {count > 9 ? '9+' : count}
+            </span>
           )}
         </div>
       </button>

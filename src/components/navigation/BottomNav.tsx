@@ -412,7 +412,7 @@ export default function BottomNav() {
             >
               <Bell size={20} strokeWidth={1.8} className="text-plt-text" />
               {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-profit-chart text-black text-[9px] font-sans font-bold tabular-nums flex items-center justify-center ring-2 ring-plt-base">
+                <span className="absolute -top-1 -end-1 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-r from-[#00BCE6] via-[#2962FF] to-[#D500F9] text-white text-[9.5px] font-sans font-bold tabular-nums flex items-center justify-center ring-2 ring-plt-base shadow-[0_0_8px_rgba(41,98,255,0.45)] leading-none select-none pointer-events-none">
                   {notificationCount > 9 ? '9+' : notificationCount}
                 </span>
               )}
