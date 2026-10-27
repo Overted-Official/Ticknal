@@ -1187,13 +1187,19 @@ export async function handleWatchdog(req: Request) {
         const activeStockCount = Number(stockPricesForDate[0]?.count || 0);
 
         if (activeStockCount >= 20) {
-          const existingFlow = await db
+          // Strictly verify that the TOTAL segment exists (the Markets page defaults to TOTAL)
+          const existingTotalFlow = await db
             .select({ id: egxInvestorFlows.id })
             .from(egxInvestorFlows)
-            .where(eq(egxInvestorFlows.date, expectedEgxDate))
+            .where(
+              and(
+                eq(egxInvestorFlows.date, expectedEgxDate),
+                eq(egxInvestorFlows.marketSegment, 'TOTAL')
+              )
+            )
             .limit(1);
 
-          if (!existingFlow[0]) {
+          if (!existingTotalFlow[0]) {
             investorFlowsMissing = true;
             const flowResult = await syncDailyInvestorFlows({ targetDate: expectedEgxDate });
             if (flowResult.success) {
@@ -1201,14 +1207,14 @@ export async function handleWatchdog(req: Request) {
             }
           }
 
-          // Ensure all 5 canonical Ticknal take posts exist for expectedEgxDate (and refresh if investor flows were just repaired)
+          // Ensure all 6 canonical Ticknal take posts exist for expectedEgxDate (and refresh if investor flows were just repaired)
           const existingTakes = await db
             .select({ count: sql<number>`count(*)` })
             .from(marketNews)
-            .where(sql`${marketNews.id} LIKE ${`take-${expectedEgxDate}-%`}`);
+            .where(sql`${marketNews.id} LIKE ${'take-' + expectedEgxDate + '-%'}`);
           const takesCount = Number(existingTakes[0]?.count || 0);
-          if (takesCount < 5 || investorFlowsMissing) {
-            const takeRes = await generateAllDailyTakes();
+          if (takesCount < 6 || investorFlowsMissing) {
+            const takeRes = await generateAllDailyTakes({ targetDate: expectedEgxDate });
             if (takeRes.success) {
               triggersTriggered.push(`ticknal-take (${expectedEgxDate})`);
             }
@@ -1267,7 +1273,8 @@ export async function handleUpdateInvestorFlows(req: Request) {
     }
 
     const result = await syncDailyInvestorFlows({ targetDate, manualData });
-    if (result.success) {
+    // Only rebuild the Ticknal take briefings when a new session actually landed (retries are cheap no-ops).
+    if (result.success && result.newlyIngested) {
       await generateAllDailyTakes().catch((e) =>
         console.warn('[cron-investor-flows] Non-fatal error refreshing Ticknal takes:', e)
       );

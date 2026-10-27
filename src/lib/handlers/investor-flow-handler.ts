@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { db } from '@/db';
 import { egxInvestorFlows, dailyPrices } from '@/db/schema';
 import { desc, asc, gte, sql, and, eq } from 'drizzle-orm';
 import { syncDailyInvestorFlows } from '@/lib/investor-flows/sync-investor-flows';
 
 let lastSelfHealAttemptMs = 0;
-const SELF_HEAL_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
+const SELF_HEAL_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes per server instance
 
 // In-memory response cache: investor flows data updates once per day after market close.
 // 5-minute TTL eliminates 100% of redundant database round-trips when switching tabs or horizons.
@@ -209,10 +209,12 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
       }
     }
 
-    // Non-blocking background self-healing trigger: check in background without blocking user response
+    // Background self-healing: if a newer trading session exists in daily_prices than in the flows
+    // table, ingest it. Uses after() so the work is not frozen once the response is sent (serverless).
     if (Date.now() - lastSelfHealAttemptMs > SELF_HEAL_COOLDOWN_MS) {
       lastSelfHealAttemptMs = Date.now();
-      void (async () => {
+      const latestFlowDate = rows[0]?.date ? String(rows[0].date) : null;
+      after(async () => {
         try {
           const latestPriceRows = await db
             .select({ date: dailyPrices.date })
@@ -222,18 +224,21 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
             .limit(1);
 
           const latestPriceDate = latestPriceRows[0]?.date ? String(latestPriceRows[0].date) : null;
-          const latestFlowDate = rows[0]?.date ? String(rows[0].date) : null;
 
           if (latestPriceDate && (!latestFlowDate || latestPriceDate > latestFlowDate)) {
             const syncRes = await syncDailyInvestorFlows({ targetDate: latestPriceDate });
             if (syncRes?.success) {
               investorFlowsCache.clear();
+              if (syncRes.newlyIngested) {
+                const { generateAllDailyTakes } = await import('@/lib/news/ticknal-take-generator');
+                await generateAllDailyTakes({ targetDate: syncRes.date });
+              }
             }
           }
         } catch (selfHealErr) {
           console.warn('Background investor flows self-healing sync warning:', selfHealErr);
         }
-      })();
+      });
     }
 
     if (rows.length === 0) {

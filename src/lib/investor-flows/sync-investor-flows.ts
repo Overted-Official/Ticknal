@@ -34,6 +34,8 @@ export interface SyncInvestorFlowResult {
   foreignSharePct: number;
   source: 'MANUAL_PAYLOAD' | 'OFFICIAL_EGX_DIRECT' | 'OFFICIAL_FEED';
   message: string;
+  /** True only when this call wrote a new session (callers use it to decide whether to refresh derived content). */
+  newlyIngested?: boolean;
 }
 
 /**
@@ -114,6 +116,7 @@ export async function syncDailyInvestorFlows(options?: {
 
     return {
       success: true,
+      newlyIngested: true,
       date: dateStr,
       totalTurnover,
       foreignNet,
@@ -243,8 +246,24 @@ export async function syncDailyInvestorFlows(options?: {
       Number(primaryRow.arabSell);
     const foreignSharePct = totVol > 0 ? Math.round((fVol / totVol) * 1000) / 10 : 8.0;
 
+    // Self-repair: a session ingested only as STOCKS must also exist as TOTAL, because the
+    // Markets page defaults to the TOTAL segment. Without this, the default chart lags a day.
+    let backfilledTotal = false;
+    if (!existingTotalRow && !existingBillsRow && existingStocksRow) {
+      const { id: _id, createdAt: _c, updatedAt: _u, marketSegment: _s, ...stocksValues } = existingStocksRow;
+      await db
+        .insert(egxInvestorFlows)
+        .values({ ...stocksValues, date: dateStr, marketSegment: 'TOTAL' })
+        .onConflictDoNothing({ target: [egxInvestorFlows.date, egxInvestorFlows.marketSegment] });
+      backfilledTotal = true;
+      try {
+        invalidateInvestorFlowsCache();
+      } catch {}
+    }
+
     return {
       success: true,
+      newlyIngested: backfilledTotal,
       date: dateStr,
       totalTurnover: Number(primaryRow.totalTurnover),
       foreignNet,
@@ -327,6 +346,7 @@ export async function syncDailyInvestorFlows(options?: {
 
         return {
           success: true,
+          newlyIngested: true,
           date: dateStr,
           totalTurnover,
           foreignNet,
@@ -352,6 +372,7 @@ export async function syncDailyInvestorFlows(options?: {
       const foreignSharePct = totVol > 0 ? Math.round((fVol / totVol) * 1000) / 10 : 8.0;
       return {
         success: true,
+        newlyIngested: false,
         date: dateStr,
         totalTurnover: Number(existingStocksRow.totalTurnover),
         foreignNet: fNet,
@@ -496,6 +517,7 @@ export async function syncDailyInvestorFlows(options?: {
 
   return {
     success: true,
+    newlyIngested: true,
     date: dateStr,
     totalTurnover: realTurnover,
     foreignNet: row.foreignNet,

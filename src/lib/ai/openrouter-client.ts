@@ -60,9 +60,9 @@ export interface AICompletionResult {
 // Cascaded model tiers using verified active free models on OpenRouter
 // (OpenRouter enforces max 3 items in 'models' array)
 const MODEL_TIERS: string[][] = [
-  ['google/gemini-2.0-flash-lite-preview-02-05:free'],
-  ['meta-llama/llama-3.3-70b-instruct:free'],
-  ['mistralai/mistral-small-24b-instruct-2501:free'],
+  ['nvidia/nemotron-3.5-lightning:free'],
+  ['dots-studio/dots-3-note-preview:free'],
+  ['nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free'],
 ];
 
 // In-memory key state store (persists across requests in node process)
