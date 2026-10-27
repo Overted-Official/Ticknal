@@ -380,7 +380,7 @@ export default function BottomNav() {
   return (
     <>
       {/* Mobile Floating Action Buttons (Positioned safely above the bottom tab bar - hidden on chart view to give full canvas to chart controls and price scale) */}
-      {!isChartRoute && !isConsole && (
+      {!isChartRoute && !isConsole && !isStrategiesRoute && (
         <div
           className={`fixed ${
             isStrategiesRoute
