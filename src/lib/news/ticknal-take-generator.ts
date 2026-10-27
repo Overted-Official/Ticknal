@@ -482,18 +482,15 @@ export async function generateAllDailyTakes(
   });
 
   // 3. 30-Day Rolling Investor Flows (Hot Money Barometer) up to targetDate
-  const [flowRows, stocksFlowRows] = await Promise.all([
+  const [rawFlowRows, stocksFlowRows] = await Promise.all([
     db
       .select()
       .from(egxInvestorFlows)
       .where(
-        sql`total_turnover::numeric >= 50000000
+        sql`total_turnover::numeric >= 10000000
           AND EXTRACT(DOW FROM date::date) NOT IN (5, 6)
           AND date <= ${targetDate}
-          AND market_segment = 'TOTAL'
-          AND EXISTS (SELECT 1 FROM egx_investor_flows s WHERE s.date = ${egxInvestorFlows.date} AND s.market_segment = 'STOCKS')
-          AND EXISTS (SELECT 1 FROM egx_investor_flows bl WHERE bl.date = ${egxInvestorFlows.date} AND bl.market_segment = 'BILLS')
-          AND EXISTS (SELECT 1 FROM egx_investor_flows bo WHERE bo.date = ${egxInvestorFlows.date} AND bo.market_segment = 'BONDS')`
+          AND market_segment = 'TOTAL'`
       )
       .orderBy(desc(egxInvestorFlows.date))
       .limit(30),
@@ -509,6 +506,20 @@ export async function generateAllDailyTakes(
       .orderBy(desc(egxInvestorFlows.date))
       .limit(25),
   ]);
+
+  const flowRows = [...rawFlowRows];
+  // Seamless bridge: if the latest session exists under STOCKS but was not yet ingested under TOTAL,
+  // bridge the latest equities session so Hot Money Status always reflects the latest market close.
+  if (stocksFlowRows.length > 0) {
+    const topTotalDate = flowRows[0]?.date ? String(flowRows[0].date).slice(0, 10) : '2020-01-01';
+    const topStocksDate = String(stocksFlowRows[0].date).slice(0, 10);
+    if (topStocksDate > topTotalDate) {
+      flowRows.unshift({
+        ...stocksFlowRows[0],
+        marketSegment: 'TOTAL',
+      });
+    }
+  }
 
   const flows30d = [...flowRows].reverse();
   let cumulative = 0;

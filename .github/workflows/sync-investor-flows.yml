@@ -2,8 +2,8 @@ name: Sync EGX Investor Flows & Market Take
 
 on:
   schedule:
-    # Runs every 30 minutes between 13:00 UTC and 17:30 UTC (16:00 to 20:30 Cairo time) on Sun-Thu
-    - cron: '*/30 13-17 * * 0-4'
+    # Runs every 15 minutes between 12:00 UTC and 16:00 UTC (15:00 to 19:00 Cairo time) on Sun-Thu
+    - cron: '*/15 12-16 * * 0-4'
   workflow_dispatch:
 
 jobs:

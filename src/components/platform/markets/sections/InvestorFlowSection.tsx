@@ -188,7 +188,7 @@ export default function InvestorFlowSection({
       ? null
       : `/api/macro/investor-flows?horizon=${horizon}&segment=${segment}&category=${category}`,
     fetcher,
-    { revalidateOnFocus: false, dedupingInterval: 60000 }
+    { revalidateOnFocus: true, dedupingInterval: 15000 }
   );
   const data = isHeroScene ? (HERO_SCENE_FLOWS.data as InvestorFlowsResponse) : liveData;
   const isLoading = !isHeroScene && liveIsLoading;
