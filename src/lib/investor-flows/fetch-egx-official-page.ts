@@ -164,9 +164,22 @@ export function buildOfficialSegmentRow(
   };
 }
 
+async function waitForRealPage(page: any, label: string, maxAttempts = 20): Promise<boolean> {
+  for (let i = 1; i <= maxAttempts; i++) {
+    await page.waitForTimeout(1500);
+    try {
+      const textLen = await page.evaluate(() => document.body?.innerText?.length || 0);
+      if (textLen > 600) {
+        return true;
+      }
+    } catch {}
+  }
+  return false;
+}
+
 /**
  * Scrapes all 4 official EGX investor flow segments (TOTAL, STOCKS, BONDS, BILLS)
- * directly from https://www.egx.com.eg/en/InvestorsTypeCharts.aspx using Playwright.
+ * directly from https://www.egx.com.eg/en/InvestorsTypeCharts.aspx using Playwright with stealth parameters.
  */
 export async function fetchOfficialEgxMultiSegmentFlows(): Promise<OfficialEgxSegmentRow[] | null> {
   let browser: any = null;
@@ -176,34 +189,70 @@ export async function fetchOfficialEgxMultiSegmentFlows(): Promise<OfficialEgxSe
       return null;
     }
 
-    browser = await pw.chromium.launch({ headless: true });
+    browser = await pw.chromium.launch({
+      headless: true,
+      args: ['--disable-blink-features=AutomationControlled', '--no-sandbox', '--disable-setuid-sandbox'],
+    });
     const context = await browser.newContext({
       userAgent:
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
+      viewport: { width: 1366, height: 768 },
       locale: 'en-US',
       extraHTTPHeaders: {
         'Accept-Language': 'en-US,en;q=0.9',
       },
     });
+
+    await context.addInitScript(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+    });
+
     const page = await context.newPage();
 
-    // 1. Pass F5 BigIP JS challenge on homepage
+    // 1. Pass F5 BigIP JS challenge on homepage first to establish session cookies
     await page.goto('https://www.egx.com.eg/en/homepage.aspx', {
       waitUntil: 'commit',
-      timeout: 25000,
+      timeout: 30000,
     });
-    await page.waitForTimeout(3000);
+    const homeLoaded = await waitForRealPage(page, 'Home');
+    if (!homeLoaded) {
+      console.warn('EGX homepage challenge did not resolve in time.');
+      return null;
+    }
 
-    // 2. Navigate to InvestorsTypeCharts.aspx
+    // 2. Navigate to InvestorsTypeCharts.aspx with session cookies active
     await page.goto('https://www.egx.com.eg/en/InvestorsTypeCharts.aspx', {
       waitUntil: 'commit',
-      timeout: 25000,
+      timeout: 30000,
     });
-    await page.waitForSelector('input[name="option"]', { timeout: 20000 });
-    await page.waitForTimeout(1500);
+    const pageLoaded = await waitForRealPage(page, 'InvestorsTypeCharts');
+    if (!pageLoaded) {
+      console.warn('EGX InvestorsTypeCharts did not load in time.');
+      return null;
+    }
 
     const extractTables = async (): Promise<Array<{ rows: string[][] }>> => {
       return page.evaluate(() => {
+        const getGridRows = (id: string) => {
+          const div = document.getElementById(id);
+          if (!div) return null;
+          const table = div.querySelector('table');
+          if (!table) return null;
+          const rows = Array.from(table.querySelectorAll('tr')).map((tr) =>
+            Array.from(tr.querySelectorAll('th, td')).map((td) => (td as HTMLElement).innerText.trim())
+          );
+          return rows.length >= 4 ? rows : null;
+        };
+
+        const all = getGridRows('AllGrd');
+        const ind = getGridRows('IndividualsGrd');
+        const inst = getGridRows('InstitutesGrd');
+
+        if (all && ind && inst) {
+          return [{ rows: all }, { rows: ind }, { rows: inst }];
+        }
+
+        // Fallback: search all tables on page
         const tables = Array.from(document.querySelectorAll('table'));
         const clean: Array<{ rows: string[][] }> = [];
         for (const t of tables) {
@@ -233,8 +282,7 @@ export async function fetchOfficialEgxMultiSegmentFlows(): Promise<OfficialEgxSe
         const radio = await page.$(`input[name="option"][value="${opt.val}"]`);
         if (!radio) continue;
         await radio.click();
-        await page.waitForTimeout(2200);
-        await page.waitForSelector('table', { timeout: 10000 }).catch(() => null);
+        await page.waitForTimeout(2500);
       }
 
       const tables = await extractTables();

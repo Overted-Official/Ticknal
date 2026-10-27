@@ -508,18 +508,6 @@ export async function generateAllDailyTakes(
   ]);
 
   const flowRows = [...rawFlowRows];
-  // Seamless bridge: if the latest session exists under STOCKS but was not yet ingested under TOTAL,
-  // bridge the latest equities session so Hot Money Status always reflects the latest market close.
-  if (stocksFlowRows.length > 0) {
-    const topTotalDate = flowRows[0]?.date ? String(flowRows[0].date).slice(0, 10) : '2020-01-01';
-    const topStocksDate = String(stocksFlowRows[0].date).slice(0, 10);
-    if (topStocksDate > topTotalDate) {
-      flowRows.unshift({
-        ...stocksFlowRows[0],
-        marketSegment: 'TOTAL',
-      });
-    }
-  }
 
   const flows30d = [...flowRows].reverse();
   let cumulative = 0;

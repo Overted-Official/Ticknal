@@ -105,6 +105,14 @@ export interface InvestorFlowsResponse {
   history: InvestorFlowDailyItem[];
 }
 
+function runSafeBackground(work: () => Promise<void>) {
+  try {
+    after(work);
+  } catch {
+    void work();
+  }
+}
+
 export async function handleInvestorFlowsGet(request: Request): Promise<Response> {
   try {
     const { searchParams } = new URL(request.url);
@@ -184,37 +192,13 @@ export async function handleInvestorFlowsGet(request: Request): Promise<Response
     ]);
 
     const rows = [...rawRows];
-    // Seamless bridge: if TOTAL segment is queried but the latest session was only ingested as STOCKS,
-    // seamlessly bridge the latest equities session so the default overview chart never lags behind.
-    if (segment === 'TOTAL') {
-      const topDate = rows[0]?.date ? String(rows[0].date) : '2020-01-01';
-      const newerStocksRows = await db
-        .select()
-        .from(egxInvestorFlows)
-        .where(
-          and(
-            eq(egxInvestorFlows.marketSegment, 'STOCKS'),
-            sql`total_turnover::numeric >= ${turnoverThreshold} AND EXTRACT(DOW FROM date::date) NOT IN (5, 6)`,
-            sql`date::date > ${topDate}::date`
-          )
-        )
-        .orderBy(desc(egxInvestorFlows.date))
-        .limit(1);
-
-      if (newerStocksRows.length > 0) {
-        rows.unshift({
-          ...newerStocksRows[0],
-          marketSegment: 'TOTAL',
-        });
-      }
-    }
 
     // Background self-healing: if a newer trading session exists in daily_prices than in the flows
     // table, ingest it. Uses after() so the work is not frozen once the response is sent (serverless).
     if (Date.now() - lastSelfHealAttemptMs > SELF_HEAL_COOLDOWN_MS) {
       lastSelfHealAttemptMs = Date.now();
       const latestFlowDate = rows[0]?.date ? String(rows[0].date) : null;
-      after(async () => {
+      runSafeBackground(async () => {
         try {
           const latestPriceRows = await db
             .select({ date: dailyPrices.date })

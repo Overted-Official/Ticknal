@@ -246,24 +246,9 @@ export async function syncDailyInvestorFlows(options?: {
       Number(primaryRow.arabSell);
     const foreignSharePct = totVol > 0 ? Math.round((fVol / totVol) * 1000) / 10 : 8.0;
 
-    // Self-repair: a session ingested only as STOCKS must also exist as TOTAL, because the
-    // Markets page defaults to the TOTAL segment. Without this, the default chart lags a day.
-    let backfilledTotal = false;
-    if (!existingTotalRow && !existingBillsRow && existingStocksRow) {
-      const { id: _id, createdAt: _c, updatedAt: _u, marketSegment: _s, ...stocksValues } = existingStocksRow;
-      await db
-        .insert(egxInvestorFlows)
-        .values({ ...stocksValues, date: dateStr, marketSegment: 'TOTAL' })
-        .onConflictDoNothing({ target: [egxInvestorFlows.date, egxInvestorFlows.marketSegment] });
-      backfilledTotal = true;
-      try {
-        invalidateInvestorFlowsCache();
-      } catch {}
-    }
-
     return {
       success: true,
-      newlyIngested: backfilledTotal,
+      newlyIngested: false,
       date: dateStr,
       totalTurnover: Number(primaryRow.totalTurnover),
       foreignNet,
@@ -468,29 +453,7 @@ export async function syncDailyInvestorFlows(options?: {
       },
     });
 
-  // Also ensure TOTAL segment is populated for the session so the default Markets page view reflects today
-  const existingBills = await db
-    .select({ id: egxInvestorFlows.id })
-    .from(egxInvestorFlows)
-    .where(and(eq(egxInvestorFlows.date, dateStr), eq(egxInvestorFlows.marketSegment, 'BILLS')))
-    .limit(1);
 
-  if (existingBills.length === 0) {
-    await db
-      .insert(egxInvestorFlows)
-      .values({
-        date: dateStr,
-        marketSegment: 'TOTAL',
-        ...commonValues,
-      })
-      .onConflictDoUpdate({
-        target: [egxInvestorFlows.date, egxInvestorFlows.marketSegment],
-        set: {
-          ...commonValues,
-          updatedAt: new Date(),
-        },
-      });
-  }
 
   try {
     invalidateInvestorFlowsCache();
