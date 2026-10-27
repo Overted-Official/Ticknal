@@ -148,7 +148,7 @@ function TickerLogo({
 
   if (isTake || cleanSymbol === 'TICKNAL') {
     return (
-      <div className="w-7 h-7 rounded-full bg-black border border-white/20 flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+      <div className="w-7 h-7 rounded-full bg-plt-base border border-plt-border flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
         <TicknalBrand href={null} showIcon={true} showText={false} iconSize={15} />
       </div>
     );

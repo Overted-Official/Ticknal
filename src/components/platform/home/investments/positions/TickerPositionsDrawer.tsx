@@ -232,7 +232,7 @@ export default function TickerPositionsDrawer({
                           <Link
                             href={chartUrl}
                             onClick={handleGoToChart}
-                            className="px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-sans font-semibold bg-surface-raised hover:bg-white/10 text-text-primary border border-border-subtle tracking-wider shrink-0 transition-colors"
+                            className="px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-sans font-semibold bg-surface-raised hover:bg-plt-hover text-text-primary border border-border-subtle tracking-wider shrink-0 transition-colors"
                             title={isArabic ? `عرض الرسم البياني لـ ${cleanSymbol}` : `Open ${cleanSymbol} Chart`}
                           >
                             {cleanSymbol}

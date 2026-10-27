@@ -3124,7 +3124,7 @@ html[data-theme="light"] .drawer-confirm-btn:hover:not(:disabled) {
   background-color: #27272a;
 }
 
-html[data-theme="light"] :is(.date-token, .input-token, .field-date-input, .strategy-library-search input) {
+html[data-theme="light"] :is(.date-token, .input-token, .field-date-input, .strategy-library-search input, .input-control-compact input) {
   color-scheme: light;
 }
 html[data-theme="light"] .date-token::-webkit-calendar-picker-indicator {

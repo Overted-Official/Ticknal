@@ -184,12 +184,12 @@ export default function StrategyReportHeader({
               aria-haspopup="listbox"
               aria-expanded={dropdownOpen}
               aria-label={isAr ? 'اختر استراتيجية' : 'Select strategy'}
-              className="flex h-8 sm:h-8.5 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-white/10 bg-black px-3 font-sans text-xs font-semibold text-white/90 outline-none transition-all hover:border-white/20 hover:text-white focus:border-white/30"
+              className="flex h-8 sm:h-8.5 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-plt-border bg-plt-base px-3 font-sans text-xs font-semibold text-plt-text outline-none transition-all hover:border-plt-border-active focus:border-brand-blue"
             >
               <span className="truncate">{currentLabel}</span>
               <ChevronDown
                 size={13}
-                className={`shrink-0 text-white/40 transition-transform duration-150 ${dropdownOpen ? 'rotate-180 text-white' : ''}`}
+                className={`shrink-0 text-plt-muted transition-transform duration-150 ${dropdownOpen ? 'rotate-180 text-plt-text' : ''}`}
               />
             </button>
 
@@ -354,14 +354,14 @@ export default function StrategyReportHeader({
               type="date"
               value={strategyStartDate || '2025-01-01'}
               onChange={(e) => onSetCustomStartDate?.(e.target.value)}
-              className="bg-transparent text-plt-text focus:outline-hidden text-xs cursor-pointer [color-scheme:dark] leading-none font-sans"
+              className="bg-transparent text-plt-text focus:outline-hidden text-xs cursor-pointer leading-none font-sans"
             />
             <span className="text-plt-muted select-none text-[11px] leading-none">{isRTL ? '←' : '→'}</span>
             <input
               type="date"
               value={strategyEndDate || ''}
               onChange={(e) => onSetCustomEndDate?.(e.target.value)}
-              className="bg-transparent text-plt-text focus:outline-hidden text-xs cursor-pointer [color-scheme:dark] leading-none font-sans"
+              className="bg-transparent text-plt-text focus:outline-hidden text-xs cursor-pointer leading-none font-sans"
             />
           </div>
         )}

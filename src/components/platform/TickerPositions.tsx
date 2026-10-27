@@ -342,7 +342,7 @@ export default function TickerPositions({
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-full text-white select-none font-sans">
+    <div className="flex flex-col flex-1 min-h-full text-plt-text select-none font-sans">
       {/* Scrollable Content Body */}
       <div className="flex-1 p-4 sm:p-6 space-y-6 sm:space-y-8 pb-6">
         {/* ================================================================= */}
@@ -350,19 +350,19 @@ export default function TickerPositions({
         {/* ================================================================= */}
         <section className="space-y-3">
         {/* Clear Section Header matching Strategy Report Drawer */}
-        <div className="flex flex-col gap-0.5 min-w-0 pb-1 border-b border-border-subtle">
+        <div className="flex flex-col gap-0.5 min-w-0 pb-1 border-b border-plt-border-soft">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-sm sm:text-[15px] font-bold text-white tracking-tight leading-snug">
+            <h3 className="text-sm sm:text-[15px] font-bold text-plt-text tracking-tight leading-snug">
               {isArabic ? 'نظرة عامة على المركز' : 'Position Overview'}
             </h3>
-            <span className="text-xs text-white/50 font-normal">
+            <span className="text-xs text-plt-muted font-normal">
               {isArabic ? 'السعر المباشر:' : 'Live Price:'}{' '}
-              <strong className="text-white font-semibold tabular-nums">
+              <strong className="text-plt-text font-semibold tabular-nums">
                 {formatPrice(currentPrice, currency, isArabic)}
               </strong>
             </span>
           </div>
-          <p className="text-xs text-white/50 leading-relaxed">
+          <p className="text-xs text-plt-muted leading-relaxed">
             {isArabic
               ? 'التعرض الاستثماري، والأداء غير المحقق، والعوائد المحققة لهذا السهم'
               : 'Portfolio exposure, unrealized performance, and realized returns for this instrument'}
@@ -372,31 +372,31 @@ export default function TickerPositions({
         {/* 3 KPI Metrics Cards: Swipable rail on mobile (showing 2.35 cards so the 3rd card peeks out), 3-col grid on desktop */}
         <div className="flex sm:grid sm:grid-cols-3 gap-2 sm:gap-2.5 overflow-x-auto sm:overflow-visible no-scrollbar snap-x snap-mandatory pb-1 sm:pb-0">
           {/* Total Invested */}
-          <div className="w-[calc((100%-0.625rem)/2.35)] min-w-[140px] sm:w-auto sm:min-w-0 shrink-0 sm:shrink snap-start relative overflow-hidden rounded-xl bg-black border border-white/10 hover:border-white/20 p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between select-none">
+          <div className="w-[calc((100%-0.625rem)/2.35)] min-w-[140px] sm:w-auto sm:min-w-0 shrink-0 sm:shrink snap-start relative overflow-hidden rounded-xl bg-plt-base border border-plt-border hover:border-plt-border-active p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between select-none">
             <div className="flex items-center gap-1.5 min-w-0">
               <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-xs bg-brand-blue text-white overflow-hidden">
                 <Wallet size={11} className="w-[11px] h-[11px] text-white" strokeWidth={2.2} />
               </div>
-              <span className="text-xs sm:text-[12px] font-semibold text-white tracking-tight truncate">
+              <span className="text-xs sm:text-[12px] font-semibold text-plt-text tracking-tight truncate">
                 {isArabic ? 'إجمالي المستثمر' : 'Total Invested'}
               </span>
             </div>
 
             <div className="flex flex-col mt-2 sm:mt-2.5">
               <div className="flex items-baseline gap-1 leading-none">
-                <span className="text-[15px] sm:text-[18px] lg:text-[20px] font-bold text-white tabular-nums tracking-tight truncate">
+                <span className="text-[15px] sm:text-[18px] lg:text-[20px] font-bold text-plt-text tabular-nums tracking-tight truncate">
                   {Math.abs(totalInvested).toLocaleString(isArabic ? 'ar-EG' : 'en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
                 </span>
-                <span className="text-[10px] sm:text-[11px] font-semibold text-white/50 uppercase tracking-wider ml-0.5 shrink-0">
+                <span className="text-[10px] sm:text-[11px] font-semibold text-plt-muted uppercase tracking-wider ml-0.5 shrink-0">
                   {currency}
                 </span>
               </div>
 
               <div className="flex items-baseline gap-1.5 mt-1.5 leading-none">
-                <span className="text-[10px] sm:text-[11px] font-medium tabular-nums text-white/50 truncate">
+                <span className="text-[10px] sm:text-[11px] font-medium tabular-nums text-plt-muted truncate">
                   {openOrders.reduce((sum, o) => sum + o.quantity, 0)} {isArabic ? 'أسهم نشطة' : 'active shares'}
                 </span>
               </div>
@@ -404,7 +404,7 @@ export default function TickerPositions({
           </div>
 
           {/* Unrealized P/L */}
-          <div className="w-[calc((100%-0.625rem)/2.35)] min-w-[140px] sm:w-auto sm:min-w-0 shrink-0 sm:shrink snap-start relative overflow-hidden rounded-xl bg-black border border-white/10 hover:border-white/20 p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between select-none">
+          <div className="w-[calc((100%-0.625rem)/2.35)] min-w-[140px] sm:w-auto sm:min-w-0 shrink-0 sm:shrink snap-start relative overflow-hidden rounded-xl bg-plt-base border border-plt-border hover:border-plt-border-active p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between select-none">
             <div className="flex items-center gap-1.5 min-w-0">
               <div
                 className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-xs overflow-hidden ${
@@ -417,7 +417,7 @@ export default function TickerPositions({
                   <TrendingDown size={11} className="w-[11px] h-[11px] text-white" strokeWidth={2.2} />
                 )}
               </div>
-              <span className="text-xs sm:text-[12px] font-semibold text-white tracking-tight truncate">
+              <span className="text-xs sm:text-[12px] font-semibold text-plt-text tracking-tight truncate">
                 {isArabic ? 'الأرباح غير المحققة' : 'Unrealized P/L'}
               </span>
             </div>
@@ -435,7 +435,7 @@ export default function TickerPositions({
                     maximumFractionDigits: 2,
                   })}
                 </span>
-                <span className="text-[10px] sm:text-[11px] font-semibold text-white/50 uppercase tracking-wider ml-0.5 shrink-0">
+                <span className="text-[10px] sm:text-[11px] font-semibold text-plt-muted uppercase tracking-wider ml-0.5 shrink-0">
                   {currency}
                 </span>
               </div>
@@ -449,7 +449,7 @@ export default function TickerPositions({
                   {unrealizedPlPct >= 0 ? '+' : ''}
                   {unrealizedPlPct.toFixed(2)}%
                 </span>
-                <span className="text-[9px] sm:text-[10px] text-white/40 font-normal">
+                <span className="text-[9px] sm:text-[10px] text-plt-muted font-normal">
                   {isArabic ? 'مفتوح' : 'open'}
                 </span>
               </div>
@@ -457,7 +457,7 @@ export default function TickerPositions({
           </div>
 
           {/* Realized P/L */}
-          <div className="w-[calc((100%-0.625rem)/2.35)] min-w-[140px] sm:w-auto sm:min-w-0 shrink-0 sm:shrink snap-start relative overflow-hidden rounded-xl bg-black border border-white/10 hover:border-white/20 p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between select-none">
+          <div className="w-[calc((100%-0.625rem)/2.35)] min-w-[140px] sm:w-auto sm:min-w-0 shrink-0 sm:shrink snap-start relative overflow-hidden rounded-xl bg-plt-base border border-plt-border hover:border-plt-border-active p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between select-none">
             <div className="flex items-center gap-1.5 min-w-0">
               <div
                 className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-xs overflow-hidden ${
@@ -466,7 +466,7 @@ export default function TickerPositions({
               >
                 <CheckCircle2 size={11} className="w-[11px] h-[11px] text-white" strokeWidth={2.2} />
               </div>
-              <span className="text-xs sm:text-[12px] font-semibold text-white tracking-tight truncate">
+              <span className="text-xs sm:text-[12px] font-semibold text-plt-text tracking-tight truncate">
                 {isArabic ? 'الأرباح المحققة' : 'Realized P/L'}
               </span>
             </div>
@@ -484,7 +484,7 @@ export default function TickerPositions({
                     maximumFractionDigits: 2,
                   })}
                 </span>
-                <span className="text-[10px] sm:text-[11px] font-semibold text-white/50 uppercase tracking-wider ml-0.5 shrink-0">
+                <span className="text-[10px] sm:text-[11px] font-semibold text-plt-muted uppercase tracking-wider ml-0.5 shrink-0">
                   {currency}
                 </span>
               </div>
@@ -530,21 +530,21 @@ export default function TickerPositions({
                 </defs>
                 <XAxis
                   dataKey="dateLabel"
-                  stroke="rgba(255,255,255,0.3)"
+                  stroke="var(--plt-text-faint)"
                   fontSize={10}
                   tickLine={false}
                   axisLine={false}
                   dy={4}
                 />
                 <YAxis hide domain={yDomain} />
-                <ReferenceLine y={0} stroke="rgba(255, 255, 255, 0.15)" strokeDasharray="3 3" />
+                <ReferenceLine y={0} stroke="var(--plt-border)" strokeDasharray="3 3" />
                 <Tooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const d = payload[0].payload;
                       const isUp = d.pl >= 0;
                       return (
-                        <div className="bg-cold-gray-900 border border-white/10 rounded-lg text-xs p-2.5 shadow-2xl font-sans">
+                        <div className="bg-[#3D3D3D] border border-white/10 rounded-lg text-xs p-2.5 shadow-2xl font-sans text-white">
                           <div className="text-[10px] text-white/50 font-medium mb-1">
                             {d.dateLabel}
                           </div>
@@ -585,11 +585,11 @@ export default function TickerPositions({
       {/* ================================================================= */}
       <section className="space-y-3">
         {/* Clear Section Header matching Strategy Report Drawer */}
-        <div className="flex flex-col gap-0.5 min-w-0 pb-1 border-b border-border-subtle">
-          <h3 className="text-sm sm:text-[15px] font-bold text-white tracking-tight leading-snug">
+        <div className="flex flex-col gap-0.5 min-w-0 pb-1 border-b border-plt-border-soft">
+          <h3 className="text-sm sm:text-[15px] font-bold text-plt-text tracking-tight leading-snug">
             {isArabic ? 'الأوامر والمراكز' : 'Orders & Positions'}
           </h3>
-          <p className="text-xs text-white/50 leading-relaxed">
+          <p className="text-xs text-plt-muted leading-relaxed">
             {isArabic
               ? 'سجل العمليات ومستويات التنفيذ للصفقات النشطة والسابقة'
               : 'Transaction ledger and fill levels for active and historical executions'}
@@ -630,13 +630,13 @@ export default function TickerPositions({
 
         {/* Compact & Clickable Positions Ledger */}
         {displayedOrders.length === 0 ? (
-          <div className="py-12 text-center text-white/40 text-xs">
+          <div className="py-12 text-center text-plt-muted text-xs">
             {isArabic
               ? `لا توجد صفقات مسجلة لسهم ${cleanSymbol} تطابق الفلتر المحدد.`
               : `No tracked positions found for ${cleanSymbol} matching the selected filter.`}
           </div>
         ) : (
-          <div className="divide-y divide-white/[0.04] border-t border-white/[0.06]">
+          <div className="divide-y divide-plt-border-soft border-t border-plt-border">
             {displayedOrders.map((order) => {
               const isOpen = order.status === 'OPEN';
               const cost = order.entryPrice * order.quantity;
@@ -660,31 +660,31 @@ export default function TickerPositions({
                       onEditOrder?.(order);
                     }
                   }}
-                  className="py-2.5 px-2 sm:px-2.5 transition-all flex items-center justify-between gap-3 hover:bg-white/[0.04] active:bg-white/[0.08] cursor-pointer rounded-lg group select-none"
+                  className="py-2.5 px-2 sm:px-2.5 transition-all flex items-center justify-between gap-3 hover:bg-plt-hover active:bg-plt-active cursor-pointer rounded-lg group select-none"
                   title={isArabic ? 'انقر لتعديل بيانات الصفقة' : 'Click to edit position details'}
                 >
                   {/* Left: Status dot + Date + units & price */}
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span
                       className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                        isOpen ? 'bg-profit-num' : 'bg-white/20'
+                        isOpen ? 'bg-profit-num' : 'bg-plt-muted/40'
                       }`}
                     />
                     <div className="flex flex-col min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-white tabular-nums tracking-tight group-hover:text-white">
+                        <span className="text-xs font-semibold text-plt-text tabular-nums tracking-tight group-hover:text-plt-text">
                           {order.quantity} {isArabic ? 'سهم' : 'units'} @ {formatPrice(order.entryPrice, currency, isArabic)}
                         </span>
                         {!isOpen && (
-                          <span className="text-[9px] font-semibold text-white/40 uppercase">
+                          <span className="text-[9px] font-semibold text-plt-muted uppercase">
                             {isArabic ? 'مغلق' : 'Closed'}
                           </span>
                         )}
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-zinc-400 font-normal hidden sm:inline">
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-plt-muted font-normal hidden sm:inline">
                           ({isArabic ? 'تعديل' : 'Edit'})
                         </span>
                       </div>
-                      <div className="text-[11px] text-white/50 tabular-nums">
+                      <div className="text-[11px] text-plt-muted tabular-nums">
                         {order.entryDate}
                       </div>
                     </div>
@@ -693,7 +693,7 @@ export default function TickerPositions({
                   {/* Right: Value & P&L + Subtle Chevron */}
                   <div className="flex items-center gap-2 shrink-0">
                     <div className="flex flex-col items-end text-right rtl:items-start rtl:text-left">
-                      <span className="text-xs font-bold text-white tabular-nums tracking-tight">
+                      <span className="text-xs font-bold text-plt-text tabular-nums tracking-tight">
                         {formatPrice(currentValue, currency, isArabic)}
                       </span>
                       <span
@@ -707,7 +707,7 @@ export default function TickerPositions({
                     </div>
                     <ChevronRight
                       size={14}
-                      className="text-zinc-600 group-hover:text-white transition-colors shrink-0 rtl:rotate-180"
+                      className="text-plt-muted group-hover:text-plt-text transition-colors shrink-0 rtl:rotate-180"
                     />
                   </div>
                 </div>
@@ -722,7 +722,7 @@ export default function TickerPositions({
       {/* STICKY BOTTOM ACTIONS BAR                                         */}
       {/* Pinned to bottom of the drawer on both desktop and mobile         */}
       {/* ================================================================= */}
-      <div className="sticky bottom-0 z-20 shrink-0 border-t border-white/10 bg-black px-4 sm:px-6 py-3 sm:py-3.5 pb-[max(0.75rem,calc(var(--ticknal-safe-area-bottom)+0.5rem))] md:pb-3.5 flex items-center justify-between gap-2.5 select-none">
+      <div className="sticky bottom-0 z-20 shrink-0 border-t border-plt-border bg-plt-base px-4 sm:px-6 py-3 sm:py-3.5 pb-[max(0.75rem,calc(var(--ticknal-safe-area-bottom)+0.5rem))] md:pb-3.5 flex items-center justify-between gap-2.5 select-none">
         {/* Left / Destructive Action: Delete Entire Position */}
         <div>
           {orders.length > 0 && (
@@ -789,7 +789,7 @@ export default function TickerPositions({
           {isCloseModalOpen && (
             <div
               key="close-position-modal-container"
-              className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm select-none"
+              className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-plt-overlay backdrop-blur-sm select-none"
               onClick={() => !isSubmitting && setIsCloseModalOpen(false)}
             >
               <motion.div
@@ -799,7 +799,7 @@ export default function TickerPositions({
                 exit={{ opacity: 0, scale: 0.95, y: 8 }}
                 transition={{ duration: 0.18, ease: 'easeOut' }}
                 onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-md bg-black border border-white/10 rounded-xl shadow-2xl p-5 space-y-4 font-sans text-white overflow-hidden"
+                className="w-full max-w-md bg-plt-base border border-plt-border rounded-xl shadow-2xl p-5 space-y-4 font-sans text-plt-text overflow-hidden"
               >
                 {/* Header Row:
                     Logo Name                   Total current position value
@@ -807,7 +807,7 @@ export default function TickerPositions({
                 */}
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-white/10 border border-white/15 p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                    <div className="w-10 h-10 rounded-full bg-plt-hover border border-plt-border p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
                       {displayLogoUrl && !imgError ? (
                         <img
                           src={displayLogoUrl}
@@ -816,40 +816,40 @@ export default function TickerPositions({
                           onError={() => setImgError(true)}
                         />
                       ) : (
-                        <span className="text-xs font-bold text-white uppercase font-sans">
+                        <span className="text-xs font-bold text-plt-text uppercase font-sans">
                           {cleanSymbol.slice(0, 2)}
                         </span>
                       )}
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span
-                        className="text-sm font-semibold text-white truncate max-w-[190px] sm:max-w-[210px] leading-snug"
+                        className="text-sm font-semibold text-plt-text truncate max-w-[190px] sm:max-w-[210px] leading-snug"
                         title={displayCompanyName}
                       >
                         {displayCompanyName}
                       </span>
-                      <span className="text-xs font-bold text-white/50 tracking-wider uppercase tabular-nums">
+                      <span className="text-xs font-bold text-plt-muted tracking-wider uppercase tabular-nums">
                         {cleanSymbol}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex flex-col items-end text-right rtl:items-start rtl:text-left shrink-0">
-                    <span className="text-sm font-bold text-white tabular-nums tracking-tight">
+                    <span className="text-sm font-bold text-plt-text tabular-nums tracking-tight">
                       {formatPrice(currentValue, currency, isArabic)}
                     </span>
-                    <span className="text-xs text-white/50 tabular-nums">
+                    <span className="text-xs text-plt-muted tabular-nums">
                       {totalOpenQuantity} {isArabic ? 'سهم مملوك' : 'units owned'}
                     </span>
                   </div>
                 </div>
 
-                <div className="border-t border-white/[0.08]" />
+                <div className="border-t border-plt-border-soft" />
 
                 {/* Form Fields: Sell 'Units' at price 'Selling Price' */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-white/60 uppercase tracking-wider block">
+                    <label className="text-[11px] font-medium text-plt-muted uppercase tracking-wider block">
                       {isArabic ? 'عدد الأسهم للبيع' : 'Units to Sell'}
                     </label>
                     <input
@@ -866,13 +866,13 @@ export default function TickerPositions({
                         }
                       }}
                       disabled={isCloseWholePosition || isSubmitting}
-                      className="input-token h-9 w-full bg-black text-white border-white/10 focus:border-white/40 text-xs tabular-nums disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="input-token h-9 w-full bg-plt-base text-plt-text border-plt-border focus:border-brand-blue text-xs tabular-nums disabled:opacity-50 disabled:cursor-not-allowed"
                       placeholder="Units"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-medium text-white/60 uppercase tracking-wider block">
+                    <label className="text-[11px] font-medium text-plt-muted uppercase tracking-wider block">
                       {isArabic ? `السعر (${currency})` : `Price (${currency})`}
                     </label>
                     <input
@@ -882,19 +882,19 @@ export default function TickerPositions({
                       value={sellingPrice}
                       onChange={(e) => setSellingPrice(e.target.value)}
                       disabled={isSubmitting}
-                      className="input-token h-9 w-full bg-black text-white border-white/10 focus:border-white/40 text-xs tabular-nums"
+                      className="input-token h-9 w-full bg-plt-base text-plt-text border-plt-border focus:border-brand-blue text-xs tabular-nums"
                       placeholder="Selling price"
                     />
                   </div>
                 </div>
 
                 {/* Toggle to close whole position */}
-                <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-plt-hover/50 border border-plt-border-soft">
                   <div className="flex flex-col">
-                    <span className="text-xs font-medium text-white">
+                    <span className="text-xs font-medium text-plt-text">
                       {isArabic ? 'إغلاق المركز بالكامل' : 'Close whole position'}
                     </span>
-                    <span className="text-[10px] text-white/40">
+                    <span className="text-[10px] text-plt-muted">
                       {isArabic ? `بيع جميع الأسهم المملوكة (${totalOpenQuantity})` : `Sell all ${totalOpenQuantity} owned units`}
                     </span>
                   </div>
@@ -924,16 +924,16 @@ export default function TickerPositions({
 
                 {/* Estimated Proceeds preview */}
                 {parseFloat(unitsToSell) > 0 && parseFloat(sellingPrice) > 0 && (
-                  <div className="flex items-center justify-between text-xs px-1 text-white/60 tabular-nums">
+                  <div className="flex items-center justify-between text-xs px-1 text-plt-muted tabular-nums">
                     <span>{isArabic ? 'المحصلات التقديرية:' : 'Estimated Proceeds:'}</span>
-                    <span className="text-white font-semibold">
+                    <span className="text-plt-text font-semibold">
                       {formatPrice(parseFloat(unitsToSell) * parseFloat(sellingPrice), currency, isArabic)}
                     </span>
                   </div>
                 )}
 
                 {/* Footer Buttons: Cancel & Sell */}
-                <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-white/[0.08]">
+                <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-plt-border-soft">
                   <button
                     type="button"
                     onClick={() => setIsCloseModalOpen(false)}
@@ -974,7 +974,7 @@ export default function TickerPositions({
           {isDeleteModalOpen && (
             <div
               key="delete-entire-position-modal-container"
-              className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm select-none"
+              className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-plt-overlay backdrop-blur-sm select-none"
               onClick={() => !isDeleting && setIsDeleteModalOpen(false)}
             >
               <motion.div
@@ -984,7 +984,7 @@ export default function TickerPositions({
                 exit={{ opacity: 0, scale: 0.95, y: 8 }}
                 transition={{ duration: 0.18, ease: 'easeOut' }}
                 onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-md bg-black border border-white/10 rounded-xl shadow-2xl p-5 space-y-4 font-sans text-white overflow-hidden"
+                className="w-full max-w-md bg-plt-base border border-plt-border rounded-xl shadow-2xl p-5 space-y-4 font-sans text-plt-text overflow-hidden"
               >
                 {/* Header */}
                 <div className="flex items-start gap-3">
@@ -992,10 +992,10 @@ export default function TickerPositions({
                     <Trash2 size={18} />
                   </div>
                   <div className="flex flex-col min-w-0 flex-1">
-                    <h3 className="text-sm sm:text-base font-bold text-white leading-snug">
+                    <h3 className="text-sm sm:text-base font-bold text-plt-text leading-snug">
                       {isArabic ? 'حذف المركز بالكامل؟' : 'Delete Entire Position?'}
                     </h3>
-                    <p className="text-xs text-white/50 leading-relaxed mt-1">
+                    <p className="text-xs text-plt-muted leading-relaxed mt-1">
                       {isArabic
                         ? 'سيتم حذف جميع صفقات هذا المركز وسجل معاملاته بشكل نهائي، واسترداد أي رصيد نقدي مرتبط به في المحفظة. استخدم هذا الخيار إذا تمت إضافة المركز عن طريق الخطأ.'
                         : 'This will permanently remove all orders, lots, and linked cash ledger transactions for this ticker. Use this if you added the position by mistake.'}
@@ -1004,9 +1004,9 @@ export default function TickerPositions({
                 </div>
 
                 {/* Target Position Info Summary */}
-                <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.08] flex items-center justify-between gap-3 text-xs">
+                <div className="p-3 rounded-lg bg-plt-hover/50 border border-plt-border-soft flex items-center justify-between gap-3 text-xs">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-white/10 border border-white/15 p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
+                    <div className="w-8 h-8 rounded-full bg-plt-hover border border-plt-border p-0.5 flex items-center justify-center shrink-0 overflow-hidden">
                       {displayLogoUrl && !imgError ? (
                         <img
                           src={displayLogoUrl}
@@ -1015,33 +1015,33 @@ export default function TickerPositions({
                           onError={() => setImgError(true)}
                         />
                       ) : (
-                        <span className="text-[10px] font-bold text-white uppercase font-sans">
+                        <span className="text-[10px] font-bold text-plt-text uppercase font-sans">
                           {cleanSymbol.slice(0, 2)}
                         </span>
                       )}
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="font-semibold text-white truncate max-w-[170px]" title={displayCompanyName}>
+                      <span className="font-semibold text-plt-text truncate max-w-[170px]" title={displayCompanyName}>
                         {displayCompanyName}
                       </span>
-                      <span className="text-[11px] text-white/50 uppercase font-sans">
+                      <span className="text-[11px] text-plt-muted uppercase font-sans">
                         {cleanSymbol}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex flex-col items-end shrink-0 tabular-nums">
-                    <span className="text-white font-medium">
+                    <span className="text-plt-text font-medium">
                       {orders.length} {isArabic ? (orders.length === 1 ? 'صفقة' : 'صفقات') : (orders.length === 1 ? 'lot' : 'lots')}
                     </span>
-                    <span className="text-[11px] text-white/50">
+                    <span className="text-[11px] text-plt-muted">
                       {totalOpenQuantity.toLocaleString()} {isArabic ? 'سهم مفتوح' : 'open shares'}
                     </span>
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-white/[0.08]">
+                <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-plt-border-soft">
                   <button
                     type="button"
                     onClick={() => setIsDeleteModalOpen(false)}

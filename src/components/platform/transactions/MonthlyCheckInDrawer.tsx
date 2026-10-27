@@ -314,7 +314,7 @@ export default function MonthlyCheckInDrawer({
             animate={isMobile ? { y: 0 } : { x: 0 }}
             exit={isMobile ? { y: '100%' } : { x: isArabic ? '-100%' : '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-            className={`drawer-sheet bg-black text-text-primary rounded-none border-l border-border-subtle ${
+            className={`drawer-sheet text-text-primary rounded-none border-l border-border-subtle ${
               !isMobile ? 'drawer-sheet-viewport-safe w-full max-w-xl lg:max-w-2xl' : 'max-h-[92vh]'
             } flex flex-col font-sans select-none`}
           >
