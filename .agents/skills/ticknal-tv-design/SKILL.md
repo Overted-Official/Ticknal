@@ -29,6 +29,7 @@ This skill is the UI source of truth for Ticknal. It is derived from the product
 
 ## Reference routing
 
+- Read [master-boilerplate.md](references/master-boilerplate.md) for a turnkey, production-ready full page and component template.
 - Read [architecture.md](references/architecture.md) for ownership, composition, data/state, and file boundaries.
 - Read [foundations.md](references/foundations.md) for tokens, colors, type, spacing, geometry, and surfaces.
 - Read [page-patterns.md](references/page-patterns.md) for Landing, Home, and Markets composition.

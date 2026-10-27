@@ -98,19 +98,65 @@ On mobile, multi-card showcases become horizontal `snap-x snap-mandatory` rails 
 
 Production root: `src/components/platform/home/HomePageView.tsx`.
 
-### Shell
+## Shell
 
 ~~~tsx
-<div className="command-surface-page ... overflow-y-auto overflow-x-hidden custom-scrollbar bg-plt-base text-plt-text">
-  <div className="px-4 sm:px-6 pt-3 pb-1 bg-plt-base">{/* breadcrumb/header */}</div>
-  <HomeFloatingNav />
-  <div className="app-page page-sections-stack pb-28 md:pb-20 pt-1 space-y-8">
-    {/* sections */}
-  </div>
+<div className="command-surface-page flex-1 h-full w-full max-w-full flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar bg-plt-base text-plt-text select-none font-sans">
+  {/* 1. Header (Breadcrumbs + Actions) */}
+  <header className="px-4 sm:px-6 pt-3 pb-1 flex items-center justify-between gap-4 shrink-0 bg-plt-base">
+    <div className="flex items-center gap-1.5 text-xs sm:text-sm">
+      <Link href="/home" className="text-text-muted font-normal hover:text-text-primary transition-colors cursor-pointer">
+        {isArabic ? 'الرئيسية' : 'Home'}
+      </Link>
+      <span className="text-text-muted">/</span>
+      <h1 className="font-semibold text-text-primary">
+        {isArabic ? 'الأسواق' : 'Markets'}
+      </h1>
+    </div>
+
+    <div className="flex items-center gap-2 sm:gap-3">
+      {/* Optional Tour Trigger */}
+      <TourTriggerButton onClick={tour.start} />
+
+      {/* Refresh Button with Spinner Fallback */}
+      <button
+        type="button"
+        onClick={() => mutate()}
+        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-raised transition-colors cursor-pointer"
+        title={isArabic ? 'تحديث البيانات' : 'Refresh market data'}
+      >
+        {isLoading ? (
+          <InlineSpinner className="h-3.5 w-3.5" label="Refreshing data" />
+        ) : (
+          <RefreshCw size={14} />
+        )}
+      </button>
+
+      {/* Live Market Indicator Dot */}
+      <span className="hidden xs:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        {isArabic ? 'مباشر' : 'LIVE'}
+      </span>
+    </div>
+  </header>
+
+  {/* 2. Floating Section Nav */}
+  <PageFloatingNav />
+
+  {/* 3. Main Sections Stack with Dynamic Bottom Safe Area */}
+  <main className="app-page page-sections-stack pt-3 space-y-8 sm:space-y-10 pb-[calc(56px+var(--ticknal-safe-area-bottom)+1rem)] md:pb-24 max-w-7xl mx-auto w-full">
+    {/* Page Sections */}
+  </main>
 </div>
 ~~~
 
-The inner command surface is the scroll owner. Floating navigation and section scrolling must target it, not assume `window`.
+The inner command surface (`.command-surface-page`) is the scroll owner. Floating navigation and section scrolling must target it, not assume `window`.
+
+### Safe-Area Bottom Padding Model
+
+On mobile devices, bottom navigation rails and mobile browser home bars overlap the bottom of the page. The bottom padding must strictly account for both:
+- **Mobile (< 768px)**: `pb-[calc(56px+var(--ticknal-safe-area-bottom)+1rem)]` (56px bottom bar height + safe area inset + 16px breathing room).
+- **Desktop (>= 768px)**: `md:pb-24` (96px clean spacing above viewport edge).
 
 ### Home information sequence
 

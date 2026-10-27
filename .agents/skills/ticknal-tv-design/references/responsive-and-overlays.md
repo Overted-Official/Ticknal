@@ -92,6 +92,104 @@ Prefer:
 
 Forms use `.drawer-sheet-form`. Standalone/mobile inspectors that cannot use the full sheet class must opt into `.drawer-gradient-top` and otherwise match the system.
 
+### Full Production Drawer Implementation (`TickerPositionsDrawer.tsx`)
+
+~~~tsx
+export function TickerPositionsDrawer({ isOpen, onClose, ticker, currentPrice }: DrawerProps) {
+  const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  if (!mounted || !isOpen) return null;
+
+  return createPortal(
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex font-sans select-none" role="dialog" aria-modal="true">
+        {/* Backdrop Overlay */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          onClick={onClose}
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm cursor-pointer"
+          aria-label="Close drawer overlay"
+        />
+
+        {/* Drawer Sheet (Spring motion: Y-axis on mobile, X-axis on desktop) */}
+        <motion.div
+          key="drawer-sheet"
+          initial={isMobile ? { y: '100%' } : { x: '100%' }}
+          animate={isMobile ? { y: 0 } : { x: 0 }}
+          exit={isMobile ? { y: '100%' } : { x: '100%' }}
+          transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+          className={`drawer-sheet ${!isMobile ? 'drawer-sheet-viewport-safe' : ''} bg-black rounded-none`}
+        >
+          {/* Drawer Header */}
+          <div className="drawer-header border-b border-plt-border p-4">
+            {/* Mobile Drag Indicator */}
+            {isMobile && (
+              <div className="w-full flex items-center justify-center pb-2 cursor-pointer" onClick={onClose}>
+                <div className="drawer-drag-pill" />
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-3">
+              {/* Left Identity: Logo + Symbol + Sector */}
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-full bg-white border border-border-default p-1 flex items-center justify-center shrink-0">
+                  <span className="text-xs font-bold text-zinc-900">{ticker.slice(0, 2)}</span>
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <h3 className="font-semibold text-base text-plt-text tracking-tight truncate leading-tight">
+                    {ticker}
+                  </h3>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="badge-symbol">{ticker}</span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      EGX Live
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Side: Live Price + Close Button */}
+              <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                <div className="hidden sm:flex flex-col items-end text-right">
+                  <span className="text-base font-bold text-plt-text tabular-nums">{currentPrice.toFixed(2)} EGP</span>
+                  <span className="text-[10px] font-medium text-emerald-400 flex items-center gap-1 leading-none mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Live Price
+                  </span>
+                </div>
+
+                <button type="button" onClick={onClose} className="drawer-close-btn" title="Close (Esc)">
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Drawer Scrollable Content Body */}
+          <div className="drawer-body flex-1 overflow-y-auto custom-scrollbar p-4 bg-black">
+            {/* Child content, transactions, order forms, or constituent list */}
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>,
+    document.body
+  );
+}
+~~~
+
 ### Visual contract
 
 - portal to `document.body`;
