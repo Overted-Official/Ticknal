@@ -202,14 +202,30 @@ export default function InvestorFlowSection({
       const rawANet = Number(h.arabNet || 0);
       const rawENet = Number(h.egyptianNet || 0);
       const rawHmNet = typeof h.hotMoneyNet === 'number' ? h.hotMoneyNet : rawFNet + rawANet;
-      const rawHmBuy = typeof h.hotMoneyBuy === 'number' ? h.hotMoneyBuy : Number(h.foreignBuy || 0) + Number(h.arabBuy || 0);
-      const rawHmSell = typeof h.hotMoneySell === 'number' ? h.hotMoneySell : Number(h.foreignSell || 0) + Number(h.arabSell || 0);
+
+      const rawFBuy = Number(h.foreignBuy ?? (rawFNet > 0 ? rawFNet : 0));
+      const rawFSell = Number(h.foreignSell ?? (rawFNet < 0 ? -rawFNet : 0));
+      const rawABuy = Number(h.arabBuy ?? (rawANet > 0 ? rawANet : 0));
+      const rawASell = Number(h.arabSell ?? (rawANet < 0 ? -rawANet : 0));
+      const rawEBuy = Number(h.egyptianBuy ?? (rawENet > 0 ? rawENet : 0));
+      const rawESell = Number(h.egyptianSell ?? (rawENet < 0 ? -rawENet : 0));
+
+      const rawHmBuy = typeof h.hotMoneyBuy === 'number' ? h.hotMoneyBuy : rawFBuy + rawABuy;
+      const rawHmSell = typeof h.hotMoneySell === 'number' ? h.hotMoneySell : rawFSell + rawASell;
       const rawTurnover = Number(h.totalTurnover || 0);
 
       const fNet = rawFNet / divisor;
       const aNet = rawANet / divisor;
       const eNet = rawENet / divisor;
       const hmNet = rawHmNet / divisor;
+
+      const foreignBuy = rawFBuy / divisor;
+      const foreignSell = rawFSell / divisor;
+      const arabBuy = rawABuy / divisor;
+      const arabSell = rawASell / divisor;
+      const egyptianBuy = rawEBuy / divisor;
+      const egyptianSell = rawESell / divisor;
+
       const hmBuy = rawHmBuy / divisor;
       const hmSell = rawHmSell / divisor;
       const totalTurnover = rawTurnover / divisor;
@@ -228,8 +244,14 @@ export default function InvestorFlowSection({
         ...h,
         usdEgpRate: fxRate,
         foreignNet: fNet,
+        foreignBuy,
+        foreignSell,
         arabNet: aNet,
+        arabBuy,
+        arabSell,
         egyptianNet: eNet,
+        egyptianBuy,
+        egyptianSell,
         hotMoneyNet: hmNet,
         hotMoneyBuy: hmBuy,
         hotMoneySell: hmSell,
@@ -988,63 +1010,100 @@ export default function InvestorFlowSection({
                     const d = payload[0].payload;
                     return (
                       <div
-                        className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50 min-w-[250px]"
+                        className="bg-[#3D3D3D] border border-white/15 rounded-xl p-3.5 shadow-2xl text-xs space-y-2 z-50 min-w-[290px] sm:min-w-[340px]"
                         dir={locale === 'ar' ? 'rtl' : 'ltr'}
                       >
-                        <div className="text-neutral-400 font-medium pb-1 border-b border-white/10 flex items-center justify-between gap-4">
-                          <span className="tabular-nums">{d.date}</span>
-                          <span className="font-semibold text-neutral-200">
-                            {locale === 'ar' ? 'الحصص السوقية' : 'Market Share'}
+                        {/* Header: Date + Title */}
+                        <div className="text-white/60 font-medium pb-2 border-b border-white/10 flex items-center justify-between gap-4">
+                          <span className="tabular-nums font-sans text-[12px] text-white/80">{d.date}</span>
+                          <span className="font-semibold text-white/90 text-[11.5px]">
+                            {locale === 'ar' ? 'الحصص السوقية والتدفقات' : 'Market Share & Flows'}
                           </span>
                         </div>
-                        <div className="space-y-1 pt-0.5">
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#2962ff]"></span>
-                              <span className="text-neutral-400">{locale === 'ar' ? 'المصريون:' : 'Egyptians:'}</span>
-                            </div>
-                            <span className="font-bold text-white tabular-nums">
-                              {d.egyptianSharePct}%{' '}
-                              <span className={`text-[11px] font-semibold ml-1 ${d.egyptianNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                                ({formatFlowVal(d.egyptianNet, locale, currency)})
-                              </span>
-                            </span>
+
+                        {/* Breakdown Table with Share %, Buy, Sell & Net */}
+                        <div className="pt-1">
+                          <div className="grid grid-cols-[1fr_repeat(3,auto)] items-center gap-2 pb-1.5 text-[10px] font-medium text-white/50 border-b border-white/5">
+                            <span>{locale === 'ar' ? 'الفئة (الحصة)' : 'Category (Share)'}</span>
+                            <span className="text-end tabular-nums w-14 sm:w-16">{locale === 'ar' ? 'شراء' : 'Buy'}</span>
+                            <span className="text-end tabular-nums w-14 sm:w-16">{locale === 'ar' ? 'بيع' : 'Sell'}</span>
+                            <span className="text-end tabular-nums w-16 sm:w-18">{locale === 'ar' ? 'الصافي' : 'Net'}</span>
                           </div>
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]"></span>
-                              <span className="text-neutral-400">{locale === 'ar' ? 'الأجانب:' : 'Foreigners:'}</span>
-                            </div>
-                            <span className="font-bold text-white tabular-nums">
-                              {d.foreignSharePct}%{' '}
-                              <span className={`text-[11px] font-semibold ml-1 ${d.foreignNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                                ({formatFlowVal(d.foreignNet, locale, currency)})
+
+                          <div className="space-y-1.5 pt-1.5">
+                            {/* Foreigners */}
+                            <div className="grid grid-cols-[1fr_repeat(3,auto)] items-center gap-2 text-[11.5px]">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b] shrink-0"></span>
+                                <span className="text-white/80 truncate text-[11px] sm:text-[11.5px]">
+                                  {locale === 'ar' ? 'الأجانب' : 'Foreigners'}{' '}
+                                  <span className="text-white/45 text-[10px] tabular-nums font-sans">({d.foreignSharePct}%)</span>
+                                </span>
+                              </div>
+                              <span className="text-end text-white/70 tabular-nums w-14 sm:w-16 font-sans text-[11px]">
+                                {formatFlowVal(d.foreignBuy, locale, currency, false)}
                               </span>
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#089981]"></span>
-                              <span className="text-neutral-400">{locale === 'ar' ? 'العرب:' : 'Arabs:'}</span>
-                            </div>
-                            <span className="font-bold text-white tabular-nums">
-                              {d.arabSharePct}%{' '}
-                              <span className={`text-[11px] font-semibold ml-1 ${d.arabNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                                ({formatFlowVal(d.arabNet, locale, currency)})
+                              <span className="text-end text-white/70 tabular-nums w-14 sm:w-16 font-sans text-[11px]">
+                                {formatFlowVal(d.foreignSell, locale, currency, false)}
                               </span>
-                            </span>
+                              <span className={`text-end font-semibold tabular-nums w-16 sm:w-18 text-[11px] sm:text-[11.5px] ${d.foreignNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                                {formatFlowVal(d.foreignNet, locale, currency, true)}
+                              </span>
+                            </div>
+
+                            {/* Arabs */}
+                            <div className="grid grid-cols-[1fr_repeat(3,auto)] items-center gap-2 text-[11.5px]">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#089981] shrink-0"></span>
+                                <span className="text-white/80 truncate text-[11px] sm:text-[11.5px]">
+                                  {locale === 'ar' ? 'العرب' : 'Arabs'}{' '}
+                                  <span className="text-white/45 text-[10px] tabular-nums font-sans">({d.arabSharePct}%)</span>
+                                </span>
+                              </div>
+                              <span className="text-end text-white/70 tabular-nums w-14 sm:w-16 font-sans text-[11px]">
+                                {formatFlowVal(d.arabBuy, locale, currency, false)}
+                              </span>
+                              <span className="text-end text-white/70 tabular-nums w-14 sm:w-16 font-sans text-[11px]">
+                                {formatFlowVal(d.arabSell, locale, currency, false)}
+                              </span>
+                              <span className={`text-end font-semibold tabular-nums w-16 sm:w-18 text-[11px] sm:text-[11.5px] ${d.arabNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                                {formatFlowVal(d.arabNet, locale, currency, true)}
+                              </span>
+                            </div>
+
+                            {/* Domestic (Egyptians) */}
+                            <div className="grid grid-cols-[1fr_repeat(3,auto)] items-center gap-2 text-[11.5px]">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#2962ff] shrink-0"></span>
+                                <span className="text-white/80 truncate text-[11px] sm:text-[11.5px]">
+                                  {locale === 'ar' ? 'المصريون' : 'Egyptians'}{' '}
+                                  <span className="text-white/45 text-[10px] tabular-nums font-sans">({d.egyptianSharePct}%)</span>
+                                </span>
+                              </div>
+                              <span className="text-end text-white/70 tabular-nums w-14 sm:w-16 font-sans text-[11px]">
+                                {formatFlowVal(d.egyptianBuy, locale, currency, false)}
+                              </span>
+                              <span className="text-end text-white/70 tabular-nums w-14 sm:w-16 font-sans text-[11px]">
+                                {formatFlowVal(d.egyptianSell, locale, currency, false)}
+                              </span>
+                              <span className={`text-end font-semibold tabular-nums w-16 sm:w-18 text-[11px] sm:text-[11.5px] ${d.egyptianNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                                {formatFlowVal(d.egyptianNet, locale, currency, true)}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between gap-4 text-plt-muted text-[11px] pt-1 border-t border-plt-border-soft">
+
+                        {/* Footer: Session Turnover & FX Rate */}
+                        <div className="flex items-center justify-between gap-4 text-white/60 text-[11px] pt-2 border-t border-white/10">
                           <span>{locale === 'ar' ? 'إجمالي التداول: ' : 'Turnover: '}</span>
-                          <span className="font-semibold text-neutral-200 tabular-nums">
+                          <span className="font-semibold text-white/90 tabular-nums font-sans">
                             {formatFlowVal(d.totalTurnover, locale, currency, false)}
                           </span>
                         </div>
                         {currency === 'USD' && d.usdEgpRate && (
-                          <div className="flex items-center justify-between gap-4 text-neutral-400 text-[10px]">
+                          <div className="flex items-center justify-between gap-4 text-white/45 text-[10px] pt-0.5">
                             <span>{locale === 'ar' ? 'سعر الصرف (USD/EGP):' : 'FX Rate (USD/EGP):'}</span>
-                            <span className="tabular-nums font-medium text-neutral-300">
+                            <span className="tabular-nums font-medium text-white/70 font-sans">
                               {Number(d.usdEgpRate).toFixed(2)}
                             </span>
                           </div>
@@ -1122,14 +1181,14 @@ export default function InvestorFlowSection({
 
                     return (
                       <div
-                        className="bg-surface-raised border border-neutral-700/80 rounded-lg p-3 shadow-2xl text-xs space-y-1.5 z-50 min-w-[260px]"
+                        className="bg-[#3D3D3D] border border-white/15 rounded-xl p-3.5 shadow-2xl text-xs space-y-2 z-50 min-w-[290px] sm:min-w-[340px]"
                         dir={locale === 'ar' ? 'rtl' : 'ltr'}
                       >
                         {/* Header: Date + Inflow/Outflow Status */}
-                        <div className="text-neutral-400 font-medium pb-1.5 border-b border-white/10 flex items-center justify-between gap-4">
-                          <span className="tabular-nums">{d.date}</span>
+                        <div className="text-white/60 font-medium pb-2 border-b border-white/10 flex items-center justify-between gap-4">
+                          <span className="tabular-nums font-sans text-[12px] text-white/80">{d.date}</span>
                           <span
-                            className={`font-semibold tabular-nums ${
+                            className={`font-semibold tabular-nums text-[11.5px] ${
                               isHmPos ? 'text-profit-num' : 'text-loss-num'
                             }`}
                           >
@@ -1144,72 +1203,108 @@ export default function InvestorFlowSection({
                         </div>
 
                         {/* Selected Metric Net Headline */}
-                        <div className="flex items-center justify-between gap-4 pt-0.5">
-                          <span className="text-neutral-400">
-                            {netFilter === 'foreign'
-                              ? locale === 'ar'
+                        <div className="flex items-center justify-between gap-4 py-1">
+                          <div className="flex flex-col">
+                            <span className="text-white/70 text-[11.5px]">
+                              {netFilter === 'foreign'
+                                ? locale === 'ar'
                                 ? 'صافي تدفق الأجانب:'
                                 : 'Foreign Net:'
-                              : netFilter === 'arab'
-                              ? locale === 'ar'
+                                : netFilter === 'arab'
+                                ? locale === 'ar'
                                 ? 'صافي تدفق العرب:'
                                 : 'Arab Net:'
-                              : locale === 'ar'
-                              ? 'صافي الساخنة:'
-                              : 'Hot Money Net:'}
-                          </span>
+                                : locale === 'ar'
+                                ? 'صافي الساخنة:'
+                                : 'Hot Money Net:'}
+                            </span>
+                            {netFilter === 'all_hot_money' && (
+                              <span className="text-[10px] text-white/45 tabular-nums font-sans">
+                                {locale === 'ar' ? 'شراء' : 'Buy'}: {formatFlowVal(d.hotMoneyBuy, locale, currency, false)} • {locale === 'ar' ? 'بيع' : 'Sell'}: {formatFlowVal(d.hotMoneySell, locale, currency, false)}
+                              </span>
+                            )}
+                          </div>
                           <span className={`font-bold tabular-nums text-sm ${isPos ? 'text-profit-num' : 'text-loss-num'}`}>
                             {formatFlowVal(activeVal, locale, currency)}
                           </span>
                         </div>
 
-                        {/* Breakdown Rows */}
-                        <div className="space-y-1 pt-1 border-t border-plt-border-soft">
-                          {/* Foreigners */}
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]"></span>
-                              <span className="text-neutral-400">{locale === 'ar' ? 'الأجانب:' : 'Foreigners:'}</span>
-                            </div>
-                            <span className={`font-semibold tabular-nums ${d.foreignNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                              {formatFlowVal(d.foreignNet, locale, currency)}
-                            </span>
+                        {/* Breakdown Table with Buy, Sell & Net */}
+                        <div className="pt-2 border-t border-white/10">
+                          {/* Table Column Headers */}
+                          <div className="grid grid-cols-[1fr_repeat(3,auto)] items-center gap-2 pb-1.5 text-[10px] font-medium text-white/50 border-b border-white/5">
+                            <span>{locale === 'ar' ? 'الفئة' : 'Category'}</span>
+                            <span className="text-end tabular-nums w-14 sm:w-16">{locale === 'ar' ? 'شراء' : 'Buy'}</span>
+                            <span className="text-end tabular-nums w-14 sm:w-16">{locale === 'ar' ? 'بيع' : 'Sell'}</span>
+                            <span className="text-end tabular-nums w-16 sm:w-18">{locale === 'ar' ? 'الصافي' : 'Net'}</span>
                           </div>
 
-                          {/* Arabs */}
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#089981]"></span>
-                              <span className="text-neutral-400">{locale === 'ar' ? 'العرب:' : 'Arabs:'}</span>
+                          {/* Table Data Rows */}
+                          <div className="space-y-1.5 pt-1.5">
+                            {/* Foreigners */}
+                            <div className="grid grid-cols-[1fr_repeat(3,auto)] items-center gap-2 text-[11.5px]">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#f59e0b] shrink-0"></span>
+                                <span className="text-white/80 truncate text-[11px] sm:text-[11.5px]">{locale === 'ar' ? 'الأجانب' : 'Foreigners'}</span>
+                              </div>
+                              <span className="text-end text-white/70 tabular-nums w-14 sm:w-16 font-sans text-[11px]">
+                                {formatFlowVal(d.foreignBuy, locale, currency, false)}
+                              </span>
+                              <span className="text-end text-white/70 tabular-nums w-14 sm:w-16 font-sans text-[11px]">
+                                {formatFlowVal(d.foreignSell, locale, currency, false)}
+                              </span>
+                              <span className={`text-end font-semibold tabular-nums w-16 sm:w-18 text-[11px] sm:text-[11.5px] ${d.foreignNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                                {formatFlowVal(d.foreignNet, locale, currency, true)}
+                              </span>
                             </div>
-                            <span className={`font-semibold tabular-nums ${d.arabNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                              {formatFlowVal(d.arabNet, locale, currency)}
-                            </span>
-                          </div>
 
-                          {/* Domestic (Egyptians) */}
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#2962ff]"></span>
-                              <span className="text-neutral-400">{locale === 'ar' ? 'المصريون:' : 'Egyptians:'}</span>
+                            {/* Arabs */}
+                            <div className="grid grid-cols-[1fr_repeat(3,auto)] items-center gap-2 text-[11.5px]">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#089981] shrink-0"></span>
+                                <span className="text-white/80 truncate text-[11px] sm:text-[11.5px]">{locale === 'ar' ? 'العرب' : 'Arabs'}</span>
+                              </div>
+                              <span className="text-end text-white/70 tabular-nums w-14 sm:w-16 font-sans text-[11px]">
+                                {formatFlowVal(d.arabBuy, locale, currency, false)}
+                              </span>
+                              <span className="text-end text-white/70 tabular-nums w-14 sm:w-16 font-sans text-[11px]">
+                                {formatFlowVal(d.arabSell, locale, currency, false)}
+                              </span>
+                              <span className={`text-end font-semibold tabular-nums w-16 sm:w-18 text-[11px] sm:text-[11.5px] ${d.arabNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                                {formatFlowVal(d.arabNet, locale, currency, true)}
+                              </span>
                             </div>
-                            <span className={`font-semibold tabular-nums ${d.egyptianNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
-                              {formatFlowVal(d.egyptianNet, locale, currency)}
-                            </span>
+
+                            {/* Domestic (Egyptians) */}
+                            <div className="grid grid-cols-[1fr_repeat(3,auto)] items-center gap-2 text-[11.5px]">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#2962ff] shrink-0"></span>
+                                <span className="text-white/80 truncate text-[11px] sm:text-[11.5px]">{locale === 'ar' ? 'المصريون' : 'Egyptians'}</span>
+                              </div>
+                              <span className="text-end text-white/70 tabular-nums w-14 sm:w-16 font-sans text-[11px]">
+                                {formatFlowVal(d.egyptianBuy, locale, currency, false)}
+                              </span>
+                              <span className="text-end text-white/70 tabular-nums w-14 sm:w-16 font-sans text-[11px]">
+                                {formatFlowVal(d.egyptianSell, locale, currency, false)}
+                              </span>
+                              <span className={`text-end font-semibold tabular-nums w-16 sm:w-18 text-[11px] sm:text-[11.5px] ${d.egyptianNet >= 0 ? 'text-profit-num' : 'text-loss-num'}`}>
+                                {formatFlowVal(d.egyptianNet, locale, currency, true)}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
                         {/* Footer: Session Turnover & FX Rate */}
-                        <div className="flex items-center justify-between gap-4 text-plt-muted text-[11px] pt-1.5 border-t border-plt-border-soft">
+                        <div className="flex items-center justify-between gap-4 text-white/60 text-[11px] pt-2 border-t border-white/10">
                           <span>{locale === 'ar' ? 'إجمالي التداول: ' : 'Turnover: '}</span>
-                          <span className="font-semibold text-neutral-200 tabular-nums">
+                          <span className="font-semibold text-white/90 tabular-nums font-sans">
                             {formatFlowVal(d.totalTurnover, locale, currency, false)}
                           </span>
                         </div>
                         {currency === 'USD' && d.usdEgpRate && (
-                          <div className="flex items-center justify-between gap-4 text-neutral-400 text-[10px]">
+                          <div className="flex items-center justify-between gap-4 text-white/45 text-[10px] pt-0.5">
                             <span>{locale === 'ar' ? 'سعر الصرف (USD/EGP):' : 'FX Rate (USD/EGP):'}</span>
-                            <span className="tabular-nums font-medium text-neutral-300">
+                            <span className="tabular-nums font-medium text-white/70 font-sans">
                               {Number(d.usdEgpRate).toFixed(2)}
                             </span>
                           </div>
