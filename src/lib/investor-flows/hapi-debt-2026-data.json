@@ -1960,5 +1960,41 @@
       "arSell": 0,
       "arNet": 0
     }
+  },
+  "2026-10-25": {
+    "bills": {
+      "frBuy": 173100,
+      "frSell": 0,
+      "frNet": 173100,
+      "arBuy": 17110000,
+      "arSell": 17111420,
+      "arNet": -1420
+    },
+    "bonds": {
+      "frBuy": 0,
+      "frSell": 0,
+      "frNet": 0,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
+  },
+  "2026-10-26": {
+    "bills": {
+      "frBuy": 368970000,
+      "frSell": 1069500000,
+      "frNet": -700530000,
+      "arBuy": 170580000,
+      "arSell": 153670000,
+      "arNet": 16910000
+    },
+    "bonds": {
+      "frBuy": 50150000,
+      "frSell": 30860000,
+      "frNet": 19290000,
+      "arBuy": 0,
+      "arSell": 0,
+      "arNet": 0
+    }
   }
 }
