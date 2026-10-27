@@ -22,6 +22,7 @@ import {
   Activity,
 } from '@/components/ui/icon-library';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
+import { useUnreadNotificationCount } from '@/lib/notifications/unread-tracker';
 import PrivacyToggleButton from '@/components/platform/PrivacyToggleButton';
 import LanguageToggleButton from './LanguageToggleButton';
 import ThemeToggleButton from './ThemeToggleButton';
@@ -138,7 +139,7 @@ function NotificationsNavItem({
         >
           <Bell ref={iconRef} size={20} strokeWidth={1.5} />
           {count > 0 && (
-            <span className="absolute -top-1 -end-1 min-w-[17px] h-[17px] px-1 rounded-full bg-gradient-to-r from-[#00BCE6] via-[#2962FF] to-[#D500F9] text-white text-[9px] font-sans font-bold tabular-nums flex items-center justify-center ring-2 ring-plt-base shadow-[0_0_8px_rgba(41,98,255,0.45)] leading-none select-none pointer-events-none">
+            <span className="absolute -top-1 -end-1 min-w-[17px] h-[17px] px-1 rounded-full bg-[#2962FF] text-white text-[9px] font-sans font-bold tabular-nums flex items-center justify-center ring-2 ring-plt-base shadow-[0_0_8px_rgba(41,98,255,0.45)] leading-none select-none pointer-events-none">
               {count > 9 ? '9+' : count}
             </span>
           )}
@@ -191,7 +192,10 @@ export default function SidebarNav() {
     isPaused: () => typeof document !== 'undefined' && document.visibilityState === 'hidden',
   });
 
-  const notificationCount = isHeroScene ? HERO_SCENE_NOTIFICATIONS.length : notifData?.notifications?.length ?? 0;
+  const notificationCount = useUnreadNotificationCount(
+    isHeroScene ? HERO_SCENE_NOTIFICATIONS : (notifData?.notifications as any),
+    isHeroScene
+  );
 
   const isConsole = pathname.startsWith('/console');
 

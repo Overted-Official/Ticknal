@@ -27,6 +27,11 @@ import type { MarketNewsItemDTO } from '@/lib/news/news-service';
 import { resolveSourceMeta, TRADINGVIEW_LOGOS } from '@/lib/news/source-meta';
 import TurboStar from '@/components/ui/TurboStar';
 import { isTurboQualified } from '@/lib/finance/turbo-client';
+import {
+  markNotificationsAsRead,
+  getLastReadCheckpoint,
+  isSignalItemUnread,
+} from '@/lib/notifications/unread-tracker';
 
 function getLocalizedNewsText(item: MarketNewsItemDTO, isAr: boolean): { title: string; summary: string } {
   const title = (isAr && item.content ? item.content : item.title) || item.title;
@@ -214,6 +219,16 @@ export default function NotificationsDrawer({
   // AddOrderModal state
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [orderInitialData, setOrderInitialData] = useState<InitialOrderData | null>(null);
+  const [openingCheckpoint, setOpeningCheckpoint] = useState<{ lastReadTime: number; lastReadId: number } | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setOpeningCheckpoint(getLastReadCheckpoint());
+    } else {
+      setOpeningCheckpoint(null);
+    }
+  }, [isOpen]);
+
   const [brokerageAccounts, setBrokerageAccounts] = useState<BrokerageAccountOption[]>([]);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
 
@@ -234,6 +249,15 @@ export default function NotificationsDrawer({
       return new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime();
     });
   }, [sceneNotifications, signalsData?.notifications]);
+
+  useEffect(() => {
+    if (!isOpen || sceneNotifications) return;
+    if (notifications.length > 0) {
+      markNotificationsAsRead(notifications);
+    } else if (!isLoadingSignals && signalsData) {
+      markNotificationsAsRead([]);
+    }
+  }, [isOpen, sceneNotifications, notifications, isLoadingSignals, signalsData]);
 
   const regimeCounts = useMemo(() => {
     const counts = { all: notifications.length, Leading: 0, Improving: 0, Weakening: 0, Lagging: 0 };
@@ -316,7 +340,10 @@ export default function NotificationsDrawer({
     setIsClearing(true);
     try {
       const res = await fetch('/api/notifications', { method: 'DELETE' });
-      if (res.ok) mutateSignals({ notifications: [] }, false);
+      if (res.ok) {
+        markNotificationsAsRead([]);
+        mutateSignals({ notifications: [] }, false);
+      }
     } catch (err) {
       console.error('Failed to clear notifications:', err);
     } finally {
@@ -628,6 +655,7 @@ export default function NotificationsDrawer({
                             const isBuy = item.signal.toUpperCase().includes('BUY');
                             const cleanSymbol = item.tickerSymbol.replace('.CA', '');
                             const regime = getRegimeBadge(item.rotationRegime, isAr);
+                            const isUnread = openingCheckpoint ? isSignalItemUnread(item, openingCheckpoint) : false;
 
                             return (
                               <div
@@ -651,6 +679,9 @@ export default function NotificationsDrawer({
                                     {/* Sub-line: Ticker pill + sector · regime */}
                                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap leading-none">
                                       <span className="inline-flex items-center gap-1 px-1 py-0.2 rounded text-[9.5px] font-semibold bg-plt-hover text-plt-text border border-plt-border uppercase tracking-wider font-sans">
+                                        {isUnread && (
+                                          <span className="w-1.5 h-1.5 rounded-full bg-[#00BCE6] shadow-[0_0_6px_rgba(0,188,230,0.6)] shrink-0" title={isAr ? 'إشارة جديدة' : 'New signal'} />
+                                        )}
                                         <span>{cleanSymbol}</span>
                                         <TurboStar symbol={cleanSymbol} signalDate={item.signalDate} size="xs" />
                                       </span>

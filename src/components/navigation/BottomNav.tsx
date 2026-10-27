@@ -23,6 +23,7 @@ import {
   Activity,
 } from '@/components/ui/icon-library';
 import NotificationsDrawer from '@/components/platform/NotificationsDrawer';
+import { useUnreadNotificationCount } from '@/lib/notifications/unread-tracker';
 import QuickAddDrawer from '@/components/platform/QuickAddDrawer';
 import MobileMoreDrawer from './MobileMoreDrawer';
 import { useMobileNavScroll } from '@/context/MobileNavScrollContext';
@@ -319,7 +320,10 @@ export default function BottomNav() {
     isPaused: () => typeof document !== 'undefined' && document.visibilityState === 'hidden',
   });
 
-  const notificationCount = isHeroScene ? HERO_SCENE_NOTIFICATIONS.length : notifData?.notifications?.length ?? 0;
+  const notificationCount = useUnreadNotificationCount(
+    isHeroScene ? HERO_SCENE_NOTIFICATIONS : (notifData?.notifications as any),
+    isHeroScene
+  );
 
   // Resolve active navigation tab based on the current URL
   const routeNavId = useMemo<NavItemId>(() => {
@@ -412,7 +416,7 @@ export default function BottomNav() {
             >
               <Bell size={20} strokeWidth={1.8} className="text-plt-text" />
               {notificationCount > 0 && (
-                <span className="absolute -top-1 -end-1 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-r from-[#00BCE6] via-[#2962FF] to-[#D500F9] text-white text-[9.5px] font-sans font-bold tabular-nums flex items-center justify-center ring-2 ring-plt-base shadow-[0_0_8px_rgba(41,98,255,0.45)] leading-none select-none pointer-events-none">
+                <span className="absolute -top-1 -end-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#2962FF] text-white text-[9.5px] font-sans font-bold tabular-nums flex items-center justify-center ring-2 ring-plt-base shadow-[0_0_8px_rgba(41,98,255,0.45)] leading-none select-none pointer-events-none">
                   {notificationCount > 9 ? '9+' : notificationCount}
                 </span>
               )}
