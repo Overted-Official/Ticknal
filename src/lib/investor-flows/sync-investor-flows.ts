@@ -7,7 +7,10 @@ import {
   fetchOfficialInvestorFlowForDate,
   buildInvestorFlowRow,
 } from '@/lib/investor-flows/fetch-official-investor-flows';
-import { fetchOfficialEgxMultiSegmentFlows } from '@/lib/investor-flows/fetch-egx-official-page';
+import {
+  fetchOfficialEgxMultiSegmentFlows,
+  getLastEgxScrapeFailure,
+} from '@/lib/investor-flows/fetch-egx-official-page';
 
 export interface ManualInvestorFlowInput {
   date: string;
@@ -227,7 +230,11 @@ export async function syncDailyInvestorFlows(options?: {
   const existingBillsRow = existingSegments.find((r) => r.marketSegment === 'BILLS');
   const existingStocksRow = existingSegments.find((r) => r.marketSegment === 'STOCKS');
 
-  const primaryRow = (existingTotalRow && existingBillsRow) ? existingTotalRow : existingStocksRow;
+  // A session is only "complete" once the official TOTAL + BILLS rows exist. A lone STOCKS row (written by the
+  // news-bulletin fallback) must NOT short-circuit the sync, otherwise the official multi-segment scrape is never
+  // retried and the day stays stocks-only (no bonds / T-bills) forever.
+  const isSessionComplete = Boolean(existingTotalRow && existingBillsRow);
+  const primaryRow = isSessionComplete ? existingTotalRow : undefined;
 
   if (
     !options?.forceRefresh &&
@@ -343,6 +350,22 @@ export async function syncDailyInvestorFlows(options?: {
         };
       }
     }
+
+    // Make official-scrape failures visible instead of silently degrading to the stocks-only fallback.
+    await db.insert(systemLogs).values({
+      source: 'cron-investor-flows',
+      level: 'ERROR',
+      message: `Official EGX multi-segment scrape did not produce TOTAL/BONDS/BILLS for ${dateStr}; falling back to equities-only source. Reason: ${
+        officialSegments
+          ? 'scraped data rejected (missing TOTAL, <2 segments, or duplicate of prior session)'
+          : getLastEgxScrapeFailure() || 'unknown'
+      }`,
+      metadata: {
+        date: dateStr,
+        segmentsScraped: officialSegments?.map((s) => s.marketSegment) ?? [],
+        reason: getLastEgxScrapeFailure(),
+      },
+    });
   }
 
   // 6. Secondary Fallback Source: Verified Official Closing Bulletin via Al Borsa (STOCKS segment)

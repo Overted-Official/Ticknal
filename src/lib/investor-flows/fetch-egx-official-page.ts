@@ -168,7 +168,7 @@ async function waitForRealPage(page: any, label: string, maxAttempts = 20): Prom
   for (let i = 1; i <= maxAttempts; i++) {
     await page.waitForTimeout(1500);
     try {
-      const textLen = await page.evaluate(() => document.body?.innerText?.length || 0);
+      const textLen = await page.evaluate('document.body ? document.body.innerText.length : 0');
       if (textLen > 600) {
         return true;
       }
@@ -177,15 +177,23 @@ async function waitForRealPage(page: any, label: string, maxAttempts = 20): Prom
   return false;
 }
 
+/** Human-readable reason for the most recent scrape failure (surfaced in system_logs by the sync job). */
+let lastScrapeFailure: string | null = null;
+export function getLastEgxScrapeFailure(): string | null {
+  return lastScrapeFailure;
+}
+
 /**
  * Scrapes all 4 official EGX investor flow segments (TOTAL, STOCKS, BONDS, BILLS)
  * directly from https://www.egx.com.eg/en/InvestorsTypeCharts.aspx using Playwright with stealth parameters.
  */
 export async function fetchOfficialEgxMultiSegmentFlows(): Promise<OfficialEgxSegmentRow[] | null> {
   let browser: any = null;
+  lastScrapeFailure = null;
   try {
     const pw = await import('playwright').catch(() => null);
     if (!pw || !pw.chromium) {
+      lastScrapeFailure = 'playwright module/chromium unavailable';
       return null;
     }
 
@@ -217,6 +225,7 @@ export async function fetchOfficialEgxMultiSegmentFlows(): Promise<OfficialEgxSe
     const homeLoaded = await waitForRealPage(page, 'Home');
     if (!homeLoaded) {
       console.warn('EGX homepage challenge did not resolve in time.');
+      lastScrapeFailure = 'EGX homepage F5 challenge did not resolve (possible datacenter IP block)';
       return null;
     }
 
@@ -228,44 +237,44 @@ export async function fetchOfficialEgxMultiSegmentFlows(): Promise<OfficialEgxSe
     const pageLoaded = await waitForRealPage(page, 'InvestorsTypeCharts');
     if (!pageLoaded) {
       console.warn('EGX InvestorsTypeCharts did not load in time.');
+      lastScrapeFailure = 'EGX InvestorsTypeCharts page did not load in time';
       return null;
     }
 
-    const extractTables = async (): Promise<Array<{ rows: string[][] }>> => {
-      return page.evaluate(() => {
-        const getGridRows = (id: string) => {
-          const div = document.getElementById(id);
-          if (!div) return null;
-          const table = div.querySelector('table');
-          if (!table) return null;
-          const rows = Array.from(table.querySelectorAll('tr')).map((tr) =>
-            Array.from(tr.querySelectorAll('th, td')).map((td) => (td as HTMLElement).innerText.trim())
-          );
-          return rows.length >= 4 ? rows : null;
-        };
+    // IMPORTANT: this is a plain string on purpose. Passing a TS function to page.evaluate() gets transpiled by
+    // tsx/esbuild (keepNames injects `__name(...)` calls) and then throws "ReferenceError: __name is not defined"
+    // inside the browser. A string expression is evaluated verbatim and is immune to any transpiler.
+    const EXTRACT_TABLES_SCRIPT = `(() => {
+      var grid = function (id) {
+        var div = document.getElementById(id);
+        if (!div) return null;
+        var table = div.querySelector('table');
+        if (!table) return null;
+        var rows = Array.prototype.slice.call(table.querySelectorAll('tr')).map(function (tr) {
+          return Array.prototype.slice.call(tr.querySelectorAll('th, td')).map(function (td) { return td.innerText.trim(); });
+        });
+        return rows.length >= 4 ? rows : null;
+      };
+      var all = grid('AllGrd');
+      var ind = grid('IndividualsGrd');
+      var inst = grid('InstitutesGrd');
+      if (all && ind && inst) return [{ rows: all }, { rows: ind }, { rows: inst }];
 
-        const all = getGridRows('AllGrd');
-        const ind = getGridRows('IndividualsGrd');
-        const inst = getGridRows('InstitutesGrd');
-
-        if (all && ind && inst) {
-          return [{ rows: all }, { rows: ind }, { rows: inst }];
+      var clean = [];
+      Array.prototype.slice.call(document.querySelectorAll('table')).forEach(function (t) {
+        if (t.querySelector('table')) return;
+        var rows = Array.prototype.slice.call(t.querySelectorAll('tr')).map(function (tr) {
+          return Array.prototype.slice.call(tr.querySelectorAll('th, td')).map(function (td) { return td.innerText.trim(); });
+        });
+        if (rows.length === 4 && rows[0] && rows[0].some(function (c) { return /Sell Value/i.test(c); })) {
+          clean.push({ rows: rows });
         }
-
-        // Fallback: search all tables on page
-        const tables = Array.from(document.querySelectorAll('table'));
-        const clean: Array<{ rows: string[][] }> = [];
-        for (const t of tables) {
-          if (t.querySelector('table')) continue;
-          const rows = Array.from(t.querySelectorAll('tr')).map((tr) =>
-            Array.from(tr.querySelectorAll('th, td')).map((td) => (td as HTMLElement).innerText.trim())
-          );
-          if (rows.length === 4 && rows[0]?.some((c) => /Sell Value/i.test(c))) {
-            clean.push({ rows });
-          }
-        }
-        return clean;
       });
+      return clean;
+    })()`;
+
+    const extractTables = async (): Promise<Array<{ rows: string[][] }>> => {
+      return (await page.evaluate(EXTRACT_TABLES_SCRIPT)) as Array<{ rows: string[][] }>;
     };
 
     const optionMap: Array<{ val: string; segment: 'TOTAL' | 'STOCKS' | 'BONDS' | 'BILLS' }> = [
@@ -292,10 +301,14 @@ export async function fetchOfficialEgxMultiSegmentFlows(): Promise<OfficialEgxSe
       }
     }
 
-    if (results.length === 0) return null;
+    if (results.length === 0) {
+      lastScrapeFailure = 'EGX tables loaded but no segment parsed/validated (zero-sum or layout change)';
+      return null;
+    }
     return results;
   } catch (err) {
     console.warn('Official EGX Playwright multi-segment scrape warning:', err);
+    lastScrapeFailure = `scrape exception: ${err instanceof Error ? err.message.split('\n')[0] : String(err)}`;
     return null;
   } finally {
     if (browser) {
