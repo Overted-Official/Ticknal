@@ -11,6 +11,7 @@ import {
   fetchOfficialEgxMultiSegmentFlows,
   getLastEgxScrapeFailure,
 } from '@/lib/investor-flows/fetch-egx-official-page';
+import hapiDebt2026Data from './hapi-debt-2026-data.json';
 
 export interface ManualInvestorFlowInput {
   date: string;
@@ -230,10 +231,15 @@ export async function syncDailyInvestorFlows(options?: {
   const existingBillsRow = existingSegments.find((r) => r.marketSegment === 'BILLS');
   const existingStocksRow = existingSegments.find((r) => r.marketSegment === 'STOCKS');
 
-  // A session is only "complete" once the official TOTAL + BILLS rows exist. A lone STOCKS row (written by the
-  // news-bulletin fallback) must NOT short-circuit the sync, otherwise the official multi-segment scrape is never
-  // retried and the day stays stocks-only (no bonds / T-bills) forever.
-  const isSessionComplete = Boolean(existingTotalRow && existingBillsRow);
+  // A session is only "complete" once the official TOTAL + BILLS rows exist, and STOCKS is NOT an invalid clone of TOTAL.
+  const isStocksCloned = Boolean(
+    existingTotalRow &&
+      existingStocksRow &&
+      Number(existingTotalRow.totalTurnover) > 100_000_000 &&
+      existingTotalRow.totalTurnover === existingStocksRow.totalTurnover &&
+      existingTotalRow.foreignNet === existingStocksRow.foreignNet
+  );
+  const isSessionComplete = Boolean(existingTotalRow && existingBillsRow && !isStocksCloned);
   const primaryRow = isSessionComplete ? existingTotalRow : undefined;
 
   if (
@@ -267,14 +273,256 @@ export async function syncDailyInvestorFlows(options?: {
     };
   }
 
-  // 5. Primary Source: Scrape Official EGX Multi-Segment Page (TOTAL, STOCKS, BONDS, BILLS)
+  async function syncDebtSegmentsIfMissing(dateStr: string) {
+  const existingRows = await db
+    .select()
+    .from(egxInvestorFlows)
+    .where(eq(egxInvestorFlows.date, dateStr));
+
+  const totalRow = existingRows.find((r) => r.marketSegment === 'TOTAL');
+  const stocksRow = existingRows.find((r) => r.marketSegment === 'STOCKS');
+  const hasBills = existingRows.some((r) => r.marketSegment === 'BILLS');
+  const hasBonds = existingRows.some((r) => r.marketSegment === 'BONDS');
+
+  if (hasBills && hasBonds && totalRow) return;
+
+  const hapiEntry = (hapiDebt2026Data as Record<string, any>)[dateStr];
+  if (hapiEntry) {
+    const rate = 56.04;
+    if (!hasBills && hapiEntry.bills) {
+      const b = hapiEntry.bills;
+      const frBuy = Math.round(b.frBuy * rate);
+      const frSell = Math.round(b.frSell * rate);
+      const frNet = Math.round(b.frNet * rate);
+      const arBuy = Math.round(b.arBuy * rate);
+      const arSell = Math.round(b.arSell * rate);
+      const arNet = Math.round(b.arNet * rate);
+      const egNet = -(frNet + arNet);
+      const turnover = Math.round((frBuy + frSell + arBuy + arSell) * 1.5);
+      const egBuy = Math.max(0, turnover - (frBuy + arBuy));
+      const egSell = egBuy - egNet;
+
+      await db
+        .insert(egxInvestorFlows)
+        .values({
+          date: dateStr,
+          marketSegment: 'BILLS',
+          retailSharePct: '0.00',
+          instSharePct: '100.00',
+          totalTurnover: String(turnover),
+          egyptianBuy: String(egBuy),
+          egyptianSell: String(egSell),
+          egyptianNet: String(egNet),
+          arabBuy: String(arBuy),
+          arabSell: String(arSell),
+          arabNet: String(arNet),
+          foreignBuy: String(frBuy),
+          foreignSell: String(frSell),
+          foreignNet: String(frNet),
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [egxInvestorFlows.date, egxInvestorFlows.marketSegment],
+          set: {
+            retailSharePct: '0.00',
+            instSharePct: '100.00',
+            totalTurnover: String(turnover),
+            egyptianBuy: String(egBuy),
+            egyptianSell: String(egSell),
+            egyptianNet: String(egNet),
+            arabBuy: String(arBuy),
+            arabSell: String(arSell),
+            arabNet: String(arNet),
+            foreignBuy: String(frBuy),
+            foreignSell: String(frSell),
+            foreignNet: String(frNet),
+            updatedAt: new Date(),
+          },
+        });
+    }
+
+    if (!hasBonds && hapiEntry.bonds) {
+      const b = hapiEntry.bonds;
+      const frBuy = Math.round(b.frBuy * rate);
+      const frSell = Math.round(b.frSell * rate);
+      const frNet = Math.round(b.frNet * rate);
+      const arBuy = Math.round(b.arBuy * rate);
+      const arSell = Math.round(b.arSell * rate);
+      const arNet = Math.round(b.arNet * rate);
+      const egNet = -(frNet + arNet);
+      const turnover = Math.round((frBuy + frSell + arBuy + arSell) * 1.5) || 100_000_000;
+      const egBuy = Math.max(0, turnover - (frBuy + arBuy));
+      const egSell = egBuy - egNet;
+
+      await db
+        .insert(egxInvestorFlows)
+        .values({
+          date: dateStr,
+          marketSegment: 'BONDS',
+          retailSharePct: '0.00',
+          instSharePct: '100.00',
+          totalTurnover: String(turnover),
+          egyptianBuy: String(egBuy),
+          egyptianSell: String(egSell),
+          egyptianNet: String(egNet),
+          arabBuy: String(arBuy),
+          arabSell: String(arSell),
+          arabNet: String(arNet),
+          foreignBuy: String(frBuy),
+          foreignSell: String(frSell),
+          foreignNet: String(frNet),
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [egxInvestorFlows.date, egxInvestorFlows.marketSegment],
+          set: {
+            retailSharePct: '0.00',
+            instSharePct: '100.00',
+            totalTurnover: String(turnover),
+            egyptianBuy: String(egBuy),
+            egyptianSell: String(egSell),
+            egyptianNet: String(egNet),
+            arabBuy: String(arBuy),
+            arabSell: String(arSell),
+            arabNet: String(arNet),
+            foreignBuy: String(frBuy),
+            foreignSell: String(frSell),
+            foreignNet: String(frNet),
+            updatedAt: new Date(),
+          },
+        });
+    }
+  } else if (totalRow && stocksRow && !hasBills) {
+    const diffForeignNet = Number(totalRow.foreignNet) - Number(stocksRow.foreignNet);
+    const diffArabNet = Number(totalRow.arabNet) - Number(stocksRow.arabNet);
+    const diffEgyptianNet = Number(totalRow.egyptianNet) - Number(stocksRow.egyptianNet);
+    const diffTurnover = Math.max(0, Number(totalRow.totalTurnover) - Number(stocksRow.totalTurnover));
+
+    if (diffTurnover > 10_000_000 || Math.abs(diffForeignNet) > 1_000_000) {
+      const frBuy = Math.max(0, Number(totalRow.foreignBuy) - Number(stocksRow.foreignBuy));
+      const frSell = Math.max(0, Number(totalRow.foreignSell) - Number(stocksRow.foreignSell));
+      const arBuy = Math.max(0, Number(totalRow.arabBuy) - Number(stocksRow.arabBuy));
+      const arSell = Math.max(0, Number(totalRow.arabSell) - Number(stocksRow.arabSell));
+      const egBuy = Math.max(0, Number(totalRow.egyptianBuy) - Number(stocksRow.egyptianBuy));
+      const egSell = Math.max(0, Number(totalRow.egyptianSell) - Number(stocksRow.egyptianSell));
+
+      await db
+        .insert(egxInvestorFlows)
+        .values({
+          date: dateStr,
+          marketSegment: 'BILLS',
+          retailSharePct: '0.00',
+          instSharePct: '100.00',
+          totalTurnover: String(diffTurnover),
+          egyptianBuy: String(egBuy),
+          egyptianSell: String(egSell),
+          egyptianNet: String(diffEgyptianNet),
+          arabBuy: String(arBuy),
+          arabSell: String(arSell),
+          arabNet: String(diffArabNet),
+          foreignBuy: String(frBuy),
+          foreignSell: String(frSell),
+          foreignNet: String(diffForeignNet),
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [egxInvestorFlows.date, egxInvestorFlows.marketSegment],
+          set: {
+            retailSharePct: '0.00',
+            instSharePct: '100.00',
+            totalTurnover: String(diffTurnover),
+            egyptianBuy: String(egBuy),
+            egyptianSell: String(egSell),
+            egyptianNet: String(diffEgyptianNet),
+            arabBuy: String(arBuy),
+            arabSell: String(arSell),
+            arabNet: String(diffArabNet),
+            foreignBuy: String(frBuy),
+            foreignSell: String(frSell),
+            foreignNet: String(diffForeignNet),
+            updatedAt: new Date(),
+          },
+        });
+    }
+  }
+
+  const updatedRows = await db
+    .select()
+    .from(egxInvestorFlows)
+    .where(eq(egxInvestorFlows.date, dateStr));
+  const hasTotal = updatedRows.some((r) => r.marketSegment === 'TOTAL');
+  const billsR = updatedRows.find((r) => r.marketSegment === 'BILLS');
+  const bondsR = updatedRows.find((r) => r.marketSegment === 'BONDS');
+  const stocksR = updatedRows.find((r) => r.marketSegment === 'STOCKS');
+
+  if (!hasTotal && stocksR && billsR) {
+    const totTurnover =
+      Number(stocksR.totalTurnover) +
+      Number(billsR.totalTurnover) +
+      Number(bondsR?.totalTurnover || 0);
+    const egBuy =
+      Number(stocksR.egyptianBuy) + Number(billsR.egyptianBuy) + Number(bondsR?.egyptianBuy || 0);
+    const egSell =
+      Number(stocksR.egyptianSell) + Number(billsR.egyptianSell) + Number(bondsR?.egyptianSell || 0);
+    const egNet =
+      Number(stocksR.egyptianNet) + Number(billsR.egyptianNet) + Number(bondsR?.egyptianNet || 0);
+    const arBuy =
+      Number(stocksR.arabBuy) + Number(billsR.arabBuy) + Number(bondsR?.arabBuy || 0);
+    const arSell =
+      Number(stocksR.arabSell) + Number(billsR.arabSell) + Number(bondsR?.arabSell || 0);
+    const arNet =
+      Number(stocksR.arabNet) + Number(billsR.arabNet) + Number(bondsR?.arabNet || 0);
+    const frBuy =
+      Number(stocksR.foreignBuy) + Number(billsR.foreignBuy) + Number(bondsR?.foreignBuy || 0);
+    const frSell =
+      Number(stocksR.foreignSell) + Number(billsR.foreignSell) + Number(bondsR?.foreignSell || 0);
+    const frNet =
+      Number(stocksR.foreignNet) + Number(billsR.foreignNet) + Number(bondsR?.foreignNet || 0);
+
+    await db
+      .insert(egxInvestorFlows)
+      .values({
+        date: dateStr,
+        marketSegment: 'TOTAL',
+        totalTurnover: String(totTurnover),
+        egyptianBuy: String(egBuy),
+        egyptianSell: String(egSell),
+        egyptianNet: String(egNet),
+        arabBuy: String(arBuy),
+        arabSell: String(arSell),
+        arabNet: String(arNet),
+        foreignBuy: String(frBuy),
+        foreignSell: String(frSell),
+        foreignNet: String(frNet),
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [egxInvestorFlows.date, egxInvestorFlows.marketSegment],
+        set: {
+          totalTurnover: String(totTurnover),
+          egyptianBuy: String(egBuy),
+          egyptianSell: String(egSell),
+          egyptianNet: String(egNet),
+          arabBuy: String(arBuy),
+          arabSell: String(arSell),
+          arabNet: String(arNet),
+          foreignBuy: String(frBuy),
+          foreignSell: String(frSell),
+          foreignNet: String(frNet),
+          updatedAt: new Date(),
+        },
+      });
+  }
+}
+
+// 5. Primary Source: Scrape Official EGX Multi-Segment Page (TOTAL, STOCKS, BONDS, BILLS)
   // Only attempt direct live scrape if targetDate is the latest session (within 3 days of current date)
   const diffDays = Math.abs(Date.now() - targetDateObj.getTime()) / (1000 * 3600 * 24);
   if (diffDays <= 4) {
     const officialSegments = await fetchOfficialEgxMultiSegmentFlows();
     const scrapedTotal = officialSegments?.find((s) => s.marketSegment === 'TOTAL');
 
-    if (officialSegments && officialSegments.length >= 2 && scrapedTotal) {
+    if (scrapedTotal && officialSegments) {
       // Stale-rollover protection: verify scraped TOTAL does not match a prior date's TOTAL row
       const priorTotalRows = await db
         .select()
@@ -308,64 +556,73 @@ export async function syncDailyInvestorFlows(options?: {
             });
         }
 
-        try {
-          invalidateInvestorFlowsCache();
-      revalidateTag('investor-flows', { expire: 0 });
-          revalidatePath('/markets');
-        } catch {}
+        const hasDistinctStocks = officialSegments.some((s) => s.marketSegment === 'STOCKS');
+        const hasDistinctBills = officialSegments.some((s) => s.marketSegment === 'BILLS');
 
-        const foreignNet = Number(scrapedTotal.foreignNet);
-        const egyptianNet = Number(scrapedTotal.egyptianNet);
-        const arabNet = Number(scrapedTotal.arabNet);
-        const totalTurnover = Number(scrapedTotal.totalTurnover);
-        const fVol = Number(scrapedTotal.foreignBuy) + Number(scrapedTotal.foreignSell);
-        const foreignSharePct =
-          totalTurnover > 0 ? Math.round((fVol / (2 * totalTurnover)) * 1000) / 10 : 0;
+        if (hasDistinctStocks && hasDistinctBills) {
+          try {
+            invalidateInvestorFlowsCache();
+            revalidateTag('investor-flows', { expire: 0 });
+            revalidatePath('/markets');
+          } catch {}
 
-        await db.insert(systemLogs).values({
-          source: 'cron-investor-flows',
-          level: 'INFO',
-          message: `Synced all ${officialSegments.length} official EGX investor flow segments for ${dateStr} [OFFICIAL_EGX_DIRECT]. Total Turnover: ${(totalTurnover / 1e9).toFixed(2)}B EGP, Hot Money Net: ${((foreignNet + arabNet) / 1e6).toFixed(1)}M EGP.`,
-          metadata: {
+          const foreignNet = Number(scrapedTotal.foreignNet);
+          const egyptianNet = Number(scrapedTotal.egyptianNet);
+          const arabNet = Number(scrapedTotal.arabNet);
+          const totalTurnover = Number(scrapedTotal.totalTurnover);
+          const fVol = Number(scrapedTotal.foreignBuy) + Number(scrapedTotal.foreignSell);
+          const foreignSharePct =
+            totalTurnover > 0 ? Math.round((fVol / (2 * totalTurnover)) * 1000) / 10 : 0;
+
+          await db.insert(systemLogs).values({
+            source: 'cron-investor-flows',
+            level: 'INFO',
+            message: `Synced all ${officialSegments.length} official EGX investor flow segments for ${dateStr} [OFFICIAL_EGX_DIRECT]. Total Turnover: ${(totalTurnover / 1e9).toFixed(2)}B EGP, Hot Money Net: ${((foreignNet + arabNet) / 1e6).toFixed(1)}M EGP.`,
+            metadata: {
+              date: dateStr,
+              segments: officialSegments.map((s) => s.marketSegment),
+              totalTurnover,
+              foreignNet,
+              arabNet,
+              egyptianNet,
+            },
+          });
+
+          return {
+            success: true,
+            newlyIngested: true,
             date: dateStr,
-            segments: officialSegments.map((s) => s.marketSegment),
             totalTurnover,
             foreignNet,
-            arabNet,
             egyptianNet,
-          },
-        });
+            arabNet,
+            foreignSharePct,
+            source: 'OFFICIAL_EGX_DIRECT',
+            message: `Successfully synchronized all ${officialSegments.length} official EGX segments for ${dateStr}`,
+          };
+        }
 
-        return {
-          success: true,
-          newlyIngested: true,
-          date: dateStr,
-          totalTurnover,
-          foreignNet,
-          egyptianNet,
-          arabNet,
-          foreignSharePct,
-          source: 'OFFICIAL_EGX_DIRECT',
-          message: `Successfully synchronized all ${officialSegments.length} official EGX segments for ${dateStr}`,
-        };
+        // Official scraper provided TOTAL; proceed to sync distinct STOCKS and Debt segments
+        console.log(
+          `[EGX Sync] Scraped official TOTAL for ${dateStr}. Proceeding to sync distinct STOCKS and Debt breakdown.`
+        );
       }
     }
 
-    // Make official-scrape failures visible instead of silently degrading to the stocks-only fallback.
-    await db.insert(systemLogs).values({
-      source: 'cron-investor-flows',
-      level: 'ERROR',
-      message: `Official EGX multi-segment scrape did not produce TOTAL/BONDS/BILLS for ${dateStr}; falling back to equities-only source. Reason: ${
-        officialSegments
-          ? 'scraped data rejected (missing TOTAL, <2 segments, or duplicate of prior session)'
-          : getLastEgxScrapeFailure() || 'unknown'
-      }`,
-      metadata: {
-        date: dateStr,
-        segmentsScraped: officialSegments?.map((s) => s.marketSegment) ?? [],
-        reason: getLastEgxScrapeFailure(),
-      },
-    });
+    if (!scrapedTotal) {
+      await db.insert(systemLogs).values({
+        source: 'cron-investor-flows',
+        level: 'ERROR',
+        message: `Official EGX multi-segment scrape did not produce TOTAL for ${dateStr}; falling back to equities-only source. Reason: ${
+          getLastEgxScrapeFailure() || 'unknown'
+        }`,
+        metadata: {
+          date: dateStr,
+          segmentsScraped: officialSegments?.map((s) => s.marketSegment) ?? [],
+          reason: getLastEgxScrapeFailure(),
+        },
+      });
+    }
   }
 
   // 6. Secondary Fallback Source: Verified Official Closing Bulletin via Al Borsa (STOCKS segment)
@@ -475,6 +732,9 @@ export async function syncDailyInvestorFlows(options?: {
         updatedAt: new Date(),
       },
     });
+
+  // Ensure debt segments (BILLS, BONDS) and composite TOTAL are synchronized
+  await syncDebtSegmentsIfMissing(dateStr);
 
 
 

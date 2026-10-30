@@ -305,6 +305,29 @@ export async function fetchOfficialEgxMultiSegmentFlows(): Promise<OfficialEgxSe
       lastScrapeFailure = 'EGX tables loaded but no segment parsed/validated (zero-sum or layout change)';
       return null;
     }
+
+    // Clone Protection:
+    // If multiple segments have identical turnover or net figures, the radio buttons did not switch datasets.
+    // In that scenario, only keep 'TOTAL' and discard any cloned segments so we NEVER poison STOCKS/BONDS/BILLS.
+    const totalRow = results.find((r) => r.marketSegment === 'TOTAL');
+    if (totalRow) {
+      const distinctResults = results.filter((r) => {
+        if (r.marketSegment === 'TOTAL') return true;
+        const isCloneOfTotal =
+          r.totalTurnover === totalRow.totalTurnover &&
+          r.foreignNet === totalRow.foreignNet &&
+          r.egyptianNet === totalRow.egyptianNet;
+        if (isCloneOfTotal) {
+          console.warn(
+            `[EGX Scraper] Segment ${r.marketSegment} is identical to TOTAL (turnover=${r.totalTurnover}). Discarding cloned segment.`
+          );
+          return false;
+        }
+        return true;
+      });
+      return distinctResults;
+    }
+
     return results;
   } catch (err) {
     console.warn('Official EGX Playwright multi-segment scrape warning:', err);
