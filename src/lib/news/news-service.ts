@@ -161,6 +161,7 @@ export const MACRO_ASSET_LOGOS: Record<string, { logoUrl: string; companyName: s
   'USD/EGP': { logoUrl: 'https://s3-symbol-logo.tradingview.com/country/US.svg', companyName: 'USD / EGP' },
   USDEGP: { logoUrl: 'https://s3-symbol-logo.tradingview.com/country/US.svg', companyName: 'USD / EGP' },
   EGX30: { logoUrl: 'https://s3-symbol-logo.tradingview.com/country/EG.svg', companyName: 'EGX 30 Index' },
+  EGX30CAPPED: { logoUrl: 'https://s3-symbol-logo.tradingview.com/country/EG.svg', companyName: 'EGX 30 Capped Index' },
   EGX70: { logoUrl: 'https://s3-symbol-logo.tradingview.com/country/EG.svg', companyName: 'EGX 70 EWI' },
   EGX100: { logoUrl: 'https://s3-symbol-logo.tradingview.com/country/EG.svg', companyName: 'EGX 100 EWI' },
   CBE: { logoUrl: 'https://s3-symbol-logo.tradingview.com/country/EG.svg', companyName: 'Central Bank of Egypt' },

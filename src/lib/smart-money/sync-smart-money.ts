@@ -13,7 +13,7 @@ export function isEligibleEquityTicker(symbol: string): boolean {
   const s = symbol.trim().toUpperCase().replace('.CA', '');
   return (
     !s.startsWith('SNDUK_') &&
-    !['GC1!', 'SI1!', 'USDEGP', 'EUREGP', 'EGX30', 'EGX70', 'EGX100'].includes(s)
+    !['GC1!', 'SI1!', 'USDEGP', 'EUREGP', 'EGX30', 'EGX30CAPPED', 'EGX70', 'EGX100'].includes(s)
   );
 }
 

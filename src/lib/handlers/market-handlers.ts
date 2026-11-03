@@ -145,6 +145,8 @@ export async function handleQuoteGet(req: Request): Promise<Response> {
   try {
     let tvSymbol = `EGX:${cleanSym}`;
     if (cleanSym === 'EGX30') {
+      tvSymbol = 'EGX:EGX30';
+    } else if (cleanSym === 'EGX30CAPPED') {
       tvSymbol = 'EGX:EGX30CAPPED';
     } else if (cleanSym === 'EGX70') {
       tvSymbol = 'EGX:EGX70EWI';

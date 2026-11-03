@@ -141,7 +141,8 @@ export function getTradingViewSymbol(symbol: string): string {
   if (clean === 'SI1!') return 'COMEX:SI1!';
   if (clean === 'USDEGP') return 'FX_IDC:USDEGP';
   if (clean === 'EUREGP') return 'FX_IDC:EUREGP';
-  if (clean === 'EGX30') return 'EGX:EGX30CAPPED';
+  if (clean === 'EGX30') return 'EGX:EGX30';
+  if (clean === 'EGX30CAPPED') return 'EGX:EGX30CAPPED';
   if (clean === 'EGX70') return 'EGX:EGX70EWI';
   if (clean === 'EGX100') return 'EGX:EGX100EWI';
 

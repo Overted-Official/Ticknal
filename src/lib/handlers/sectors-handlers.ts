@@ -74,7 +74,7 @@ export async function handlePerformanceGet(request: Request) {
         SELECT COUNT(DISTINCT dp.ticker_symbol) as count
         FROM daily_prices dp
         WHERE dp.date = ${endDate}
-          AND dp.ticker_symbol NOT IN ('EGX30', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SI1!')
+          AND dp.ticker_symbol NOT IN ('EGX30', 'EGX30CAPPED', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SI1!')
           AND dp.volume::numeric > 0
       `);
       const rowCount = Number((Array.isArray(countCheck) ? countCheck[0] : (countCheck as any)?.rows?.[0])?.count || 0);
@@ -84,7 +84,7 @@ export async function handlePerformanceGet(request: Request) {
         const latestSessionRes = await db.execute(sql`
           SELECT dp.date
           FROM daily_prices dp
-          WHERE dp.ticker_symbol NOT IN ('EGX30', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SI1!')
+          WHERE dp.ticker_symbol NOT IN ('EGX30', 'EGX30CAPPED', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SI1!')
             AND dp.volume::numeric > 0
           ORDER BY dp.date DESC
           LIMIT 1
@@ -173,7 +173,7 @@ export async function handlePerformanceGet(request: Request) {
         close::numeric as close,
         volume::numeric as volume
       FROM daily_prices
-      WHERE ticker_symbol IN ('EGX30', 'EGX70', 'EGX100')
+      WHERE ticker_symbol IN ('EGX30', 'EGX30CAPPED', 'EGX70', 'EGX100')
         AND date <= ${endDate}
         AND date >= (${startDate}::date - INTERVAL '14 days')
       ORDER BY date ASC;
@@ -190,7 +190,7 @@ export async function handlePerformanceGet(request: Request) {
         FROM daily_prices
         WHERE date <= ${endDate}
           AND date >= (${startDate}::date - INTERVAL '14 days')
-          AND ticker_symbol NOT IN ('EGX30', 'EGX70', 'EGX100', 'USDEGP')
+          AND ticker_symbol NOT IN ('EGX30', 'EGX30CAPPED', 'EGX70', 'EGX100', 'USDEGP')
       )
       SELECT 
         date,
@@ -278,18 +278,19 @@ export async function handlePerformanceGet(request: Request) {
       }
     });
 
-    const indicesMap: Record<'EGX30' | 'EGX70' | 'EGX100', {
+    const indicesMap: Record<'EGX30' | 'EGX30CAPPED' | 'EGX70' | 'EGX100', {
       name: string;
       badge: string;
       allHistory: Array<{ date: string; open: number; high: number; low: number; close: number; volume: number }>;
     }> = {
-      EGX30: { name: 'EGX 30 Capped Index', badge: '30', allHistory: [] },
+      EGX30: { name: 'EGX 30 Index', badge: '30', allHistory: [] },
+      EGX30CAPPED: { name: 'EGX 30 Capped Index', badge: '30C', allHistory: [] },
       EGX70: { name: 'EGX 70 EWI Index', badge: '70', allHistory: [] },
       EGX100: { name: 'EGX 100 EWI Index', badge: '100', allHistory: [] },
     };
 
     for (const r of indexRows) {
-      const sym = r.ticker_symbol as 'EGX30' | 'EGX70' | 'EGX100';
+      const sym = r.ticker_symbol as 'EGX30' | 'EGX30CAPPED' | 'EGX70' | 'EGX100';
       if (indicesMap[sym]) {
         indicesMap[sym].allHistory.push({
           date: typeof r.date === 'string' ? r.date : new Date(r.date).toISOString().split('T')[0],
@@ -302,11 +303,22 @@ export async function handlePerformanceGet(request: Request) {
       }
     }
 
-    const majorIndices: Record<'EGX30' | 'EGX70' | 'EGX100', import('@/lib/finance/sectors-math').MajorIndexData> = {
+    const majorIndices: Record<'EGX30' | 'EGX30CAPPED' | 'EGX70' | 'EGX100', import('@/lib/finance/sectors-math').MajorIndexData> = {
       EGX30: {
         symbol: 'EGX30',
-        name: 'EGX 30 Capped Index',
+        name: 'EGX 30 Index',
         badge: '30',
+        points: 0,
+        change: 0,
+        changePercent: 0,
+        dailyChange: 0,
+        dailyChangePercent: 0,
+        history: [],
+      },
+      EGX30CAPPED: {
+        symbol: 'EGX30CAPPED',
+        name: 'EGX 30 Capped Index',
+        badge: '30C',
         points: 0,
         change: 0,
         changePercent: 0,
@@ -338,7 +350,7 @@ export async function handlePerformanceGet(request: Request) {
       },
     };
 
-    (['EGX30', 'EGX70', 'EGX100'] as const).forEach((sym) => {
+    (['EGX30', 'EGX30CAPPED', 'EGX70', 'EGX100'] as const).forEach((sym) => {
       const allHist = indicesMap[sym].allHistory;
       // Chart history is filtered precisely within the requested [startDate, endDate] window
       const chartHist = allHist.filter((h) => h.date >= startDate && h.date <= endDate);
@@ -426,7 +438,7 @@ export async function handlePerformanceGet(request: Request) {
       const isIndexOrMacro =
         meta?.sector === 'Indices' ||
         meta?.sector === 'Macro' ||
-        ['EGX70', 'EGX100', 'EGX30', 'USDEGP'].includes(sym.toUpperCase());
+        ['EGX70', 'EGX100', 'EGX30', 'EGX30CAPPED', 'USDEGP'].includes(sym.toUpperCase());
 
       const isFund =
         ['CI_QUANT', 'OSOUL', 'COF'].includes(sym.toUpperCase()) ||
@@ -622,7 +634,7 @@ export async function handleSignalsGet(request?: Request) {
         SELECT COUNT(DISTINCT dp.ticker_symbol) as count
         FROM daily_prices dp
         WHERE dp.date = ${endDate}
-          AND dp.ticker_symbol NOT IN ('EGX30', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SI1!')
+          AND dp.ticker_symbol NOT IN ('EGX30', 'EGX30CAPPED', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SI1!')
           AND dp.volume::numeric > 0
       `);
       const rowCount = Number((Array.isArray(countCheck) ? countCheck[0] : (countCheck as any)?.rows?.[0])?.count || 0);
@@ -632,7 +644,7 @@ export async function handleSignalsGet(request?: Request) {
         const latestSessionRes = await db.execute(sql`
           SELECT dp.date
           FROM daily_prices dp
-          WHERE dp.ticker_symbol NOT IN ('EGX30', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SI1!')
+          WHERE dp.ticker_symbol NOT IN ('EGX30', 'EGX30CAPPED', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SI1!')
             AND dp.volume::numeric > 0
           ORDER BY dp.date DESC
           LIMIT 1
@@ -724,7 +736,7 @@ export async function handleSignalsGet(request?: Request) {
 
       for (const [symbol, bars] of barsByTicker.entries()) {
         const meta = tickerMap.get(symbol);
-        const isIndexOrMacro = meta?.sector === 'Indices' || meta?.sector === 'Macro' || ['EGX30', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SI1!'].includes(symbol);
+        const isIndexOrMacro = meta?.sector === 'Indices' || meta?.sector === 'Macro' || ['EGX30', 'EGX30CAPPED', 'EGX70', 'EGX100', 'USDEGP', 'GC1!', 'SI1!'].includes(symbol);
         const isFund = ['CI_QUANT', 'OSOUL', 'COF'].includes(symbol) || meta?.sector === 'Funds';
         if (isIndexOrMacro || isFund) continue;
         if (!bars || bars.length === 0) continue;

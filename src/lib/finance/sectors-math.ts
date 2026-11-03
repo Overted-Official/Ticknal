@@ -52,7 +52,7 @@ export interface SectorPerformanceItem {
 }
 
 export interface MajorIndexData {
-  symbol: 'EGX30' | 'EGX70' | 'EGX100';
+  symbol: 'EGX30' | 'EGX30CAPPED' | 'EGX70' | 'EGX100';
   name: string;
   badge: string;
   points: number;
@@ -108,7 +108,7 @@ export interface SectorsPerformanceResponse {
   egx30Return?: number | null;
   egx30History?: { date: string; close: number; volume?: number }[];
   dailyBreadth?: { date: string; gainers: number; losers: number; netAdvancers: number; adLine: number }[];
-  majorIndices?: Record<'EGX30' | 'EGX70' | 'EGX100', MajorIndexData>;
+  majorIndices?: Record<'EGX30' | 'EGX30CAPPED' | 'EGX70' | 'EGX100', MajorIndexData>;
   moneySupply?: Record<'M2' | 'M1' | 'M0', MoneySupplyData>;
   granularity?: 'sector' | 'industryGroup' | 'industry' | 'ticker';
 }

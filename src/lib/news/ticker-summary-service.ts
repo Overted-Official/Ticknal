@@ -32,6 +32,12 @@ export const CANONICAL_ASSET_METADATA: Record<
     category: 'macro_market',
     categoryLabel: 'Macro Market',
   },
+  EGX30CAPPED: {
+    en: 'EGX 30 Capped Index',
+    ar: 'مؤشر EGX 30 محدد الأوزان',
+    category: 'macro_market',
+    categoryLabel: 'Macro Market',
+  },
   EGX70: {
     en: 'EGX 70 EWI',
     ar: 'مؤشر الشركات الصغيرة والمتوسطة EGX 70',

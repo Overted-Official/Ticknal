@@ -15,7 +15,7 @@ import { ChevronRight } from '@/components/ui/icon-library';
 import Skeleton from '@/components/ui/Skeleton';
 import { useTranslation } from '@/lib/i18n';
 
-export type SelectedIndexSymbol = 'EGX30' | 'EGX70' | 'EGX100';
+export type SelectedIndexSymbol = 'EGX30' | 'EGX30CAPPED' | 'EGX70' | 'EGX100';
 
 interface MajorIndicesSectionProps {
   id?: string;
@@ -36,11 +36,21 @@ export default function MajorIndicesSection({
 
   const indexList: MajorIndexData[] = useMemo(() => {
     if (!majorIndices) return [];
-    const keys: SelectedIndexSymbol[] = ['EGX30', 'EGX70', 'EGX100'];
+    const keys: SelectedIndexSymbol[] = ['EGX30', 'EGX30CAPPED', 'EGX70', 'EGX100'];
     return keys
       .map((k) => majorIndices[k])
       .filter((item): item is MajorIndexData => Boolean(item));
   }, [majorIndices]);
+
+  const getIndexName = (item: MajorIndexData) => {
+    if (locale === 'ar') {
+      if (item.symbol === 'EGX30') return 'مؤشر EGX 30 الرئيسي';
+      if (item.symbol === 'EGX30CAPPED') return 'مؤشر EGX 30 محدد الأوزان';
+      if (item.symbol === 'EGX70') return 'مؤشر EGX 70 متساوي الأوزان';
+      if (item.symbol === 'EGX100') return 'مؤشر EGX 100 متساوي الأوزان';
+    }
+    return item.name;
+  };
 
   const activeIndex = majorIndices?.[selectedSymbol] || indexList[0] || null;
 
@@ -164,7 +174,7 @@ export default function MajorIndicesSection({
                           isSelected ? 'text-white' : 'text-neutral-200 group-hover:text-white'
                         }`}
                       >
-                        {item.name}
+                        {getIndexName(item)}
                       </span>
                       <span className="text-[10px] font-bold text-amber-500 ml-0.5">D</span>
                       <span className="text-neutral-500 text-xs ml-0.5">-</span>

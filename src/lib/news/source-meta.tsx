@@ -52,6 +52,7 @@ export const TRADINGVIEW_LOGOS: Record<string, string> = {
   'USD/EGP': 'https://s3-symbol-logo.tradingview.com/country/US.svg',
   USDEGP: 'https://s3-symbol-logo.tradingview.com/country/US.svg',
   EGX30: 'https://s3-symbol-logo.tradingview.com/country/EG.svg',
+  EGX30CAPPED: 'https://s3-symbol-logo.tradingview.com/country/EG.svg',
   EGX70: 'https://s3-symbol-logo.tradingview.com/country/EG.svg',
   EGX100: 'https://s3-symbol-logo.tradingview.com/country/EG.svg',
 };

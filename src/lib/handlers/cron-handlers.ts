@@ -231,7 +231,7 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
     ]);
 
     const prioritySet = new Set<string>([
-      'EGX30', 'EGX70', 'EGX100',
+      'EGX30', 'EGX30CAPPED', 'EGX70', 'EGX100',
       'COMI', 'COMI.CA', 'ETEL', 'ETEL.CA', 'EAST', 'EAST.CA', 'EGAL', 'EGAL.CA', 'PHDC', 'PHDC.CA',
       'HRHO', 'HRHO.CA', 'TMGH', 'TMGH.CA', 'SWDY', 'SWDY.CA', 'FWRY', 'FWRY.CA', 'MFPC', 'MFPC.CA',
       'EKHO', 'EKHO.CA', 'ORAS', 'ORAS.CA', 'ABUK', 'ABUK.CA', 'ESRS', 'ESRS.CA', 'AMOC', 'AMOC.CA',
@@ -348,6 +348,8 @@ export async function handleUpdateStocks(req: Request, options?: { specificSymbo
             const symbol = ticker.symbol.replace('.CA', '');
             const tvSymbol =
               symbol === 'EGX30'
+                ? 'EGX:EGX30'
+                : symbol === 'EGX30CAPPED'
                 ? 'EGX:EGX30CAPPED'
                 : symbol === 'EGX70'
                 ? 'EGX:EGX70EWI'
