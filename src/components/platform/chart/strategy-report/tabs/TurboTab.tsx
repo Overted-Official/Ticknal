@@ -472,6 +472,11 @@ export default function TurboTab({ symbol, companyName }: TurboTabProps) {
                                 <span className="text-[10px] text-plt-faint truncate max-w-[120px]">
                                   • {pos.sector}
                                 </span>
+                                {pos.stopLossPct && (
+                                  <span className="text-[10px] text-plt-muted tabular-nums" title={`Stop: ${pos.stopPrice?.toFixed(2)} EGP`}>
+                                    • SL: -{pos.stopLossPct}%
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -548,6 +553,11 @@ export default function TurboTab({ symbol, companyName }: TurboTabProps) {
                           >
                             {trade.sym}
                           </Link>
+                          {trade.reason === 'stop_loss' && (
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-loss-num/10 text-loss-num border border-loss-num/20">
+                              {isAr ? 'وقف خسارة' : 'Stop Loss'}
+                            </span>
+                          )}
                           <span className="text-[10px] text-plt-muted truncate max-w-[180px]">
                             {trade.name}
                           </span>

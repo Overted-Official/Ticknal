@@ -42,65 +42,63 @@ export const TURBO_QUALIFIED_SYMBOLS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Actively held positions in the 10-slot Turbo portfolio (with 20% Sector Cap).
+ * Actively held positions in the 10-slot Turbo portfolio (with 20% Sector Cap & 1.5-Sigma Stop Loss).
  */
 export const TURBO_ACTIVE_POSITIONS: ReadonlySet<string> = new Set([
   'AALR',
+  'BIOC',
+  'CANA',
   'CPCI',
-  'GTWL',
+  'CPME',
   'OBRI',
-  'SVCE',
-  'GRCA',
-  'AFMC',
-  'ISMQ',
   'SMFR',
-  'NINH',
+  'SVCE',
+  'TALM',
 ]);
 
 /**
  * Historical entries executed by the Turbo Portfolio manager (symbol:entryDate).
  */
 export const TURBO_EXECUTED_ENTRIES: ReadonlySet<string> = new Set([
-  'AALR:2026-08-06',
-  'CPCI:2026-08-17',
-  'GTWL:2026-08-26',
-  'OBRI:2026-08-30',
-  'SVCE:2026-09-01',
-  'GRCA:2026-09-02',
-  'AFMC:2026-09-08',
-  'ISMQ:2026-09-16',
-  'SMFR:2026-09-17',
-  'NINH:2026-10-04',
-  'SVCE:2025-11-30',
-  'EBSC:2025-12-03',
-  'IFAP:2025-11-23',
-  'RMDA:2025-08-26',
-  'ISMQ:2025-11-27',
-  'CANA:2025-12-10',
-  'GGRN:2025-12-04',
-  'OCPH:2026-01-25',
-  'INFI:2025-12-23',
-  'GRCA:2026-03-08',
-  'EGTS:2026-04-26',
-  'MENA:2026-03-09',
-  'UBEE:2026-06-02',
-  'AFMC:2026-02-26',
-  'GTWL:2026-05-18',
-  'ISMQ:2026-04-09',
-  'GTWL:2026-07-07',
-  'ADRI:2026-06-03',
+  'AALR:2026-01-27',
   'AALR:2026-05-10',
+  'AALR:2026-08-06',
   'ADCI:2026-06-07',
-  'CPCI:2026-07-07',
-  'OBRI:2026-02-24',
-  'EALR:2026-01-08',
-  'GTWL:2026-07-26',
+  'ADRI:2026-06-03',
   'ADRI:2026-07-21',
-  'GRCA:2026-06-17',
-  'NINH:2026-08-20',
-  'NCCW:2026-08-26',
-  'TALM:2026-05-25',
+  'AFMC:2026-02-26',
+  'AFMC:2026-09-08',
+  'BIOC:2026-09-14',
+  'CANA:2025-12-10',
   'CANA:2026-06-30',
+  'CANA:2026-10-13',
+  'CPCI:2026-07-07',
+  'CPCI:2026-08-17',
+  'CPME:2026-10-06',
+  'EALR:2026-01-08',
+  'EGTS:2026-04-26',
+  'GRCA:2026-03-08',
+  'GRCA:2026-06-17',
+  'GRCA:2026-09-02',
+  'GTWL:2026-05-18',
+  'GTWL:2026-07-07',
+  'GTWL:2026-07-26',
+  'GTWL:2026-08-26',
+  'HBCO:2026-10-15',
+  'INFI:2025-12-23',
+  'ISMQ:2026-04-09',
+  'ISMQ:2026-09-16',
+  'MENA:2026-03-09',
+  'NCCW:2026-08-26',
+  'NINH:2026-08-20',
+  'OBRI:2026-02-24',
+  'OBRI:2026-08-30',
+  'OCPH:2026-01-25',
+  'SMFR:2026-09-17',
+  'SVCE:2026-09-01',
+  'TALM:2026-05-25',
+  'TALM:2026-10-04',
+  'UBEE:2026-06-02',
 ]);
 
 export type TurboSignalStatus = 'entered' | 'candidate' | 'none';
@@ -151,6 +149,14 @@ export function getTurboSignalStatus(
   }
 
   return 'candidate';
+}
+
+/**
+ * Fast synchronous check if a symbol is actively held in the Turbo portfolio.
+ */
+export function isTurboActive(symbol: string): boolean {
+  const clean = symbol.replace(/\.CA$/i, '').trim().toUpperCase();
+  return TURBO_ACTIVE_POSITIONS.has(clean);
 }
 
 /**

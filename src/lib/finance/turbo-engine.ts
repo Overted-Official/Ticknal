@@ -10,6 +10,8 @@ export interface TurboOpenPosition {
   entryDate: string;
   entryPrice: number;
   lastPrice: number;
+  stopPrice?: number;
+  stopLossPct?: number;
   shares: number;
   cost: number;
   currentValue: number;
@@ -27,6 +29,8 @@ export interface TurboClosedTrade {
   proceeds: number;
   retPct: number;
   champion: 'typhon' | 'cerberus' | 'hydra';
+  reason?: 'native_exit' | 'stop_loss';
+  stopLossPct?: number;
 }
 
 export interface TurboPortfolioData {
